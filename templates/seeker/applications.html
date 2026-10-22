@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% from "seeker/_macros.html" import page_head with context %}
+{% block title %}My Applications — NEXORA{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-10">
+  {{ page_head('file-check-2', 'My Applications', 'Every job you have applied to, and where each one stands.', 'icon-badge-rose') }}
+
+  <!-- Status filters -->
+  <div class="flex flex-wrap gap-2 mb-5" role="tablist" aria-label="Filter by status">
+    <a href="{{ url_for('seeker.applications') }}" class="chip {{ 'chip-active' if not active else '' }} !py-1.5 !px-3.5 text-[13px]" {% if not active %}aria-current="page"{% endif %}>All ({{ total }})</a>
+    {% for st in statuses %}
+    <a href="{{ url_for('seeker.applications', status=st) }}" class="chip {{ 'chip-active' if active == st else '' }} !py-1.5 !px-3.5 text-[13px]" {% if active == st %}aria-current="page"{% endif %}>{{ st }} ({{ counts[st] }})</a>
+    {% endfor %}
+  </div>
+
+  <div class="tint tint-rose p-4 md:p-5">
+    {% if apps %}
+    <ul class="bg-white rounded-2xl divide-y divide-grey-line border border-grey-line">
+      {% for a in apps %}
+      <li class="flex items-center gap-3 md:gap-4 p-4" data-app-row>
+        <span class="w-11 h-11 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0" style="background:{{ a.job.company_color }}">{{ a.job.company_initials }}</span>
+        <div class="min-w-0 flex-1">
+          <a href="{{ url_for('job_details', job_id=a.job.id) }}" class="font-semibold text-navy hover:text-indigo block truncate">{{ a.job.title }}</a>
+          <p class="text-xs text-ink/55 truncate">{{ a.job.company }} · Applied {{ a.applied_label }}</p>
+        </div>
+        <span class="status-chip status-{{ a.status }}" data-status-chip>{{ a.status }}</span>
+
+        <div class="relative" data-menu-wrap>
+          <button type="button" class="w-9 h-9 rounded-full inline-flex items-center justify-center text-ink/60 hover:bg-cream-dim" aria-haspopup="menu" aria-expanded="false" aria-label="Actions for {{ a.job.title }}" data-menu-btn>
+            <i data-lucide="ellipsis-vertical" class="w-[18px] h-[18px]"></i>
+          </button>
+          <div class="hidden absolute right-0 mt-1 w-52 bg-white border border-grey-line rounded-2xl shadow-xl p-1.5 z-30" role="menu" data-menu>
+            <p class="px-3 pt-1.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-ink/40">Update progress</p>
+            {% for st in statuses %}
+            <button type="button" role="menuitem" class="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] hover:bg-cream-dim {{ 'font-semibold text-navy' if st == a.status else 'text-ink' }}" data-set-status="{{ st }}" data-app-id="{{ a.id }}">
+              <span class="status-chip status-{{ st }} !py-0.5 !px-2 !text-[11px]">{{ st }}</span>{% if st == a.status %}<i data-lucide="check" class="w-3.5 h-3.5 ml-auto"></i>{% endif %}
+            </button>
+            {% endfor %}
+            <div class="my-1 border-t border-grey-line"></div>
+            <button type="button" role="menuitem" class="w-full text-left flex items-center gap-2 px-3 py-2 rounded-xl text-[13px] font-medium text-rose hover:bg-rose/10" data-remove="{{ a.id }}"><i data-lucide="trash-2" class="w-4 h-4"></i>Remove application</button>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="bg-white rounded-2xl text-center py-14 px-6">
+      <span class="icon-badge icon-badge-rose w-12 h-12 mx-auto mb-4"><i data-lucide="inbox" class="w-5 h-5"></i></span>
+      {% if total %}
+      <p class="font-display font-semibold text-navy">No {{ active|lower }} applications</p>
+      <a href="{{ url_for('seeker.applications') }}" class="btn btn-outline btn-sm mt-4 inline-flex">Show all</a>
+      {% else %}
+      <p class="font-display font-semibold text-navy">You haven't applied to any jobs yet</p>
+      <p class="text-sm text-ink/55 mt-1">Find a role you like and apply in a couple of clicks.</p>
+      <a href="{{ url_for('jobs') }}" class="btn btn-primary btn-sm mt-4 inline-flex">Find Jobs</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const closeMenus = () => document.querySelectorAll('[data-menu]').forEach((m) => {
+    m.classList.add('hidden'); m.parentElement.querySelector('[data-menu-btn]').setAttribute('aria-expanded', 'false');
+  });
+  document.querySelectorAll('[data-menu-btn]').forEach((btn) => btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const menu = btn.parentElement.querySelector('[data-menu]');
+    const wasHidden = menu.classList.contains('hidden');
+    closeMenus();
+    if (wasHidden) { menu.classList.remove('hidden'); btn.setAttribute('aria-expanded', 'true'); }
+  }));
+  document.addEventListener('click', closeMenus);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenus(); });
+
+  async function call(url, body) {
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {}) });
+    return res.ok;
+  }
+  document.querySelectorAll('[data-set-status]').forEach((btn) => btn.addEventListener('click', async () => {
+    const ok = await call(`/api/seeker/applications/${btn.dataset.appId}/status`, { status: btn.dataset.setStatus });
+    showToast(ok ? `Marked as ${btn.dataset.setStatus}.` : 'Could not update. Please try again.', { icon: ok ? 'check-circle-2' : 'alert-circle' });
+    if (ok) setTimeout(() => location.reload(), 600);
+  }));
+  document.querySelectorAll('[data-remove]').forEach((btn) => btn.addEventListener('click', async () => {
+    if (!confirm('Remove this application from your list?')) return;
+    const ok = await call(`/api/seeker/applications/${btn.dataset.remove}/remove`);
+    showToast(ok ? 'Application removed.' : 'Could not remove. Please try again.', { icon: ok ? 'trash-2' : 'alert-circle' });
+    if (ok) setTimeout(() => location.reload(), 600);
+  }));
+</script>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% from "seeker/_macros.html" import ring, match_card with context %}
+{% block title %}Dashboard — NEXORA{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-10">
+  <section class="dash-shell seeker-dashboard" aria-labelledby="dash-title">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between gap-4 flex-wrap mb-6">
+      <div class="flex items-center gap-4 min-w-0">
+        <span class="w-14 h-14 rounded-2xl flex items-center justify-center text-white shrink-0" style="background:linear-gradient(135deg,#1E6BFF,#1450D6)"><i data-lucide="home" class="w-7 h-7"></i></span>
+        <div class="min-w-0">
+          <h1 id="dash-title" class="font-display text-3xl font-bold text-navy tracking-tight">Dashboard</h1>
+          <p class="text-sm text-ink/60">Welcome back, {{ seeker_user.first_name }}. Here's your job search progress.</p>
+        </div>
+      </div>
+      <a href="{{ url_for('jobs') }}" class="btn btn-primary"><i data-lucide="search" class="w-4 h-4"></i>Find Jobs</a>
+    </div>
+
+    <!-- Profile completion + resume status -->
+    <div class="grid sm:grid-cols-2 gap-4">
+      <a href="{{ url_for('seeker.profile') }}" class="tint tint-mint tile-link p-4 flex items-center gap-4" aria-label="Profile completion {{ percent }} percent. Open My Profile">
+        {{ ring(percent, 64) }}
+        <div class="min-w-0">
+          <p class="font-display font-semibold text-navy leading-tight">Profile<br>Completion</p>
+          <p class="text-xs text-ink/55 mt-1">{% set todo = sections|rejectattr('done')|list|length %}{{ 'All sections complete' if todo == 0 else (todo ~ (' section' if todo == 1 else ' sections') ~ ' to go') }}</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-5 h-5 text-ink/40 ml-auto shrink-0"></i>
+      </a>
+      <a href="{{ url_for('seeker.resume') }}" class="tint tint-lav tile-link p-4 flex items-center gap-4" aria-label="Resume status {{ resume_status }}. Open Resume Builder">
+        <span class="w-14 h-14 rounded-xl flex items-center justify-center text-white shrink-0" style="background:linear-gradient(135deg,#7A5CF5,#5B3FD8)"><i data-lucide="file-text" class="w-7 h-7"></i></span>
+        <div class="min-w-0">
+          <p class="font-display font-semibold text-navy leading-tight">Resume<br>Status</p>
+          <p class="text-sm font-semibold mt-1 {{ 'text-[#0E8A6F]' if resume_status == 'Completed' else ('text-[#A06A00]' if resume_status == 'In progress' else 'text-ink/55') }}">{{ resume_status }}</p>
+        </div>
+        <i data-lucide="chevron-right" class="w-5 h-5 text-ink/40 ml-auto shrink-0"></i>
+      </a>
+    </div>
+
+    <!-- Overview -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4" aria-label="Job search overview">
+      {% for label, value, icon, href in [
+        ('Applied', applications|length, 'send', url_for('seeker.applications')),
+        ('Shortlisted', status_counts['Shortlisted'], 'star', url_for('seeker.applications', status='Shortlisted')),
+        ('Interviews', status_counts['Interview'], 'calendar-check', url_for('seeker.applications', status='Interview')),
+        ('Saved jobs', saved|length, 'bookmark', '#saved')] %}
+      <a href="{{ href }}" class="tint tint-white tile-link p-3.5 flex items-center gap-3">
+        <span class="icon-badge icon-badge-indigo w-9 h-9"><i data-lucide="{{ icon }}" class="w-4 h-4"></i></span>
+        <div><p class="font-display text-xl font-bold text-navy leading-none" data-counter="{{ value }}">{{ value }}</p><p class="text-[11px] text-ink/55 mt-1">{{ label }}</p></div>
+      </a>
+      {% endfor %}
+    </div>
+
+    <!-- Recommended jobs -->
+    <div class="tint tint-rose mt-4 p-4 md:p-5">
+      <h2 class="font-display font-semibold text-navy text-center mb-4">Recommended Jobs (Top 3)</h2>
+      {% if matches %}
+      <div class="grid sm:grid-cols-3 gap-3">
+        {% for m in matches[:3] %}{{ match_card(m) }}{% endfor %}
+      </div>
+      {% else %}
+      <div class="bg-white/70 rounded-2xl p-6 text-center">
+        <i data-lucide="sparkles" class="w-7 h-7 mx-auto mb-2 text-indigo"></i>
+        <p class="font-semibold text-navy text-sm">No matches yet</p>
+        <p class="text-xs text-ink/60 mt-1 max-w-sm mx-auto">Add your headline and at least 3 skills to your profile and we'll find the roles that fit you best.</p>
+        <a href="{{ url_for('seeker.profile') }}" class="btn btn-primary btn-sm mt-4 inline-flex">Complete my profile</a>
+      </div>
+      {% endif %}
+
+      <!-- Locked / unlocked extra matches -->
+      {% if is_premium %}
+      <div class="mt-4 bg-white/70 rounded-2xl p-4 flex items-center gap-4 flex-wrap">
+        <span class="w-11 h-11 rounded-xl bg-[#D5F5E6] text-[#0E7A4F] flex items-center justify-center"><i data-lucide="lock-open" class="w-5 h-5"></i></span>
+        <div class="flex-1 min-w-[200px]">
+          <p class="font-display font-semibold text-navy text-sm">All matching jobs unlocked</p>
+          <p class="text-xs text-ink/60">{{ total_matches }} role{{ '' if total_matches == 1 else 's' }} match your profile.</p>
+        </div>
+        <a href="{{ url_for('seeker.matches') }}" class="btn btn-soft btn-sm">View all matches</a>
+      </div>
+      {% else %}
+      <div class="mt-4 bg-white/60 border border-[#FFC9D2] rounded-2xl p-4 text-center">
+        <p class="font-display font-semibold text-navy text-sm flex items-center justify-center gap-2"><i data-lucide="lock" class="w-4 h-4"></i>More Matching Jobs (Locked)</p>
+        <p class="text-xs text-ink/60 mt-1">{% if locked_count %}{{ locked_count }} more role{{ '' if locked_count == 1 else 's' }} match you. {% endif %}Upgrade to see all matching jobs</p>
+        <a href="{{ url_for('seeker.upgrade') }}" class="btn btn-purple btn-sm mt-3 inline-flex">Upgrade Plan</a>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Quick access -->
+    <h2 class="font-display font-semibold text-navy mt-8 mb-3">Quick access</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <a href="{{ url_for('jobs') }}" class="tint tint-green tile-link p-4">
+        <span class="w-10 h-10 rounded-xl bg-[#17A34A] text-white flex items-center justify-center mb-3"><i data-lucide="search" class="w-5 h-5"></i></span>
+        <p class="font-display font-semibold text-navy">Find Jobs</p>
+        <p class="text-xs text-ink/60 mt-1">Search, filter and apply to jobs directly.</p>
+      </a>
+      <a href="{{ url_for('seeker.profile') }}" class="tint tint-lav tile-link p-4">
+        <span class="w-10 h-10 rounded-xl text-white flex items-center justify-center mb-3" style="background:#7A4DF0"><i data-lucide="user-round" class="w-5 h-5"></i></span>
+        <p class="font-display font-semibold text-navy">My Profile</p>
+        <p class="text-xs text-ink/60 mt-1">Better profile, better job matching.</p>
+      </a>
+      <a href="{{ url_for('seeker.applications') }}" class="tint tint-rose tile-link p-4">
+        <span class="w-10 h-10 rounded-xl text-white flex items-center justify-center mb-3" style="background:#F0476A"><i data-lucide="file-check-2" class="w-5 h-5"></i></span>
+        <p class="font-display font-semibold text-navy">My Applications</p>
+        <p class="text-xs text-ink/60 mt-1">Track the progress of every application.</p>
+      </a>
+      <a href="{{ url_for('seeker.resume') }}" class="tint tint-amber tile-link p-4">
+        <span class="w-10 h-10 rounded-xl text-white flex items-center justify-center mb-3" style="background:#F59E0B"><i data-lucide="file-text" class="w-5 h-5"></i></span>
+        <p class="font-display font-semibold text-navy">Resume Builder</p>
+        <p class="text-xs text-ink/60 mt-1">Create, preview and download your resume.</p>
+      </a>
+    </div>
+
+    <!-- Recent applications + saved -->
+    <div class="grid lg:grid-cols-2 gap-4 mt-6">
+      <div class="tint tint-white p-5" id="applications">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-display font-semibold text-navy text-sm">Recent applications</h2>
+          {% if applications %}<a href="{{ url_for('seeker.applications') }}" class="text-xs font-semibold text-indigo hover:text-indigo-dark">View all</a>{% endif %}
+        </div>
+        {% if applications %}
+        <ul class="flex flex-col gap-3">
+          {% for a in applications[:3] %}
+          <li class="flex items-center gap-3">
+            <span class="w-9 h-9 rounded-lg flex items-center justify-center text-white text-[11px] font-bold shrink-0" style="background:{{ a.job.company_color }}">{{ a.job.company_initials }}</span>
+            <div class="min-w-0 flex-1">
+              <a href="{{ url_for('job_details', job_id=a.job.id) }}" class="text-sm font-semibold text-navy hover:text-indigo truncate block">{{ a.job.title }}</a>
+              <p class="text-xs text-ink/50 truncate">{{ a.job.company }} · {{ a.applied_label }}</p>
+            </div>
+            <span class="status-chip status-{{ a.status }}">{{ a.status }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-sm text-ink/55 py-4 text-center">You haven't applied to any jobs yet. <a class="auth-link" href="{{ url_for('jobs') }}">Browse jobs</a></p>
+        {% endif %}
+      </div>
+
+      <div class="tint tint-white p-5" id="saved">
+        <h2 class="font-display font-semibold text-navy text-sm mb-3">Saved jobs</h2>
+        {% if saved %}
+        <ul class="flex flex-col gap-3">
+          {% for job in saved[:4] %}
+          <li class="flex items-center gap-3">
+            <span class="w-9 h-9 rounded-lg flex items-center justify-center text-white text-[11px] font-bold shrink-0" style="background:{{ job.company_color }}">{{ job.company_initials }}</span>
+            <div class="min-w-0 flex-1">
+              <a href="{{ url_for('job_details', job_id=job.id) }}" class="text-sm font-semibold text-navy hover:text-indigo truncate block">{{ job.title }}</a>
+              <p class="text-xs text-ink/50 truncate">{{ job.company }} · {{ job.location }}</p>
+            </div>
+            <a href="{{ url_for('job_details', job_id=job.id) }}" class="btn btn-soft btn-sm shrink-0">View</a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-sm text-ink/55 py-4 text-center">Jobs you save will appear here.</p>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

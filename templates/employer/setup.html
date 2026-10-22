@@ -1,0 +1,62 @@
+{% extends "auth/_layout.html" %}
+{% from "auth/_macros.html" import flashes, form_error, text_field, country_select, field_error with context %}
+{% block title %}{{ 'Company profile' if editing else 'Set up your company profile' }} — NEXORA{% endblock %}
+{% block stage_art %}{% endblock %}
+{% block wrap_class %}auth-wide{% endblock %}
+
+{% block card %}
+<h1 class="auth-title">{{ 'Company profile' if editing else 'Set up your company profile' }}</h1>
+<p class="auth-sub">{{ 'Keep your organisation details up to date.' if editing else 'Tell us about your organisation to start hiring.' }}</p>
+{{ flashes() }}
+{{ form_error(errors) }}
+
+<form method="post" action="{{ url_for('employer.setup') }}" data-auth-form data-setup-form>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+
+  <div class="nx-section"><span class="icon-badge icon-badge-indigo w-8 h-8"><i data-lucide="building-2" class="w-4 h-4"></i></span><h2>Company details</h2></div>
+  <div class="grid sm:grid-cols-2 gap-x-4">
+    {{ text_field('company_name', 'Company name', values.name, errors, placeholder='e.g. Northlane Digital', autocomplete='organization') }}
+    {{ country_select('country', 'Country', values.country, countries, 'name', errors) }}
+  </div>
+  {{ text_field('registered_name', 'Registered business name', values.registered_name, errors, placeholder='e.g. Northlane Digital Pty Ltd') }}
+
+  <div class="nx-field" role="radiogroup" aria-labelledby="reg-label">
+    <span class="nx-label" id="reg-label">Are you a registered business? *</span>
+    <div class="nx-radio-row">
+      <label class="nx-radio"><input type="radio" name="is_registered" value="yes" {% if values.is_registered %}checked{% endif %}> Yes</label>
+      <label class="nx-radio"><input type="radio" name="is_registered" value="no" {% if not values.is_registered %}checked{% endif %}> No</label>
+    </div>
+  </div>
+
+  <div data-abn-group {% if not values.is_registered %}hidden{% endif %}>
+    {{ text_field('abn', 'Australian Business Number (ABN)', values.abn, errors, placeholder='e.g. 12 345 678 901', required=false, optional=true, inputmode='numeric', maxlength=14, hint='Add your ABN to help verify your business.') }}
+  </div>
+
+  <div class="nx-section"><span class="icon-badge icon-badge-mint w-8 h-8"><i data-lucide="user-round" class="w-4 h-4"></i></span><h2>Primary contact person</h2></div>
+  <div class="grid sm:grid-cols-2 gap-x-4">
+    {{ text_field('contact_first', 'First name', values.contact_first, errors, placeholder='e.g. John', autocomplete='given-name') }}
+    {{ text_field('contact_last', 'Last name', values.contact_last, errors, placeholder='e.g. Smith', autocomplete='family-name') }}
+  </div>
+
+  <div class="nx-field">
+    <label class="nx-label" for="phone">Contact number *</label>
+    <div class="nx-phone">
+      <div class="nx-select-flag">
+        <img src="https://flagcdn.com/w40/{{ values.phone_country|lower }}.png" alt="" data-flag-for="phone_country" onerror="this.style.display='none'" onload="this.style.display=''">
+        <select class="nx-input" id="phone_country" name="phone_country" data-flag-select aria-label="Country code">
+          {% for c in countries %}<option value="{{ c.code }}" {% if c.code == values.phone_country %}selected{% endif %}>{{ c.name }} (+{{ c.dial }})</option>{% endfor %}
+        </select>
+      </div>
+      <input class="nx-input{% if errors.get('phone') %} is-invalid{% endif %}" id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national"
+             value="{{ values.phone }}" placeholder="e.g. 412 345 678" required maxlength="20" aria-describedby="phone-error phone-hint"
+             {% if errors.get('phone') %}aria-invalid="true"{% endif %}>
+    </div>
+    {{ field_error(errors, 'phone') }}
+    <p class="nx-hint" id="phone-hint">This is your primary contact and will not be shared with candidates.</p>
+  </div>
+
+  <button type="submit" class="btn btn-accent btn-block mt-7"><span class="btn-label">{{ 'Save changes' if editing else 'Save and continue' }}</span><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+  {% if editing %}<p class="auth-foot"><a class="auth-link" href="{{ url_for('employer_dashboard') }}">Cancel</a></p>{% endif %}
+</form>
+{% endblock %}

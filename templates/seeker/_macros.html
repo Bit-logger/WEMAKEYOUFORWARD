@@ -1,0 +1,32 @@
+{# Shared pieces for the job-seeker portal. Import with: {% from "seeker/_macros.html" import ... with context %} #}
+
+{% macro ring(percent, size=64, stroke=7) %}
+  {% set r = (size - stroke) / 2 %}
+  {% set c = 2 * 3.14159265 * r %}
+  <span class="relative inline-flex items-center justify-center shrink-0" style="width:{{ size }}px;height:{{ size }}px" role="img" aria-label="{{ percent }} percent complete">
+    <svg width="{{ size }}" height="{{ size }}" viewBox="0 0 {{ size }} {{ size }}" style="transform:rotate(-90deg)" aria-hidden="true">
+      <circle cx="{{ size / 2 }}" cy="{{ size / 2 }}" r="{{ r }}" fill="none" stroke="#CDEBDD" stroke-width="{{ stroke }}"/>
+      <circle cx="{{ size / 2 }}" cy="{{ size / 2 }}" r="{{ r }}" fill="none" stroke="#0E9D6B" stroke-width="{{ stroke }}" stroke-linecap="round" stroke-dasharray="{{ (c * percent / 100)|round(2) }} {{ c|round(2) }}"/>
+    </svg>
+    <span class="absolute font-display font-bold text-navy" style="font-size:{{ (size * 0.26)|round|int }}px">{{ percent }}%</span>
+  </span>
+{% endmacro %}
+
+{% macro page_head(icon, title, subtitle, badge='icon-badge-indigo') %}
+  <div class="flex items-center gap-3 mb-8">
+    <span class="icon-badge {{ badge }} w-11 h-11"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></span>
+    <div>
+      <h1 class="font-display text-2xl md:text-3xl font-bold text-cream tracking-tight">{{ title }}</h1>
+      {% if subtitle %}<p class="text-sm text-cream/50 mt-1">{{ subtitle }}</p>{% endif %}
+    </div>
+  </div>
+{% endmacro %}
+
+{% macro match_card(m) %}
+  <div class="bg-white rounded-2xl border border-grey-line p-3.5 flex flex-col">
+    <a href="{{ url_for('job_details', job_id=m.job.id) }}" class="font-display font-semibold text-[13.5px] text-navy hover:text-indigo leading-snug">{{ m.job.title }}</a>
+    <p class="text-xs text-ink/55 mt-0.5 truncate">{{ m.job.company }}</p>
+    <p class="match-pct mt-2">{{ m.score }}% Match</p>
+    <a href="{{ url_for('job_details', job_id=m.job.id) }}" class="btn btn-soft btn-sm mt-3 w-full justify-center">View Job</a>
+  </div>
+{% endmacro %}

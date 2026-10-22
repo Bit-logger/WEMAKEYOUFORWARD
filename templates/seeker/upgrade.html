@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% from "seeker/_macros.html" import page_head with context %}
+{% block title %}Upgrade Plan — NEXORA{% endblock %}
+
+{% macro feature(text, soon=false) %}
+  <li class="flex items-start gap-2.5 text-sm text-ink">
+    <i data-lucide="check" class="w-4 h-4 mt-0.5 shrink-0" style="color:#0E9D6B"></i>
+    <span>{{ text }}{% if soon %} <span class="chip chip-amber !text-[10px] !py-0 !px-1.5 ml-1 align-middle">Coming soon</span>{% endif %}</span>
+  </li>
+{% endmacro %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-10">
+  {{ page_head('crown', 'Upgrade Plan', 'Unlock every job that matches your profile.', 'icon-badge-rose') }}
+
+  <div class="grid md:grid-cols-2 gap-5">
+    <!-- Free -->
+    <section class="card p-6 flex flex-col {{ 'ring-2 ring-indigo' if not is_premium else '' }}" aria-labelledby="plan-free">
+      <div class="flex items-center justify-between mb-1">
+        <h2 id="plan-free" class="font-display font-semibold text-xl text-navy">Free</h2>
+        {% if not is_premium %}<span class="chip chip-indigo">Current plan</span>{% endif %}
+      </div>
+      <p class="text-sm text-ink/55 mb-5">Everything you need to start your search.</p>
+      <ul class="space-y-3 mb-6">
+        {{ feature('Top ' ~ free_limit ~ ' recommended jobs') }}
+        {{ feature('Apply to unlimited jobs') }}
+        {{ feature('Track every application') }}
+        {{ feature('Profile & resume builder') }}
+      </ul>
+      <div class="mt-auto">
+        {% if is_premium %}
+        <form method="post" action="{{ url_for('seeker.upgrade_post') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="plan" value="free">
+          <button class="btn btn-outline btn-block justify-center" {% if not demo_enabled %}disabled{% endif %}>Switch to Free</button>
+        </form>
+        {% else %}<p class="text-xs text-ink/45 text-center">You're on this plan</p>{% endif %}
+      </div>
+    </section>
+
+    <!-- Premium -->
+    <section class="rounded-2xl p-6 flex flex-col border-2 border-[#C7B6FF] relative overflow-hidden" style="background:linear-gradient(180deg,#F4EFFF,#fff)" aria-labelledby="plan-premium">
+      <div class="flex items-center justify-between mb-1">
+        <h2 id="plan-premium" class="font-display font-semibold text-xl text-navy flex items-center gap-2"><i data-lucide="crown" class="w-5 h-5" style="color:#E0475F"></i>Premium</h2>
+        {% if is_premium %}<span class="chip chip-mint">Current plan</span>{% endif %}
+      </div>
+      <p class="text-sm text-ink/55 mb-5">See more, match better, get noticed.</p>
+      <ul class="space-y-3 mb-6">
+        {{ feature('Show more job matches: every role that fits you') }}
+        {{ feature('Higher match accuracy', soon=true) }}
+        {{ feature('AI recommendations', soon=true) }}
+        {{ feature('Advanced filters', soon=true) }}
+        {{ feature('Priority support', soon=true) }}
+      </ul>
+      <div class="mt-auto">
+        {% if is_premium %}
+        <a href="{{ url_for('seeker.matches') }}" class="btn btn-purple btn-block justify-center">View all my matches</a>
+        {% else %}
+        <form method="post" action="{{ url_for('seeker.upgrade_post') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="plan" value="premium">
+          <button class="btn btn-purple btn-block justify-center" {% if not demo_enabled %}disabled aria-disabled="true"{% endif %}>{{ 'Upgrade to Premium' if demo_enabled else 'Payments coming soon' }}</button>
+        </form>
+        {% if demo_enabled %}<p class="text-[11px] text-ink/45 text-center mt-2">Demo build: no payment is taken.</p>{% endif %}
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  {% if not is_premium and total_matches > free_limit %}
+  <p class="text-center text-sm text-cream/60 mt-6">You have <strong class="text-cream">{{ total_matches - free_limit }}</strong> more matching job{{ '' if total_matches - free_limit == 1 else 's' }} waiting.</p>
+  {% endif %}
+</div>
+{% endblock %}

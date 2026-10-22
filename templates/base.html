@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}NEXORA — Find work that moves you forward{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          navy: '#0B1230', 'navy-soft': '#141B3F', 'navy-elevated': '#1B234D', ink: '#12142B',
+          cream: '#F8F6F1', 'cream-dim': '#EFEBE2',
+          indigo: { DEFAULT: '#6C5CF5', dark: '#5342D6' },
+          mint: { DEFAULT: '#2BE0BE', soft: '#E2F7F2' },
+          amber: '#FFB74A',
+          rose: '#FF6B87', grey: { DEFAULT: '#8B8F9E', line: '#E4E1D9' },
+        },
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          display: ['Plus Jakarta Sans', 'sans-serif'],
+        },
+        borderRadius: { '2xl': '18px', '3xl': '22px' },
+      }
+    }
+  }
+</script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+{% block head %}{% endblock %}
+</head>
+<body class="bg-navy">
+
+<div id="toast-container" aria-live="polite"></div>
+
+<!-- ==================== NAV ==================== -->
+{% block site_header %}
+<header class="sticky top-0 z-50 bg-navy/85 backdrop-blur-md border-b border-white/10">
+  <div class="max-w-7xl mx-auto px-5 md:px-8">
+    <div class="flex items-center justify-between h-16">
+      <a href="{{ url_for('index') }}" class="flex items-center gap-2.5 shrink-0 group">
+        <svg class="nx-mark icon-bounce-hover" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="17" cy="17" r="16" stroke="#F8F6F1" stroke-width="1.4" opacity="0.9"/>
+          <circle cx="9" cy="22" r="3" fill="#6C5CF5"/>
+          <circle cx="25" cy="12" r="3" fill="#2BE0BE"/>
+          <path d="M9 22 C 14 16, 19 18, 25 12" stroke="#F8F6F1" stroke-width="1.4" stroke-dasharray="1 3.4" stroke-linecap="round" opacity="0.85"/>
+          <g class="nx-orbit-dot"><circle cx="25" cy="12" r="1.3" fill="#0B1230"/></g>
+        </svg>
+        <span class="nx-wordmark">NEXORA</span>
+      </a>
+
+      <nav class="hidden lg:flex items-center gap-1 text-sm font-medium text-cream/70">
+        {% if demo_role == 'seeker' %}
+          <a href="{{ url_for('seeker_dashboard') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path=='/dashboard/seeker' %}text-mint font-semibold{% endif %}">Dashboard</a>
+          <a href="{{ url_for('jobs') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path=='/jobs' %}text-mint font-semibold{% endif %}">Find Jobs</a>
+          <a href="{{ url_for('seeker.applications') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path=='/seeker/applications' %}text-mint font-semibold{% endif %}">My Applications</a>
+          <a href="{{ url_for('seeker.resume') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path=='/seeker/resume' %}text-mint font-semibold{% endif %}">Resume Builder</a>
+        {% elif demo_role == 'employer' %}
+          <a href="{{ url_for('jobs') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path=='/jobs' %}text-mint font-semibold{% endif %}">Find Jobs</a>
+          <a href="{{ url_for('companies') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path.startswith('/companies') %}text-mint font-semibold{% endif %}">Companies</a>
+          <a href="{{ url_for('employer_dashboard') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path in ('/dashboard/employer', '/applicants', '/post-job', '/checkout') %}text-mint font-semibold{% endif %}">For Employers</a>
+          <a href="{{ url_for('pricing') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path=='/pricing' %}text-mint font-semibold{% endif %}">Pricing</a>
+        {% elif demo_role == 'admin' %}
+          <a href="{{ url_for('admin') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path=='/admin' %}text-mint font-semibold{% endif %}">Dashboard</a>
+          <a href="{{ url_for('admin') }}#jobs" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream">Jobs</a>
+          <a href="{{ url_for('admin') }}#reports" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream">Reports</a>
+        {% else %}
+          <a href="{{ url_for('jobs') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path=='/jobs' %}text-mint font-semibold{% endif %}">Find Jobs</a>
+          <a href="{{ url_for('companies') }}" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path.startswith('/companies') %}text-mint font-semibold{% endif %}">Explore Top Companies</a>
+          <div class="nx-dd">
+            <button type="button" class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream inline-flex items-center gap-1">For Employers <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+            <div class="nx-dd-menu">
+              <a href="{{ url_for('employer.login') }}"><i data-lucide="log-in" class="w-4 h-4"></i>Employer Login</a>
+              <a href="{{ url_for('employer.register') }}"><i data-lucide="building-2" class="w-4 h-4"></i>Employer Register</a>
+            </div>
+          </div>
+        {% endif %}
+      </nav>
+
+      <div class="flex items-center gap-2">
+        {% if demo_role == 'employer' %}
+        <button type="button" onclick="showToast('You have no new notifications.', {icon: 'bell'})" class="w-9 h-9 rounded-full inline-flex items-center justify-center text-cream/70 hover:bg-white/5 hover:text-cream" aria-label="Notifications">
+          <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+        </button>
+        <div class="relative" id="user-menu">
+          <button type="button" id="user-menu-btn" onclick="toggleUserMenu()" aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu-panel"
+                  class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full hover:bg-white/5 text-sm font-medium text-cream/90">
+            <span class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style="background:var(--indigo)">{{ employer_company.initials if employer_company else '?' }}</span>
+            <span class="hidden sm:inline max-w-[150px] truncate">{{ employer_company.name if employer_company else employer_user.email }}</span>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-cream/60"></i>
+          </button>
+          <div id="user-menu-panel" role="menu" class="hidden absolute right-0 mt-2 w-60 bg-white rounded-2xl border border-grey-line shadow-xl p-1.5 z-[60]">
+            {% set soon = 'w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] text-ink hover:bg-cream-dim' %}
+            <button type="button" role="menuitem" class="{{ soon }}" onclick="comingSoon('Account settings')"><i data-lucide="settings" class="w-4 h-4 text-ink/60"></i>Account settings</button>
+            <button type="button" role="menuitem" class="{{ soon }}" onclick="comingSoon('Payable invoices')"><i data-lucide="file-text" class="w-4 h-4 text-ink/60"></i>Payable invoices</button>
+            <button type="button" role="menuitem" class="{{ soon }}" onclick="comingSoon('Invoice history')"><i data-lucide="history" class="w-4 h-4 text-ink/60"></i>Invoice history</button>
+            <a role="menuitem" class="{{ soon }}" href="{{ url_for('employer.setup') }}"><i data-lucide="building-2" class="w-4 h-4 text-ink/60"></i>Company Profile</a>
+            <button type="button" role="menuitem" class="{{ soon }}" onclick="comingSoon('Logos and brands')"><i data-lucide="image" class="w-4 h-4 text-ink/60"></i>Logos and brands</button>
+            <a role="menuitem" class="{{ soon }}" href="{{ url_for('pricing') }}"><i data-lucide="tag" class="w-4 h-4 text-ink/60"></i>Ad price lookup</a>
+            <a role="menuitem" class="{{ soon }}" href="{{ url_for('post_job') }}"><i data-lucide="plus" class="w-4 h-4 text-ink/60"></i>Create a job ad</a>
+            <button type="button" role="menuitem" class="{{ soon }}" onclick="comingSoon('Contact us')"><i data-lucide="mail" class="w-4 h-4 text-ink/60"></i>Contact us</button>
+            <div class="my-1 border-t border-grey-line"></div>
+            <form method="post" action="{{ url_for('employer.logout') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" role="menuitem" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium text-rose hover:bg-rose/10"><i data-lucide="log-out" class="w-4 h-4"></i>Sign out</button>
+            </form>
+          </div>
+        </div>
+        {% elif demo_role == 'seeker' %}
+        <div class="relative" id="user-menu">
+          <button type="button" id="user-menu-btn" onclick="toggleUserMenu()" aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu-panel"
+                  class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full hover:bg-white/5 text-sm font-medium text-cream/90">
+            <span class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style="background:var(--indigo)">{{ seeker_user.initials }}</span>
+            <span class="hidden sm:inline max-w-[140px] truncate">{{ seeker_user.first_name }}</span>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-cream/60"></i>
+          </button>
+          <div id="user-menu-panel" role="menu" class="hidden absolute right-0 mt-2 w-60 bg-white rounded-2xl border border-grey-line shadow-xl p-1.5 z-[60]">
+            <div class="px-3 py-2 mb-1 border-b border-grey-line">
+              <p class="text-sm font-semibold text-navy truncate">{{ seeker_user.full_name }}</p>
+              <p class="text-xs text-ink/50 truncate">{{ seeker_user.email }}</p>
+              <span class="chip {{ 'chip-mint' if seeker_user.is_premium else '' }} mt-1.5 !text-[10px]">{{ 'Premium plan' if seeker_user.is_premium else 'Free plan' }}</span>
+            </div>
+            {% set item = 'w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] text-ink hover:bg-cream-dim' %}
+            <a role="menuitem" class="{{ item }}" href="{{ url_for('seeker_dashboard') }}"><i data-lucide="layout-dashboard" class="w-4 h-4 text-ink/60"></i>Dashboard</a>
+            <a role="menuitem" class="{{ item }}" href="{{ url_for('seeker.profile') }}"><i data-lucide="user-round" class="w-4 h-4 text-ink/60"></i>My Profile</a>
+            <a role="menuitem" class="{{ item }}" href="{{ url_for('seeker.applications') }}"><i data-lucide="file-check-2" class="w-4 h-4 text-ink/60"></i>My Applications</a>
+            <a role="menuitem" class="{{ item }}" href="{{ url_for('seeker.resume') }}"><i data-lucide="file-text" class="w-4 h-4 text-ink/60"></i>Resume Builder</a>
+            <a role="menuitem" class="{{ item }}" href="{{ url_for('seeker_dashboard') }}#saved"><i data-lucide="bookmark" class="w-4 h-4 text-ink/60"></i>Saved jobs <span class="ml-auto text-xs text-ink/40" data-saved-count>{{ saved_count }}</span></a>
+            <a role="menuitem" class="{{ item }}" href="{{ url_for('seeker.upgrade') }}"><i data-lucide="crown" class="w-4 h-4 text-ink/60"></i>Upgrade Plan</a>
+            <div class="my-1 border-t border-grey-line"></div>
+            <form method="post" action="{{ url_for('seeker.logout') }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" role="menuitem" class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium text-rose hover:bg-rose/10"><i data-lucide="log-out" class="w-4 h-4"></i>Sign out</button>
+            </form>
+          </div>
+        </div>
+        {% elif demo_role == 'guest' or not demo_role %}
+        <a href="{{ url_for('seeker.login') }}" class="hidden sm:inline-flex btn btn-ghost btn-sm on-dark">Login</a>
+        <a href="{{ url_for('seeker.register') }}" class="btn btn-primary btn-sm"><i data-lucide="user-plus" class="w-3.5 h-3.5"></i>Register</a>
+        {% else %}
+        <span class="hidden sm:flex items-center gap-2 text-sm text-cream/70 pr-1">
+          <span class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white" style="background:linear-gradient(135deg, var(--indigo), var(--mint))">
+            AD
+          </span>
+        </span>
+        <button onclick="setDemoRole('guest')" class="btn btn-outline btn-sm on-dark">Sign Out</button>
+        {% endif %}
+        <button id="mobile-nav-btn" class="lg:hidden btn btn-ghost btn-sm on-dark !px-2" aria-label="Open menu">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile nav drawer -->
+<div class="nx-overlay" id="mobile-nav-overlay" onclick="closeMobileNav()"></div>
+<div class="nx-drawer" id="mobile-nav-drawer">
+  <div class="p-5 flex items-center justify-between border-b border-grey-line">
+    <span class="nx-wordmark" style="color:var(--navy)">NEXORA</span>
+    <button onclick="closeMobileNav()" class="btn btn-ghost btn-sm !px-2"><i data-lucide="x" class="w-5 h-5"></i></button>
+  </div>
+  <nav class="p-3 flex flex-col text-sm font-medium">
+    {% if demo_role == 'seeker' %}
+      <a href="{{ url_for('seeker_dashboard') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="layout-dashboard" class="w-4 h-4 text-indigo"></i>Dashboard</a>
+      <a href="{{ url_for('jobs') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="search" class="w-4 h-4 text-indigo"></i>Find Jobs</a>
+      <a href="{{ url_for('seeker.applications') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="file-check-2" class="w-4 h-4 text-rose"></i>My Applications</a>
+      <a href="{{ url_for('seeker.profile') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="user-round" class="w-4 h-4 text-indigo"></i>My Profile</a>
+      <a href="{{ url_for('seeker.resume') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="file-text" class="w-4 h-4 text-amber" style="color:#B4790A"></i>Resume Builder</a>
+      <a href="{{ url_for('seeker.upgrade') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="crown" class="w-4 h-4 text-rose"></i>Upgrade Plan</a>
+      <form method="post" action="{{ url_for('seeker.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="w-full px-3 py-3 rounded-lg hover:bg-rose/10 flex items-center gap-2.5 text-left text-rose"><i data-lucide="log-out" class="w-4 h-4"></i>Sign out</button>
+      </form>
+    {% elif demo_role == 'employer' %}
+      <a href="{{ url_for('employer_dashboard') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="layout-dashboard" class="w-4 h-4 text-indigo"></i>Dashboard</a>
+      <a href="{{ url_for('jobs') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="search" class="w-4 h-4 text-indigo"></i>Find Jobs</a>
+      <a href="{{ url_for('companies') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="building" class="w-4 h-4 text-indigo"></i>Companies</a>
+      <a href="{{ url_for('applicants') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="users" class="w-4 h-4 text-mint" style="color:#0E9D85"></i>Applicants</a>
+      <a href="{{ url_for('post_job') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="plus-circle" class="w-4 h-4 text-amber" style="color:#B4790A"></i>Post a Job</a>
+      <a href="{{ url_for('pricing') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="tag" class="w-4 h-4 text-indigo"></i>Pricing</a>
+      <a href="{{ url_for('employer.setup') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="building-2" class="w-4 h-4 text-indigo"></i>Company Profile</a>
+      <form method="post" action="{{ url_for('employer.logout') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="w-full px-3 py-3 rounded-lg hover:bg-rose/10 flex items-center gap-2.5 text-left text-rose"><i data-lucide="log-out" class="w-4 h-4"></i>Sign out</button>
+      </form>
+    {% elif demo_role == 'admin' %}
+      <a href="{{ url_for('admin') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="shield" class="w-4 h-4 text-rose"></i>Dashboard</a>
+    {% else %}
+      <a href="{{ url_for('jobs') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="search" class="w-4 h-4 text-indigo"></i>Find Jobs</a>
+      <a href="{{ url_for('companies') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5"><i data-lucide="building-2" class="w-4 h-4 text-mint" style="color:#0E9D85"></i>Explore Top Companies</a>
+      <a href="{{ url_for('employer.login') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5 text-left"><i data-lucide="briefcase" class="w-4 h-4 text-amber" style="color:#B4790A"></i>Employer Login</a>
+      <a href="{{ url_for('employer.register') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5 text-left"><i data-lucide="building" class="w-4 h-4 text-amber" style="color:#B4790A"></i>Employer Register</a>
+      <a href="{{ url_for('seeker.login') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5 text-left"><i data-lucide="log-in" class="w-4 h-4 text-indigo"></i>Login</a>
+      <a href="{{ url_for('seeker.register') }}" class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5 text-left"><i data-lucide="user-plus" class="w-4 h-4 text-rose"></i>Register</a>
+    {% endif %}
+  </nav>
+</div>
+
+{% endblock %}
+
+<!-- ==================== MAIN ==================== -->
+<main>
+{% block content %}{% endblock %}
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+{% block site_footer %}
+<footer class="border-t border-white/10 mt-20" style="background:var(--navy-soft)">
+  <div class="max-w-7xl mx-auto px-5 md:px-8 py-12 grid grid-cols-2 md:grid-cols-5 gap-8">
+    <div class="col-span-2">
+      <div class="flex items-center gap-2 mb-3">
+        <svg class="nx-mark" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="17" cy="17" r="16" stroke="#F8F6F1" stroke-width="1.4" opacity="0.9"/>
+          <circle cx="9" cy="22" r="3" fill="#6C5CF5"/><circle cx="25" cy="12" r="3" fill="#2BE0BE"/>
+          <path d="M9 22 C 14 16, 19 18, 25 12" stroke="#F8F6F1" stroke-width="1.4" stroke-dasharray="1 3.4" stroke-linecap="round" opacity="0.85"/>
+        </svg>
+        <span class="nx-wordmark">NEXORA</span>
+      </div>
+      <p class="text-sm text-cream/50 max-w-xs">Find work that moves you forward. An Australian employment marketplace connecting job seekers and employers.</p>
+      <div class="flex items-center gap-2 mt-4">
+        <span class="icon-badge icon-badge-indigo w-8 h-8"><i data-lucide="linkedin" class="w-4 h-4"></i></span>
+        <span class="icon-badge icon-badge-mint w-8 h-8"><i data-lucide="instagram" class="w-4 h-4"></i></span>
+        <span class="icon-badge icon-badge-rose w-8 h-8"><i data-lucide="facebook" class="w-4 h-4"></i></span>
+      </div>
+    </div>
+    <div>
+      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Job seekers</p>
+      <ul class="space-y-2 text-sm text-cream/60">
+        <li><a href="{{ url_for('jobs') }}" class="hover:text-mint transition-colors">Find Jobs</a></li>
+        <li><a href="{{ url_for('jobs') }}" class="hover:text-mint transition-colors">Browse Companies</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Employers</p>
+      <ul class="space-y-2 text-sm text-cream/60">
+        <li><a href="{{ url_for('post_job') }}" class="hover:text-mint transition-colors">Post a Job</a></li>
+        <li><a href="{{ url_for('pricing') }}" class="hover:text-mint transition-colors">Pricing</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Company</p>
+      <ul class="space-y-2 text-sm text-cream/60">
+        <li><span class="cursor-default">About</span></li>
+        <li><span class="cursor-default">Contact</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-white/10 py-5 text-center text-xs text-cream/35">© 2026 NEXORA. Client demonstration build — not for production use.</div>
+</footer>
+{% endblock %}
+
+<!-- ==================== DEMO CONTROLS ==================== -->
+{% block demo_controls %}
+<div id="demo-controls" class="flex items-center gap-2.5">
+  <div class="relative" id="demo-switcher">
+    <button id="demo-switcher-btn" class="btn btn-sm text-white flex items-center gap-2" onclick="toggleDemoMenu()">
+      <i data-lucide="sparkles" class="w-3.5 h-3.5 icon-spin-slow"></i>
+      Demo mode: <span id="demo-role-label" class="font-semibold capitalize">{{ demo_role if demo_role != 'guest' else 'Visitor' }}</span>
+      <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
+    </button>
+    <div id="demo-menu" class="hidden absolute bottom-12 left-0 w-52 bg-white border border-grey-line rounded-2xl shadow-xl p-1.5">
+      <button onclick="setDemoRole('guest')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-cream-dim flex items-center gap-2"><span class="icon-badge icon-badge-amber w-7 h-7"><i data-lucide="eye" class="w-3.5 h-3.5"></i></span>Visitor</button>
+      <button onclick="setDemoRole('seeker')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-cream-dim flex items-center gap-2"><span class="icon-badge icon-badge-indigo w-7 h-7"><i data-lucide="user" class="w-3.5 h-3.5"></i></span>Job Seeker</button>
+      <button onclick="setDemoRole('employer')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-cream-dim flex items-center gap-2"><span class="icon-badge icon-badge-mint w-7 h-7"><i data-lucide="briefcase" class="w-3.5 h-3.5"></i></span>Employer</button>
+      <button onclick="setDemoRole('admin')" class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-cream-dim flex items-center gap-2"><span class="icon-badge icon-badge-rose w-7 h-7"><i data-lucide="shield" class="w-3.5 h-3.5"></i></span>Admin</button>
+    </div>
+  </div>
+  {% if demo_role == 'guest' or not demo_role %}
+  <button id="tour-trigger-btn" class="btn btn-sm flex items-center gap-2" onclick="startWebsiteTour()">
+    <i data-lucide="compass" class="w-3.5 h-3.5 icon-spin-slow"></i> Website Tour
+  </button>
+  {% endif %}
+</div>
+{% endblock %}
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour.js') }}"></script>
+{% block scripts %}{% endblock %}
+{% block flash_toasts %}
+{% with flashed = get_flashed_messages(with_categories=true) %}
+{% if flashed %}
+<script>
+  {% for category, message in flashed %}
+  showToast({{ message|tojson }}, { icon: {{ ('alert-circle' if category == 'error' else ('info' if category == 'info' else 'check-circle-2'))|tojson }} });
+  {% endfor %}
+</script>
+{% endif %}
+{% endwith %}
+{% endblock %}
+<script>lucide.createIcons();</script>
+</body>
+</html>

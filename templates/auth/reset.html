@@ -1,0 +1,19 @@
+{% extends "auth/_layout.html" %}
+{% from "auth/_macros.html" import password_field with context %}
+{% block title %}Choose a new password — NEXORA{% endblock %}
+
+{% block card %}
+{% if invalid %}
+<h1 class="auth-title">This link has expired</h1>
+<p class="auth-sub">Reset links work once and expire after 1 hour. Request a new one to continue.</p>
+<a href="{{ url_for(cfg.bp ~ '.forgot') }}" class="btn btn-accent btn-block mt-6"><span class="btn-label">Request a new link</span></a>
+{% else %}
+<h1 class="auth-title">Choose a new password</h1>
+<p class="auth-sub">Use at least 8 characters, with a letter and a number.</p>
+<form method="post" action="{{ url_for(cfg.bp ~ '.reset', token=token) }}" data-auth-form>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {{ password_field('password', 'New password', errors, placeholder='Create a new password', autocomplete='new-password') }}
+  <button type="submit" class="btn btn-accent btn-block mt-6"><span class="btn-label">Update password</span><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% from "seeker/_macros.html" import ring, page_head with context %}
+{% from "auth/_macros.html" import text_field, field_error with context %}
+{% block title %}My Profile — NEXORA{% endblock %}
+
+{% macro section_error(errors, key) %}
+  {% if errors.get(key) %}<div class="nx-alert" role="alert"><i data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i><span>{{ errors[key] }}</span></div>{% endif %}
+{% endmacro %}
+
+{% macro acc_head(s) %}
+  <summary>
+    <span class="check-dot {{ 'is-done' if s.done else 'is-todo' }}" aria-hidden="true">{% if s.done %}<i data-lucide="check" class="w-3 h-3"></i>{% endif %}</span>
+    <span class="icon-badge icon-badge-indigo w-9 h-9"><i data-lucide="{{ s.icon }}" class="w-4 h-4"></i></span>
+    <span class="min-w-0">
+      <span class="block font-display font-semibold text-navy text-[15px]">{{ s.label }}</span>
+      <span class="block text-xs {{ 'text-[#0E8A6F]' if s.done else 'text-ink/50' }}">{{ 'Complete' if s.done else 'Missing details · adds ' ~ s.weight ~ '%' }}</span>
+    </span>
+    <i data-lucide="chevron-down" class="acc-chevron w-5 h-5"></i>
+  </summary>
+{% endmacro %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-10">
+  {{ page_head('user-round', 'My Profile', 'Better profile, better job matching.', 'icon-badge-indigo') }}
+
+  <div class="grid lg:grid-cols-[340px_1fr] gap-6 items-start">
+
+    <!-- Completion card -->
+    <aside class="lg:sticky lg:top-24">
+      <div class="tint tint-lav p-5">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <h2 class="font-display font-semibold text-navy">Profile Completion</h2>
+            <p class="text-xs text-ink/55 mt-1">{{ 'Looking great!' if percent == 100 else 'Fill the missing fields to improve your matches.' }}</p>
+          </div>
+          {{ ring(percent, 72) }}
+        </div>
+        <div class="progress-track my-4"><div class="progress-fill" style="width:{{ percent }}%"></div></div>
+        <ul class="space-y-2.5">
+          {% for s in sections %}
+          <li>
+            <a href="{{ url_for('seeker.profile', edit=s.key) }}" class="flex items-center gap-2.5 text-sm text-navy hover:text-indigo">
+              <span class="check-dot {{ 'is-done' if s.done else 'is-todo' }}" aria-hidden="true">{% if s.done %}<i data-lucide="check" class="w-3 h-3"></i>{% endif %}</span>
+              <span class="flex-1">{{ s.label }}</span>
+              <span class="sr-only">{{ 'complete' if s.done else 'incomplete' }}</span>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% set next_todo = sections|rejectattr('done')|first %}
+        {% if next_todo %}
+        <a href="{{ url_for('seeker.profile', edit=next_todo.key) }}" class="btn btn-purple btn-block mt-5 justify-center">Edit Profile</a>
+        {% else %}
+        <a href="{{ url_for('seeker.matches') }}" class="btn btn-purple btn-block mt-5 justify-center">See my matches</a>
+        {% endif %}
+      </div>
+      <p class="text-xs text-cream/45 mt-3 px-1 flex gap-2"><i data-lucide="trending-up" class="w-4 h-4 shrink-0 text-mint"></i>Your profile and resume are used by the Job Matching Engine to find your best roles.</p>
+    </aside>
+
+    <!-- Sections -->
+    <div>
+      {% set S = {} %}{% for s in sections %}{% set _ = S.update({s.key: s}) %}{% endfor %}
+
+      <!-- 1. Basic information -->
+      <details class="acc" id="sec-basic" {% if open_section == 'basic' %}open{% endif %}>
+        {{ acc_head(S.basic) }}
+        <form method="post" action="{{ url_for('seeker.profile_save', section='basic') }}" class="acc-body">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="grid sm:grid-cols-2 gap-x-4">
+            {{ text_field('full_name', 'Full name', values.full_name, errors, autocomplete='name', placeholder='e.g. Jordan Reyes') }}
+            {{ text_field('headline', 'Headline', values.headline, errors, placeholder='e.g. Software Developer', maxlength=80, hint='Your current or target role. Used for job matching.') }}
+            {{ text_field('phone', 'Phone number', values.phone, errors, type='tel', autocomplete='tel', placeholder='e.g. 0412 345 678', inputmode='tel') }}
+            <div>
+              {{ text_field('location', 'Location', values.location, errors, autocomplete='address-level2', placeholder='e.g. Melbourne, VIC') }}
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary mt-5">Save basic information</button>
+        </form>
+      </details>
+
+      <!-- 2. Education -->
+      <details class="acc" id="sec-education" {% if open_section == 'education' %}open{% endif %}>
+        {{ acc_head(S.education) }}
+        <form method="post" action="{{ url_for('seeker.profile_save', section='education') }}" class="acc-body" data-repeat-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          {{ section_error(errors, 'education') }}
+          {% for r in edu_rows %}
+          <div class="repeat-card" data-repeat-row>
+            <div class="grid sm:grid-cols-[1.3fr_1.3fr_0.6fr] gap-x-4">
+              <div class="nx-field"><label class="nx-label" for="edu_q_{{ loop.index }}">Qualification</label><input class="nx-input" id="edu_q_{{ loop.index }}" name="edu_qualification" value="{{ r.qualification }}" maxlength="100" placeholder="e.g. Bachelor of IT"></div>
+              <div class="nx-field"><label class="nx-label" for="edu_i_{{ loop.index }}">Institution</label><input class="nx-input" id="edu_i_{{ loop.index }}" name="edu_institution" value="{{ r.institution }}" maxlength="100" placeholder="e.g. RMIT University"></div>
+              <div class="nx-field"><label class="nx-label" for="edu_y_{{ loop.index }}">Year</label><input class="nx-input" id="edu_y_{{ loop.index }}" name="edu_year" value="{{ r.year }}" maxlength="4" inputmode="numeric" placeholder="2024"></div>
+            </div>
+          </div>
+          {% endfor %}
+          <button type="button" class="btn btn-ghost btn-sm mt-3 text-indigo hidden" data-add-row><i data-lucide="plus" class="w-4 h-4"></i>Add another</button>
+          <div><button type="submit" class="btn btn-primary mt-4">Save education</button></div>
+        </form>
+      </details>
+
+      <!-- 3. Skills & interests -->
+      <details class="acc" id="sec-skills" {% if open_section == 'skills' %}open{% endif %}>
+        {{ acc_head(S.skills) }}
+        <form method="post" action="{{ url_for('seeker.profile_save', section='skills') }}" class="acc-body">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="nx-field">
+            <label class="nx-label" for="skills">Skills *</label>
+            <textarea class="nx-input nx-textarea {% if errors.get('skills') %}is-invalid{% endif %}" id="skills" name="skills" rows="3" placeholder="e.g. Python, SQL, React, Customer Service">{{ values.skills }}</textarea>
+            {{ field_error(errors, 'skills') }}
+            <p class="nx-hint">Separate skills with commas (at least 3). The more precise, the better your matches.</p>
+          </div>
+          <div class="nx-field">
+            <label class="nx-label" for="interests">Interests <span class="nx-opt">(Optional)</span></label>
+            <input class="nx-input" id="interests" name="interests" value="{{ values.interests }}" placeholder="e.g. Data, Web applications, Healthcare">
+          </div>
+          <button type="submit" class="btn btn-primary mt-5">Save skills &amp; interests</button>
+        </form>
+      </details>
+
+      <!-- 4. Experience -->
+      <details class="acc" id="sec-experience" {% if open_section == 'experience' %}open{% endif %}>
+        {{ acc_head(S.experience) }}
+        <form method="post" action="{{ url_for('seeker.profile_save', section='experience') }}" class="acc-body" data-repeat-form>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          {{ section_error(errors, 'experience') }}
+          {% for r in exp_rows %}
+          <div class="repeat-card" data-repeat-row>
+            <div class="grid sm:grid-cols-2 gap-x-4">
+              <div class="nx-field"><label class="nx-label" for="exp_t_{{ loop.index }}">Job title</label><input class="nx-input" id="exp_t_{{ loop.index }}" name="exp_title" value="{{ r.title }}" maxlength="100" placeholder="e.g. Junior Developer"></div>
+              <div class="nx-field"><label class="nx-label" for="exp_c_{{ loop.index }}">Company</label><input class="nx-input" id="exp_c_{{ loop.index }}" name="exp_company" value="{{ r.company }}" maxlength="100" placeholder="e.g. Acme Pty Ltd"></div>
+              <div class="nx-field"><label class="nx-label" for="exp_s_{{ loop.index }}">Start</label><input class="nx-input" id="exp_s_{{ loop.index }}" name="exp_start" value="{{ r.start }}" maxlength="20" placeholder="e.g. Jan 2023"></div>
+              <div class="nx-field"><label class="nx-label" for="exp_e_{{ loop.index }}">End</label><input class="nx-input" id="exp_e_{{ loop.index }}" name="exp_end" value="{{ r.end }}" maxlength="20" placeholder="e.g. Present"></div>
+            </div>
+            <div class="nx-field"><label class="nx-label" for="exp_d_{{ loop.index }}">What did you do? <span class="nx-opt">(Optional)</span></label><textarea class="nx-input nx-textarea" id="exp_d_{{ loop.index }}" name="exp_description" rows="3" maxlength="500" placeholder="Key responsibilities and achievements">{{ r.description }}</textarea></div>
+          </div>
+          {% endfor %}
+          <button type="button" class="btn btn-ghost btn-sm mt-3 text-indigo hidden" data-add-row><i data-lucide="plus" class="w-4 h-4"></i>Add another role</button>
+          <label class="nx-radio mt-4"><input type="checkbox" name="no_experience" value="1" {% if values.no_experience %}checked{% endif %}> I don't have work experience yet</label>
+          <div><button type="submit" class="btn btn-primary mt-4">Save work experience</button></div>
+        </form>
+      </details>
+
+      <!-- 5. Additional -->
+      <details class="acc" id="sec-additional" {% if open_section == 'additional' %}open{% endif %}>
+        {{ acc_head(S.additional) }}
+        <form method="post" action="{{ url_for('seeker.profile_save', section='additional') }}" class="acc-body">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          {{ section_error(errors, 'additional') }}
+          <div class="grid sm:grid-cols-2 gap-x-4">
+            <div class="nx-field">
+              <label class="nx-label" for="work_rights">Work rights in Australia *</label>
+              <select class="nx-input" id="work_rights" name="work_rights"><option value="">Select…</option>{% for o in work_rights_options %}<option {% if values.work_rights == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+            </div>
+            <div class="nx-field">
+              <label class="nx-label" for="pref_location">Preferred location</label>
+              <input class="nx-input" id="pref_location" name="pref_location" list="loc-list" value="{{ values.pref_location }}" placeholder="e.g. Sydney, NSW">
+              <datalist id="loc-list">{% for l in locations %}<option value="{{ l }}">{% endfor %}</datalist>
+            </div>
+            <div class="nx-field">
+              <label class="nx-label" for="pref_job_type">Job type</label>
+              <select class="nx-input" id="pref_job_type" name="pref_job_type"><option value="">No preference</option>{% for o in job_types %}<option {% if values.pref_job_type == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+            </div>
+            <div class="nx-field">
+              <label class="nx-label" for="pref_work_mode">Work mode</label>
+              <select class="nx-input" id="pref_work_mode" name="pref_work_mode"><option value="">No preference</option>{% for o in work_modes %}<option {% if values.pref_work_mode == o %}selected{% endif %}>{{ o }}</option>{% endfor %}</select>
+            </div>
+            <div class="nx-field">
+              <label class="nx-label" for="linkedin">LinkedIn <span class="nx-opt">(Optional)</span></label>
+              <input class="nx-input" id="linkedin" name="linkedin" type="url" value="{{ values.linkedin }}" placeholder="https://linkedin.com/in/…">
+            </div>
+            <div class="nx-field">
+              <label class="nx-label" for="portfolio">Portfolio / website <span class="nx-opt">(Optional)</span></label>
+              <input class="nx-input" id="portfolio" name="portfolio" type="url" value="{{ values.portfolio }}" placeholder="https://…">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary mt-5">Save additional details</button>
+        </form>
+      </details>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // "Add another" for education / experience: show the first empty row, reveal more on demand.
+  document.querySelectorAll('[data-repeat-form]').forEach((form) => {
+    const rows = [...form.querySelectorAll('[data-repeat-row]')];
+    const btn = form.querySelector('[data-add-row]');
+    const isEmpty = (row) => [...row.querySelectorAll('input, textarea')].every((i) => !i.value.trim());
+    let shownEmpty = false;
+    rows.forEach((row) => {
+      if (isEmpty(row)) { if (shownEmpty) row.hidden = true; else shownEmpty = true; }
+    });
+    const refresh = () => { if (btn) btn.classList.toggle('hidden', !rows.some((r) => r.hidden)); };
+    btn?.addEventListener('click', () => {
+      const next = rows.find((r) => r.hidden);
+      if (next) { next.hidden = false; next.querySelector('input')?.focus(); }
+      refresh();
+    });
+    refresh();
+  });
+  // Deep link from the dashboard / checklist: scroll the opened section into view.
+  const open = document.querySelector('details.acc[open]');
+  if (open && location.search.includes('edit=')) open.scrollIntoView({ behavior: 'smooth', block: 'start' });
+</script>
+{% endblock %}

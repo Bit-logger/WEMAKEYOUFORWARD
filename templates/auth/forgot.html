@@ -1,0 +1,21 @@
+{% extends "auth/_layout.html" %}
+{% from "auth/_macros.html" import flashes, text_field with context %}
+{% block title %}Reset your password — NEXORA{% endblock %}
+
+{% block card %}
+<h1 class="auth-title">Reset your password</h1>
+{% if sent %}
+<div class="nx-alert is-success" role="status"><i data-lucide="mail-check" class="w-4 h-4 shrink-0 mt-0.5"></i>
+  <span>If an account exists for that email, we've sent a link to reset your password. It expires in 1 hour.</span></div>
+<p class="auth-foot"><a class="auth-link" href="{{ url_for(cfg.bp ~ '.login') }}">Back to login</a></p>
+{% else %}
+<p class="auth-sub">Enter your account email and we'll send you a link to choose a new password.</p>
+{{ flashes() }}
+<form method="post" action="{{ url_for(cfg.bp ~ '.forgot') }}" data-auth-form>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {{ text_field('email', 'Email address', email, errors, type='email', placeholder='you@company.com', autocomplete='email', icon='mail') }}
+  <button type="submit" class="btn btn-accent btn-block mt-6"><span class="btn-label">Send reset link</span><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+</form>
+<p class="auth-foot"><a class="auth-link" href="{{ url_for(cfg.bp ~ '.login') }}">Back to login</a></p>
+{% endif %}
+{% endblock %}

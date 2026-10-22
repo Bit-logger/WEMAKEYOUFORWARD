@@ -1,0 +1,407 @@
+"""
+Employer authentication and onboarding.
+
+Routes (all under /employer):
+    GET/POST  /register        Create an employer account
+    GET/POST  /login           Sign in
+    POST      /logout          Sign out
+    GET/POST  /setup           Company profile (first-time setup and later edits)
+    GET/POST  /forgot          Request a password-reset link
+    GET/POST  /reset/<token>   Choose a new password
+    GET       /google          Start "Continue with Google"
+    GET       /google/callback Finish "Continue with Google"
+"""
+import hmac
+import os
+import secrets
+from functools import wraps
+
+from flask import (Blueprint, current_app, flash, g, jsonify, redirect, render_template,
+                   request, session, url_for)
+from itsdangerous import BadSignature, SignatureExpired
+from werkzeug.security import check_password_hash, generate_password_hash
+
+import auth_common as ac
+import db
+import validators as v
+from auth_common import csrf_token, safe_next  # noqa: F401  (csrf_token is exported to templates)
+
+bp = Blueprint("employer", __name__, url_prefix="/employer")
+
+RESET_SALT = "employer-password-reset"
+
+# Text + routing used by the shared templates in templates/auth/
+CFG = {
+    "bp": "employer",
+    "page_label": "Employer",
+    "ask_name": False,
+    "register_title": "Create employer account",
+    "register_sub": "Join thousands of Australian employers hiring great talent.",
+    "login_page_title": "Employer login",
+    "login_sub": "Sign in to manage your jobs, candidates and company profile.",
+    "other_bp": "seeker",
+    "other_prompt": "Looking for a job?",
+    "other_label": "Create a job seeker account",
+    "other_login_label": "Job seeker login",
+}
+
+
+# ------------------------------------------------------------- helpers --
+def current_employer():
+    """The signed-in employer row, or None. Cached for the request."""
+    if "employer" not in g:
+        g.employer = db.get_employer(session.get("employer_id"))
+        if g.employer is None:
+            session.pop("employer_id", None)
+    return g.employer
+
+
+def current_company():
+    emp = current_employer()
+    if not emp:
+        return None
+    if "company" not in g:
+        g.company = db.get_company(emp["id"])
+    return g.company
+
+
+def employer_login_required(view):
+    """Require a signed-in employer (company setup may still be incomplete)."""
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not current_employer():
+            if ac.wants_json():
+                return jsonify({"ok": False, "error": "Please log in."}), 401
+            flash("Log in to continue.", "info")
+            return redirect(url_for("employer.login", next=request.full_path.rstrip("?")))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def employer_required(view):
+    """Require a signed-in employer who has finished company setup."""
+    @wraps(view)
+    @employer_login_required
+    def wrapped(*args, **kwargs):
+        if not current_employer()["onboarding_complete"]:
+            if ac.wants_json():
+                return jsonify({"ok": False, "error": "Complete your company profile first."}), 403
+            return redirect(url_for("employer.setup", next=request.full_path.rstrip("?")))
+        return view(*args, **kwargs)
+    return wrapped
+
+
+def _start_session(employer_id):
+    session.clear()  # new session on login prevents session fixation
+    session["employer_id"] = employer_id
+    session.permanent = True
+    db.touch_login(employer_id)
+
+
+def _after_login(emp, next_url):
+    if not emp["onboarding_complete"]:
+        return redirect(url_for("employer.setup", next=next_url) if next_url else url_for("employer.setup"))
+    return redirect(next_url or url_for("employer_dashboard"))
+
+
+@bp.before_request
+def _check_csrf():
+    if request.method == "POST" and ac.csrf_failed():
+        return ac.csrf_bounce("employer.login")
+
+
+# ------------------------------------------------------------ register --
+@bp.route("/register", methods=["GET", "POST"])
+def register():
+    """Register an employer with Supabase Auth, then send them to company setup."""
+    if current_employer():
+        return redirect(url_for("employer.setup"))
+
+    errors, email = {}, ""
+    if request.method == "POST":
+        email = v.normalise_email(request.form.get("email"))
+        password = request.form.get("password", "")
+
+        if err := v.validate_email(email):
+            errors["email"] = err
+        if err := v.validate_new_password(password):
+            errors["password"] = err
+
+        if not errors:
+            try:
+                # A NEXORA employer row is the authorization allow-list for both
+                # password login and Google OAuth. Never create duplicates.
+                if db.get_employer_by_email(email):
+                    errors["email"] = "An employer account with this email already exists. Please log in."
+                else:
+                    auth = db.get_auth_client()
+                    result = auth.auth.sign_up({
+                        "email": email,
+                        "password": password,
+                        "options": {"data": {"role": "employer"}},
+                    })
+                    auth_user = getattr(result, "user", None)
+                    if not auth_user:
+                        errors["form"] = "Supabase did not create the account. Check your Auth settings and try again."
+                    else:
+                        identities = getattr(auth_user, "identities", None)
+                        if identities is not None and len(identities) == 0:
+                            errors["email"] = "An account with this email already exists. Please log in."
+                        else:
+                            employer_id = db.create_employer(email, password_hash=None)
+                            auth_session = getattr(result, "session", None)
+                            if auth_session:
+                                _start_session(employer_id)
+                                flash("Employer account created. Complete your company profile to continue.", "success")
+                                return redirect(url_for("employer.setup"))
+                            flash("Registration successful. Check your email to confirm your account, then log in to complete your company profile.", "success")
+                            return redirect(url_for("employer.login"))
+            except Exception:
+                current_app.logger.exception("Supabase employer registration failed")
+                errors["form"] = (
+                    "Registration could not be completed. The email may already be registered, "
+                    "or Supabase/database configuration needs checking."
+                )
+
+    return render_template(
+        "auth/register.html",
+        cfg=CFG,
+        errors=errors,
+        email=email,
+        google_enabled=ac.google_configured(),
+    )
+
+
+# --------------------------------------------------------------- login --
+@bp.route("/login", methods=["GET", "POST"])
+def login():
+    if current_employer():
+        return redirect(url_for("employer_dashboard"))
+    next_url = safe_next(request.values.get("next"))
+    errors, email = {}, ""
+    if request.method == "POST":
+        email = v.normalise_email(request.form.get("email"))
+        password = request.form.get("password", "")
+        if err := v.validate_email(email):
+            errors["email"] = err
+        if not password:
+            errors["password"] = "Enter your password."
+        if not errors:
+            key = ac.lock_key("employer", email)
+            if ac.is_locked(key):
+                errors["form"] = "Too many failed attempts. Try again in 15 minutes or reset your password."
+            else:
+                emp = db.get_employer_by_email(email)
+                try:
+                    auth = db.get_auth_client()
+                    result = auth.auth.sign_in_with_password({"email": email, "password": password})
+                    auth_user = getattr(result, "user", None)
+                    if auth_user and emp:
+                        ac.clear_failures(key)
+                        _start_session(emp["id"])
+                        return _after_login(emp, next_url)
+                    if auth_user and not emp:
+                        errors["form"] = "Your Supabase account is not enabled as a NEXORA employer. Contact the NEXORA administrator."
+                    else:
+                        errors["form"] = "Incorrect email or password."
+                except Exception:
+                    ac.record_failure(key)
+                    errors["form"] = "Incorrect email or password, or email confirmation is still pending."
+    return render_template("auth/login.html", cfg=CFG, errors=errors, email=email, next_url=next_url,
+                           google_enabled=ac.google_configured())
+
+
+@bp.post("/logout")
+def logout():
+    session.clear()
+    flash("You've been signed out.", "info")
+    return redirect(url_for("index"))
+
+
+# --------------------------------------------------------------- setup --
+@bp.route("/setup", methods=["GET", "POST"])
+@employer_login_required
+def setup():
+    emp = current_employer()
+    existing = db.get_company(emp["id"])
+    editing = bool(emp["onboarding_complete"])
+    next_url = safe_next(request.values.get("next"))
+    errors = {}
+
+    if request.method == "POST":
+        form = request.form
+        f = {
+            "name": v.clean_text(form.get("company_name"), 100),
+            "country": form.get("country", "AU"),
+            "registered_name": v.clean_text(form.get("registered_name"), 150),
+            "is_registered": form.get("is_registered", "yes") == "yes",
+            "abn": v.digits_only(form.get("abn")),
+            "contact_first": v.clean_text(form.get("contact_first"), 50),
+            "contact_last": v.clean_text(form.get("contact_last"), 50),
+            "phone_country": form.get("phone_country", "AU"),
+            "phone": form.get("phone", ""),
+        }
+        if len(f["name"]) < 2:
+            errors["company_name"] = "Enter your company name."
+        if f["country"] not in v.COUNTRY_BY_CODE:
+            errors["country"] = "Choose a country."
+        if len(f["registered_name"]) < 2:
+            errors["registered_name"] = "Enter your registered business name."
+        if f["is_registered"] and f["abn"] and not v.is_valid_abn(f["abn"]):
+            errors["abn"] = "That ABN doesn't look right. Check the 11 digits and try again."
+        if not f["is_registered"]:
+            f["abn"] = ""
+        if not f["contact_first"]:
+            errors["contact_first"] = "Enter a first name."
+        if not f["contact_last"]:
+            errors["contact_last"] = "Enter a last name."
+        if f["phone_country"] not in v.COUNTRY_BY_CODE:
+            errors["phone"] = "Choose a country code."
+        else:
+            digits, err = v.normalise_phone(f["phone_country"], f["phone"])
+            if err:
+                errors["phone"] = err
+            f["phone"] = digits
+
+        if not errors:
+            db.save_company(emp["id"], {**f, "is_registered": int(f["is_registered"])})
+            flash("Company profile saved." if editing else "You're all set. Welcome to NEXORA.", "success")
+            return redirect(next_url or url_for("employer_dashboard"))
+        values = {**f, "phone": form.get("phone", ""), "abn": form.get("abn", "")}
+    else:
+        values = {
+            "name": existing["name"] if existing else "",
+            "country": existing["country"] if existing else "AU",
+            "registered_name": existing["registered_name"] if existing else "",
+            "is_registered": bool(existing["is_registered"]) if existing else True,
+            "abn": v.format_abn(existing["abn"]) if existing and existing["abn"] else "",
+            "contact_first": existing["contact_first"] if existing else "",
+            "contact_last": existing["contact_last"] if existing else "",
+            "phone_country": existing["phone_country"] if existing else "AU",
+            "phone": existing["phone"] if existing else "",
+        }
+    return render_template("employer/setup.html", errors=errors, values=values, editing=editing,
+                           next_url=next_url, countries=v.COUNTRIES)
+
+
+# ------------------------------------------------------ password reset --
+@bp.route("/forgot", methods=["GET", "POST"])
+def forgot():
+    sent, errors, email = False, {}, ""
+    if request.method == "POST":
+        email = v.normalise_email(request.form.get("email"))
+        if err := v.validate_email(email):
+            errors["email"] = err
+        else:
+            # Employer accounts are provisioned by an administrator; Supabase handles reset email.
+            try:
+                auth = db.get_auth_client()
+                redirect_to = os.environ.get("SUPABASE_PASSWORD_RESET_REDIRECT_URL")
+                options = {"redirect_to": redirect_to} if redirect_to else None
+                if options:
+                    auth.auth.reset_password_for_email(email, options=options)
+                else:
+                    auth.auth.reset_password_for_email(email)
+            except Exception:
+                current_app.logger.exception("Supabase employer password reset request failed")
+            sent = True  # same response whether or not the account exists
+    return render_template("auth/forgot.html", cfg=CFG, sent=sent, errors=errors, email=email)
+
+
+@bp.route("/reset/<token>", methods=["GET", "POST"])
+def reset(token):
+    try:
+        data = ac.make_serializer(RESET_SALT).loads(token, max_age=ac.RESET_TOKEN_MAX_AGE)
+    except (BadSignature, SignatureExpired):
+        return render_template("auth/reset.html", cfg=CFG, invalid=True, errors={}), 400
+    emp = db.get_employer(data.get("id"))
+    if not emp or not hmac.compare_digest(data.get("fp", ""), ac.pw_fingerprint(emp["password_hash"])):
+        return render_template("auth/reset.html", cfg=CFG, invalid=True, errors={}), 400  # link already used
+
+    errors = {}
+    if request.method == "POST":
+        password = request.form.get("password", "")
+        if err := v.validate_new_password(password):
+            errors["password"] = err
+        else:
+            db.update_employer(emp["id"], password_hash=generate_password_hash(password))
+            flash("Password updated. Log in with your new password.", "success")
+            return redirect(url_for("employer.login"))
+    return render_template("auth/reset.html", cfg=CFG, invalid=False, errors=errors, token=token)
+
+
+# -------------------------------------------------------------- Google --
+@bp.get("/google")
+def google_start():
+    if not ac.google_configured():
+        flash("Google sign-in is not configured yet. Check the Supabase URL and public Auth key.", "error")
+        return redirect(url_for("employer.login"))
+    try:
+        target = ac.supabase_google_authorize_url(
+            "employer.google_callback", "employer", request.args.get("next")
+        )
+        return redirect(target)
+    except Exception:
+        current_app.logger.exception("Could not start Supabase Google OAuth for employer")
+        flash("Google sign-in could not start. Check your Supabase configuration and redirect URLs.", "error")
+        return redirect(url_for("employer.login"))
+
+
+@bp.get("/google/callback")
+def google_callback():
+    next_url = session.pop("supabase_oauth_next", "") or None
+    role = session.pop("supabase_oauth_role", None)
+    fail = lambda msg: (session.pop("supabase_oauth_verifier", None),
+                        flash(msg, "error"), redirect(url_for("employer.login")))[-1]  # noqa: E731
+
+    if request.args.get("error") or request.args.get("error_description"):
+        return fail("Google sign-in was cancelled or denied.")
+    if role != "employer":
+        return fail("Google sign-in session expired. Please try again.")
+    code = request.args.get("code", "")
+    if not code:
+        return fail("Supabase did not return an authorization code. Please try again.")
+    try:
+        user = ac.supabase_exchange_oauth_code(code)
+    except Exception:
+        current_app.logger.exception("Supabase Google OAuth callback failed for employer")
+        return fail("Google sign-in failed. Check the Supabase provider and redirect URL settings, then try again.")
+
+    email = v.normalise_email(user.get("email"))
+    google_sub = ac.google_identity_id(user)
+    if not email:
+        return fail("Google did not provide an email address.")
+    try:
+        # Employer records must be provisioned by an administrator; OAuth must never
+        # create or authorize an employer record on its own.
+        emp = db.get_employer_by_google_sub(google_sub) if google_sub else None
+        emp = emp or db.get_employer_by_email(email)
+        if not emp:
+            return fail("This Google account is not registered as an authorized NEXORA employer. Contact the administrator.")
+        if google_sub and not emp.get("google_sub"):
+            db.update_employer(emp["id"], google_sub=google_sub)
+        _start_session(emp["id"])
+        return _after_login(db.get_employer(emp["id"]), next_url)
+    except Exception:
+        current_app.logger.exception("Could not map Supabase OAuth user to a NEXORA employer")
+        return fail("Google authentication succeeded, but NEXORA could not verify your employer profile. Contact the administrator.")
+
+
+# ----------------------------------------------------------- demo seed --
+DEMO_EMAIL = "demo@northlane.com.au"
+
+
+def seed_demo(password):
+    """Create (or reset) the Northlane Digital demo account used for client demos."""
+    emp = db.get_employer_by_email(DEMO_EMAIL)
+    if emp:
+        db.update_employer(emp["id"], password_hash=generate_password_hash(password))
+        return emp["id"]
+    employer_id = db.create_employer(DEMO_EMAIL, password_hash=generate_password_hash(password),
+                                     is_demo=True)
+    db.save_company(employer_id, {
+        "name": "Northlane Digital", "country": "AU", "registered_name": "Northlane Digital Pty Ltd",
+        "is_registered": 1, "abn": "51824753556", "contact_first": "Sam", "contact_last": "Carter",
+        "phone_country": "AU", "phone": "412345678",
+    })
+    return employer_id

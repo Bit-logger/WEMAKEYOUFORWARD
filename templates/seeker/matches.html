@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% from "seeker/_macros.html" import page_head with context %}
+{% block title %}Job Matches — NEXORA{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-10">
+  {{ page_head('sparkles', 'Your job matches', 'Ranked by how well each role fits your profile, skills, resume and preferences.', 'icon-badge-mint') }}
+
+  <div class="tint tint-rose p-4 md:p-5">
+    {% if matches %}
+    <ul class="space-y-3">
+      {% for m in matches %}
+      <li class="bg-white rounded-2xl border border-grey-line p-4 md:p-5 flex gap-4">
+        <span class="w-12 h-12 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0" style="background:{{ m.job.company_color }}">{{ m.job.company_initials }}</span>
+        <div class="min-w-0 flex-1">
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <a href="{{ url_for('job_details', job_id=m.job.id) }}" class="font-display font-semibold text-navy hover:text-indigo block truncate">{{ m.job.title }}</a>
+              <p class="text-sm text-ink/55">{{ m.job.company }}</p>
+            </div>
+            <span class="match-pct shrink-0 text-base">{{ m.score }}% Match</span>
+          </div>
+          <p class="text-xs text-ink/50 mt-2">{{ m.job.location }} · {{ m.job.type }} · {{ m.job.mode }}</p>
+          {% if m.matched %}<p class="text-xs text-ink/60 mt-2"><span class="font-semibold text-navy">Matches your skills:</span> {{ m.matched|join(', ') }}</p>{% endif %}
+          <div class="flex gap-2 mt-3">
+            <a href="{{ url_for('job_details', job_id=m.job.id) }}" class="btn btn-soft btn-sm">View Job</a>
+            <button type="button" class="btn btn-primary btn-sm" data-apply="{{ m.job.id }}">Apply</button>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="bg-white/70 rounded-2xl p-10 text-center">
+      <i data-lucide="sparkles" class="w-8 h-8 mx-auto mb-3 text-indigo"></i>
+      <p class="font-display font-semibold text-navy">No matches yet</p>
+      <p class="text-sm text-ink/60 mt-1 max-w-sm mx-auto">Add your headline and at least 3 skills so the matching engine has something to work with.</p>
+      <a href="{{ url_for('seeker.profile') }}" class="btn btn-primary btn-sm mt-4 inline-flex">Complete my profile</a>
+    </div>
+    {% endif %}
+
+    {% if not is_premium and locked_count %}
+    <div class="mt-4 bg-white/60 border border-[#FFC9D2] rounded-2xl p-5 text-center">
+      <p class="font-display font-semibold text-navy flex items-center justify-center gap-2"><i data-lucide="lock" class="w-4 h-4"></i>{{ locked_count }} more matching job{{ '' if locked_count == 1 else 's' }} (Locked)</p>
+      <p class="text-xs text-ink/60 mt-1">The Free plan shows your top {{ free_limit }} matches. Upgrade to see all matching jobs.</p>
+      <a href="{{ url_for('seeker.upgrade') }}" class="btn btn-purple btn-sm mt-3 inline-flex">Upgrade Plan</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('[data-apply]').forEach((btn) => btn.addEventListener('click', () => quickApply(btn.dataset.apply, btn)));
+</script>
+{% endblock %}

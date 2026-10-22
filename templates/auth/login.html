@@ -1,0 +1,25 @@
+{% extends "auth/_layout.html" %}
+{% from "auth/_macros.html" import flashes, form_error, text_field, password_field, google_button with context %}
+{% block title %}{{ cfg.login_page_title }} — NEXORA{% endblock %}
+
+{% block card %}
+<h1 class="auth-title">Welcome back</h1>
+<p class="auth-sub">{{ cfg.login_sub }}</p>
+{{ flashes() }}
+{{ form_error(errors) }}
+
+<form method="post" action="{{ url_for(cfg.bp ~ '.login') }}" data-auth-form>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+  {{ text_field('email', 'Email address', email, errors, type='email', placeholder='you@example.com' if cfg.ask_name else 'you@company.com', autocomplete='email', icon='mail') }}
+  {{ password_field('password', 'Password', errors, placeholder='Enter your password', autocomplete='current-password') }}
+  <div class="text-right mt-2"><a class="auth-link text-[13px]" href="{{ url_for(cfg.bp ~ '.forgot') }}">Forgot password?</a></div>
+  <button type="submit" class="btn btn-accent btn-block mt-4"><span class="btn-label">Login</span><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+</form>
+
+<div class="nx-divider">or</div>
+{{ google_button(url_for(cfg.bp ~ '.google_start', next=next_url), google_enabled) }}
+
+<p class="auth-foot">Don't have an account? <a class="auth-link" href="{{ url_for(cfg.bp ~ '.register') }}">Create an account</a></p>
+<p class="auth-foot !mt-2 text-[12px]">{{ cfg.other_prompt }} <a class="auth-link" href="{{ url_for(cfg.other_bp ~ '.login') }}">{{ cfg.other_login_label }}</a></p>
+{% endblock %}

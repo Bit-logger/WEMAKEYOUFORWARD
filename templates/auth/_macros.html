@@ -1,0 +1,82 @@
+{# Shared form pieces for the employer auth + onboarding screens. Import with: `from ... import ... with context` #}
+
+{% macro flashes() %}
+  {% for category, message in get_flashed_messages(with_categories=true) %}
+  <div class="nx-alert is-{{ category }}" role="{{ 'alert' if category == 'error' else 'status' }}">
+    <i data-lucide="{{ 'alert-circle' if category == 'error' else ('info' if category == 'info' else 'check-circle-2') }}" class="w-4 h-4 shrink-0 mt-0.5"></i>
+    <span>{{ message }}</span>
+  </div>
+  {% endfor %}
+{% endmacro %}
+
+{% macro form_error(errors) %}
+  {% if errors.get('form') %}
+  <div class="nx-alert" role="alert"><i data-lucide="alert-circle" class="w-4 h-4 shrink-0 mt-0.5"></i><span>{{ errors.form }}</span></div>
+  {% endif %}
+{% endmacro %}
+
+{% macro field_error(errors, name) %}
+  {% if errors.get(name) %}
+  <p class="nx-error" id="{{ name }}-error" role="alert"><i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0 mt-px"></i><span>{{ errors[name] }}</span></p>
+  {% endif %}
+{% endmacro %}
+
+{% macro text_field(name, label, value='', errors={}, type='text', placeholder='', autocomplete='off',
+                    required=true, optional=false, icon=none, hint='', inputmode=none, maxlength=none) %}
+<div class="nx-field">
+  <label class="nx-label" for="{{ name }}">{{ label }}{% if required %} *{% endif %}{% if optional %} <span class="nx-opt">(Optional)</span>{% endif %}</label>
+  <div class="nx-input-wrap">
+    {% if icon %}<i data-lucide="{{ icon }}" class="nx-input-icon"></i>{% endif %}
+    <input class="nx-input{% if icon %} pad-left{% endif %}{% if errors.get(name) %} is-invalid{% endif %}"
+           id="{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value }}" placeholder="{{ placeholder }}"
+           autocomplete="{{ autocomplete }}" {% if required %}required{% endif %}
+           {% if inputmode %}inputmode="{{ inputmode }}"{% endif %} {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
+           {% if errors.get(name) %}aria-invalid="true"{% endif %}
+           aria-describedby="{{ name }}-error{% if hint %} {{ name }}-hint{% endif %}">
+  </div>
+  {{ field_error(errors, name) }}
+  {% if hint %}<p class="nx-hint" id="{{ name }}-hint">{{ hint }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro password_field(name, label, errors={}, placeholder='', autocomplete='current-password', hint='') %}
+<div class="nx-field">
+  <label class="nx-label" for="{{ name }}">{{ label }}</label>
+  <div class="nx-input-wrap">
+    <i data-lucide="lock" class="nx-input-icon"></i>
+    <input class="nx-input pad-left pad-right{% if errors.get(name) %} is-invalid{% endif %}" id="{{ name }}" name="{{ name }}"
+           type="password" placeholder="{{ placeholder }}" autocomplete="{{ autocomplete }}" required maxlength="128"
+           {% if errors.get(name) %}aria-invalid="true"{% endif %} aria-describedby="{{ name }}-error{% if hint %} {{ name }}-hint{% endif %}">
+    <button type="button" class="nx-eye" data-toggle-password="{{ name }}" aria-label="Show password" aria-pressed="false">
+      <i data-lucide="eye" class="w-[18px] h-[18px]" data-eye-on></i>
+      <i data-lucide="eye-off" class="w-[18px] h-[18px] hidden" data-eye-off></i>
+    </button>
+  </div>
+  {{ field_error(errors, name) }}
+  {% if hint %}<p class="nx-hint" id="{{ name }}-hint">{{ hint }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro country_select(name, label, selected, countries, mode='name', errors={}) %}
+{# mode='name' -> "Australia"   mode='dial' -> "Australia (+61)" #}
+<div class="nx-field">
+  <label class="nx-label" for="{{ name }}">{{ label }}{% if mode == 'name' %} *{% endif %}</label>
+  <div class="nx-select-flag">
+    <img src="https://flagcdn.com/w40/{{ selected|lower }}.png" alt="" data-flag-for="{{ name }}" onerror="this.style.display='none'" onload="this.style.display=''">
+    <select class="nx-input{% if errors.get(name) %} is-invalid{% endif %}" id="{{ name }}" name="{{ name }}" data-flag-select
+            {% if mode == 'dial' %}aria-label="{{ label }}"{% endif %}>
+      {% for c in countries %}
+      <option value="{{ c.code }}" {% if c.code == selected %}selected{% endif %}>{{ c.name }}{% if mode == 'dial' %} (+{{ c.dial }}){% endif %}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {{ field_error(errors, name) }}
+</div>
+{% endmacro %}
+
+{% macro google_button(href, enabled, label='Continue with Google') %}
+<a href="{{ href }}" class="btn btn-google" {% if not enabled %}title="Google sign-in isn't configured yet"{% endif %}>
+  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17.5z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+  {{ label }}
+</a>
+{% endmacro %}
