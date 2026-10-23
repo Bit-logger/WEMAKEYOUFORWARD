@@ -18,7 +18,7 @@
   <button type="submit" class="btn btn-accent btn-block mt-6"><span class="btn-label">Register</span><i data-lucide="arrow-right" class="w-4 h-4"></i></button>
 </form>
 
-{% if cfg.bp != 'employer' %}
+{% if cfg.get('show_google_register', True) %}
 <div class="nx-divider">or</div>
 {{ google_button(url_for(cfg.bp ~ '.google_start'), google_enabled) }}
 {% endif %}

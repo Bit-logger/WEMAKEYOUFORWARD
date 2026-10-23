@@ -43,6 +43,8 @@ CFG = {
     "other_prompt": "Looking for a job?",
     "other_label": "Create a job seeker account",
     "other_login_label": "Job seeker login",
+    # Employer registration uses email/password only; Google is offered on login.
+    "show_google_register": False,
 }
 
 
@@ -113,9 +115,9 @@ def _check_csrf():
 # ------------------------------------------------------------ register --
 @bp.route("/register", methods=["GET", "POST"])
 def register():
-    """Register an employer with Supabase Auth, then send them to company setup."""
+    """Create a Supabase Auth employer and send confirmation links to employer login."""
     if current_employer():
-        return redirect(url_for("employer.setup"))
+        return _after_login(current_employer(), None)
 
     errors, email = {}, ""
     if request.method == "POST":
@@ -129,33 +131,40 @@ def register():
 
         if not errors:
             try:
-                # A NEXORA employer row is the authorization allow-list for both
-                # password login and Google OAuth. Never create duplicates.
+                # Do not create another employer record for an email already registered
+                # in the NEXORA employer table.
                 if db.get_employer_by_email(email):
-                    errors["email"] = "An employer account with this email already exists. Please log in."
+                    errors["email"] = "An employer account with this email already exists. Log in instead."
                 else:
                     auth = db.get_auth_client()
+                    redirect_to = (
+                        os.environ.get("SUPABASE_EMPLOYER_CONFIRM_REDIRECT_URL", "").strip()
+                        or url_for("employer.login", _external=True)
+                    )
                     result = auth.auth.sign_up({
                         "email": email,
                         "password": password,
-                        "options": {"data": {"role": "employer"}},
+                        "options": {
+                            "data": {"role": "employer"},
+                            "email_redirect_to": redirect_to,
+                        },
                     })
-                    auth_user = getattr(result, "user", None)
-                    if not auth_user:
-                        errors["form"] = "Supabase did not create the account. Check your Auth settings and try again."
+                    user = getattr(result, "user", None)
+                    if not user:
+                        errors["form"] = "Supabase did not create the account. Check Auth settings and try again."
+                    elif getattr(user, "identities", None) == []:
+                        # Supabase may return an obfuscated user for an existing Auth email.
+                        errors["email"] = "An account with this email may already exist. Try logging in."
                     else:
-                        identities = getattr(auth_user, "identities", None)
-                        if identities is not None and len(identities) == 0:
-                            errors["email"] = "An account with this email already exists. Please log in."
-                        else:
-                            employer_id = db.create_employer(email, password_hash=None)
-                            auth_session = getattr(result, "session", None)
-                            if auth_session:
-                                _start_session(employer_id)
-                                flash("Employer account created. Complete your company profile to continue.", "success")
-                                return redirect(url_for("employer.setup"))
-                            flash("Registration successful. Check your email to confirm your account, then log in to complete your company profile.", "success")
-                            return redirect(url_for("employer.login"))
+                        # Create the matching application record so login can identify
+                        # this account as an employer. Profile details are collected later.
+                        db.create_employer(email, password_hash=None, onboarding_complete=False)
+                        flash(
+                            "Registration successful. Check your email to confirm your account, "
+                            "then return here and log in.",
+                            "success",
+                        )
+                        return redirect(url_for("employer.login"))
             except Exception:
                 current_app.logger.exception("Supabase employer registration failed")
                 errors["form"] = (
@@ -164,10 +173,7 @@ def register():
                 )
 
     return render_template(
-        "auth/register.html",
-        cfg=CFG,
-        errors=errors,
-        email=email,
+        "auth/register.html", cfg=CFG, errors=errors, email=email, full_name="",
         google_enabled=ac.google_configured(),
     )
 
@@ -175,9 +181,11 @@ def register():
 # --------------------------------------------------------------- login --
 @bp.route("/login", methods=["GET", "POST"])
 def login():
-    if current_employer():
-        return redirect(url_for("employer_dashboard"))
     next_url = safe_next(request.values.get("next"))
+    existing_employer = current_employer()
+    if existing_employer:
+        # Even an already signed-in employer must complete setup before dashboard access.
+        return _after_login(existing_employer, next_url)
     errors, email = {}, ""
     if request.method == "POST":
         email = v.normalise_email(request.form.get("email"))
@@ -334,57 +342,45 @@ def reset(token):
 @bp.get("/google")
 def google_start():
     if not ac.google_configured():
-        flash("Google sign-in is not configured yet. Check the Supabase URL and public Auth key.", "error")
+        flash("Google sign-in isn't available yet. Use your email and password instead.", "error")
         return redirect(url_for("employer.login"))
-    try:
-        target = ac.supabase_google_authorize_url(
-            "employer.google_callback", "employer", request.args.get("next")
-        )
-        return redirect(target)
-    except Exception:
-        current_app.logger.exception("Could not start Supabase Google OAuth for employer")
-        flash("Google sign-in could not start. Check your Supabase configuration and redirect URLs.", "error")
-        return redirect(url_for("employer.login"))
+    state = secrets.token_urlsafe(24)
+    session["google_state"] = state
+    session["google_next"] = safe_next(request.args.get("next")) or ""
+    return redirect(ac.google_authorize_url("employer.google_callback", state))
 
 
 @bp.get("/google/callback")
 def google_callback():
-    next_url = session.pop("supabase_oauth_next", "") or None
-    role = session.pop("supabase_oauth_role", None)
-    fail = lambda msg: (session.pop("supabase_oauth_verifier", None),
-                        flash(msg, "error"), redirect(url_for("employer.login")))[-1]  # noqa: E731
+    expected = session.pop("google_state", None)
+    next_url = session.pop("google_next", "") or None
+    fail = lambda msg: (flash(msg, "error"), redirect(url_for("employer.login")))[1]  # noqa: E731
 
-    if request.args.get("error") or request.args.get("error_description"):
-        return fail("Google sign-in was cancelled or denied.")
-    if role != "employer":
-        return fail("Google sign-in session expired. Please try again.")
-    code = request.args.get("code", "")
-    if not code:
-        return fail("Supabase did not return an authorization code. Please try again.")
+    if request.args.get("error"):
+        return fail("Google sign-in was cancelled.")
+    state, code = request.args.get("state", ""), request.args.get("code", "")
+    if not expected or not code or not hmac.compare_digest(state, expected):
+        return fail("Google sign-in failed. Please try again.")
     try:
-        user = ac.supabase_exchange_oauth_code(code)
-    except Exception:
-        current_app.logger.exception("Supabase Google OAuth callback failed for employer")
-        return fail("Google sign-in failed. Check the Supabase provider and redirect URL settings, then try again.")
+        info = ac.google_fetch_userinfo(code, "employer.google_callback")
+    except ac.GOOGLE_ERRORS:
+        current_app.logger.exception("Google OAuth exchange failed")
+        return fail("Google sign-in failed. Please try again.")
 
-    email = v.normalise_email(user.get("email"))
-    google_sub = ac.google_identity_id(user)
-    if not email:
-        return fail("Google did not provide an email address.")
-    try:
-        # Employer records must be provisioned by an administrator; OAuth must never
-        # create or authorize an employer record on its own.
-        emp = db.get_employer_by_google_sub(google_sub) if google_sub else None
-        emp = emp or db.get_employer_by_email(email)
-        if not emp:
-            return fail("This Google account is not registered as an authorized NEXORA employer. Contact the administrator.")
-        if google_sub and not emp.get("google_sub"):
-            db.update_employer(emp["id"], google_sub=google_sub)
-        _start_session(emp["id"])
-        return _after_login(db.get_employer(emp["id"]), next_url)
-    except Exception:
-        current_app.logger.exception("Could not map Supabase OAuth user to a NEXORA employer")
-        return fail("Google authentication succeeded, but NEXORA could not verify your employer profile. Contact the administrator.")
+    email = v.normalise_email(info.get("email"))
+    sub = info.get("sub")
+    if not email or not sub or not info.get("email_verified"):
+        return fail("Your Google email address isn't verified.")
+
+    emp = db.get_employer_by_google_sub(sub) or db.get_employer_by_email(email)
+    if emp:
+        if not emp["google_sub"]:
+            db.update_employer(emp["id"], google_sub=sub)  # link existing password account
+        employer_id = emp["id"]
+    else:
+        employer_id = db.create_employer(email, google_sub=sub)
+    _start_session(employer_id)
+    return _after_login(db.get_employer(employer_id), next_url)
 
 
 # ----------------------------------------------------------- demo seed --
