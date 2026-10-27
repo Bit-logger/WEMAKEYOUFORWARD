@@ -342,45 +342,57 @@ def reset(token):
 @bp.get("/google")
 def google_start():
     if not ac.google_configured():
-        flash("Google sign-in isn't available yet. Use your email and password instead.", "error")
+        flash("Google sign-in is not configured yet. Check the Supabase URL and public Auth key.", "error")
         return redirect(url_for("employer.login"))
-    state = secrets.token_urlsafe(24)
-    session["google_state"] = state
-    session["google_next"] = safe_next(request.args.get("next")) or ""
-    return redirect(ac.google_authorize_url("employer.google_callback", state))
+    try:
+        target = ac.supabase_google_authorize_url(
+            "employer.google_callback", "employer", request.args.get("next")
+        )
+        return redirect(target)
+    except Exception:
+        current_app.logger.exception("Could not start Supabase Google OAuth for employer")
+        flash("Google sign-in could not start. Check your Supabase configuration and redirect URLs.", "error")
+        return redirect(url_for("employer.login"))
 
 
 @bp.get("/google/callback")
 def google_callback():
-    expected = session.pop("google_state", None)
-    next_url = session.pop("google_next", "") or None
-    fail = lambda msg: (flash(msg, "error"), redirect(url_for("employer.login")))[1]  # noqa: E731
+    next_url = session.pop("supabase_oauth_next", "") or None
+    role = session.pop("supabase_oauth_role", None)
+    fail = lambda msg: (session.pop("supabase_oauth_verifier", None),
+                        flash(msg, "error"), redirect(url_for("employer.login")))[-1]  # noqa: E731
 
-    if request.args.get("error"):
-        return fail("Google sign-in was cancelled.")
-    state, code = request.args.get("state", ""), request.args.get("code", "")
-    if not expected or not code or not hmac.compare_digest(state, expected):
-        return fail("Google sign-in failed. Please try again.")
+    if request.args.get("error") or request.args.get("error_description"):
+        return fail("Google sign-in was cancelled or denied.")
+    if role != "employer":
+        return fail("Google sign-in session expired. Please try again.")
+    code = request.args.get("code", "")
+    if not code:
+        return fail("Supabase did not return an authorization code. Please try again.")
     try:
-        info = ac.google_fetch_userinfo(code, "employer.google_callback")
-    except ac.GOOGLE_ERRORS:
-        current_app.logger.exception("Google OAuth exchange failed")
-        return fail("Google sign-in failed. Please try again.")
+        user = ac.supabase_exchange_oauth_code(code)
+    except Exception:
+        current_app.logger.exception("Supabase Google OAuth callback failed for employer")
+        return fail("Google sign-in failed. Check the Supabase provider and redirect URL settings, then try again.")
 
-    email = v.normalise_email(info.get("email"))
-    sub = info.get("sub")
-    if not email or not sub or not info.get("email_verified"):
-        return fail("Your Google email address isn't verified.")
-
-    emp = db.get_employer_by_google_sub(sub) or db.get_employer_by_email(email)
-    if emp:
-        if not emp["google_sub"]:
-            db.update_employer(emp["id"], google_sub=sub)  # link existing password account
-        employer_id = emp["id"]
-    else:
-        employer_id = db.create_employer(email, google_sub=sub)
-    _start_session(employer_id)
-    return _after_login(db.get_employer(employer_id), next_url)
+    email = v.normalise_email(user.get("email"))
+    google_sub = ac.google_identity_id(user)
+    if not email:
+        return fail("Google did not provide an email address.")
+    try:
+        emp = db.get_employer_by_google_sub(google_sub) if google_sub else None
+        emp = emp or db.get_employer_by_email(email)
+        if emp:
+            if google_sub and not emp.get("google_sub"):
+                db.update_employer(emp["id"], google_sub=google_sub)
+            employer_id = emp["id"]
+        else:
+            employer_id = db.create_employer(email, google_sub=google_sub, onboarding_complete=False)
+        _start_session(employer_id)
+        return _after_login(db.get_employer(employer_id), next_url)
+    except Exception:
+        current_app.logger.exception("Could not map Supabase OAuth user to a NEXORA employer")
+        return fail("Google authentication succeeded, but NEXORA could not load your employer profile. Contact support.")
 
 
 # ----------------------------------------------------------- demo seed --
