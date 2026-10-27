@@ -304,168 +304,78 @@ table.nx-table tr:last-child td { border-bottom: none; }
 .nx-dd-menu button:hover, .nx-dd-menu a:hover { background: rgba(255,255,255,0.07); color: var(--mint); }
 
 
-/* ============================================================
-   Employer auth & onboarding (register / login / company setup)
-   ============================================================ */
-.auth-stage { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem 1rem; }
-.auth-wrap { position: relative; z-index: 1; width: min(480px, 100%); }
-.auth-wrap.auth-wide { width: min(580px, 100%); }
-.auth-logo { display: inline-flex; align-items: center; gap: 0.625rem; }
-
-/* Framed panel with the skyline illustration (login / register) */
-.auth-panel {
-  padding: 0 1.25rem 1.25rem; border-radius: 26px; overflow: hidden;
-  background: #0E1745; border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: 0 40px 80px -40px rgba(0,0,0,0.75);
+/* Responsive refinements for homepage and seeker dashboard */
+html, body { max-width: 100%; overflow-x: clip; }
+img, svg, video, canvas { max-width: 100%; }
+button, a, input, select { -webkit-tap-highlight-color: transparent; }
+.hero-illustration { min-width: 0; isolation: isolate; }
+.hero-illustration > svg { width: 100%; height: auto; display: block; overflow: visible; }
+.nx-plan-slider {
+  position: relative; overflow: hidden; border-radius: 20px; color: #fff;
+  background: radial-gradient(circle at 100% 0%, rgba(43,224,190,.28), transparent 45%),
+              linear-gradient(135deg, #171e48 0%, #30266d 58%, #5145ba 100%);
+  box-shadow: 0 14px 32px rgba(11,18,48,.18); min-width: 0;
 }
-.auth-art { margin: 0 -1.25rem; aspect-ratio: 440 / 262; pointer-events: none;
-  -webkit-mask-image: linear-gradient(#000 82%, transparent); mask-image: linear-gradient(#000 82%, transparent); }
-.auth-art svg { width: 100%; height: 100%; display: block; }
-.auth-panel .auth-logo { position: absolute; top: 1.25rem; left: 1.5rem; z-index: 2; }
-.auth-panel .auth-card { position: relative; margin-top: -1.5rem; }
-.auth-wide .auth-logo { margin-bottom: 1.5rem; }
-.auth-card {
-  background: #fff; border-radius: 22px; padding: 2rem 1.75rem 1.75rem;
-  box-shadow: 0 30px 60px -28px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.06);
+.nx-plan-slides { position: relative; min-height: 218px; }
+.nx-plan-slide {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: flex-start;
+  padding: 22px; color: white; text-decoration: none; opacity: 0; visibility: hidden;
+  transform: translateX(12px); transition: opacity .35s ease, transform .35s ease, visibility .35s;
 }
-.auth-wide .auth-card { padding: 2rem 2rem 1.75rem; }
-.auth-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 1.5rem; letter-spacing: -0.02em; color: var(--navy); line-height: 1.2; }
-.auth-sub { margin-top: 0.4rem; font-size: 0.875rem; color: rgba(18,20,43,0.6); line-height: 1.5; }
-.auth-foot { margin-top: 1.25rem; text-align: center; font-size: 0.8125rem; color: rgba(18,20,43,0.7); }
-.auth-link { color: var(--indigo-dark); font-weight: 600; }
-.auth-link:hover { text-decoration: underline; }
-@media (max-width: 480px) {
-  .auth-stage { padding: 0.75rem; align-items: flex-start; }
-  .auth-panel { padding: 0 0.75rem 0.75rem; }
-  .auth-art { margin: 0 -0.75rem; }
-  .auth-panel .auth-logo { left: 1rem; top: 1rem; }
-  .auth-card, .auth-wide .auth-card { padding: 1.5rem 1.25rem; }
+.nx-plan-slide.is-active { position: relative; opacity: 1; visibility: visible; transform: translateX(0); }
+.nx-plan-kicker { color: #8cf3df; font-size: .65rem; font-weight: 800; letter-spacing: .14em; }
+.nx-plan-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 2rem; line-height: 1.15; font-weight: 800; margin-top: 8px; }
+.nx-plan-copy { color: rgba(255,255,255,.76); font-size: .82rem; line-height: 1.55; margin-top: 8px; max-width: 28rem; }
+.nx-plan-cta { display: inline-flex; align-items: center; gap: 7px; margin-top: auto; padding-top: 16px; font-size: .8rem; font-weight: 700; color: #8cf3df; }
+.nx-plan-controls { display: flex; align-items: center; justify-content: space-between; padding: 0 18px 14px; }
+.nx-plan-arrow { width: 30px; height: 30px; border: 1px solid rgba(255,255,255,.28); border-radius: 50%; color: #fff; background: rgba(255,255,255,.08); font-size: 1.2rem; line-height: 1; }
+.nx-plan-arrow:hover { background: rgba(255,255,255,.18); }
+.nx-plan-dots { display: flex; align-items: center; gap: 7px; }
+.nx-plan-dots button { width: 7px; height: 7px; border-radius: 99px; background: rgba(255,255,255,.38); transition: width .2s ease, background .2s ease; }
+.nx-plan-dots button.is-active { width: 22px; background: #8cf3df; }
+@media (max-width: 639px) {
+  .hero-illustration { margin-top: 1rem; max-width: 420px; }
+  .nx-plan-slides { min-height: 205px; }
+  .nx-plan-slide { padding: 18px; }
+  .nx-plan-title { font-size: 1.75rem; }
+  .nx-plan-copy { font-size: .78rem; }
+  .nx-plan-controls { padding: 0 14px 12px; }
+  .pipeline-node p { font-size: .65rem; line-height: 1.2; }
+  #applications .card, .card { min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nx-plan-slide, .nx-plan-dots button { transition: none !important; }
 }
 
-.nx-field { margin-top: 1rem; }
-.nx-label { display: block; font-size: 0.8125rem; font-weight: 600; color: var(--ink); margin-bottom: 0.4rem; }
-.nx-label .nx-opt { font-weight: 500; color: var(--grey); }
-.nx-input-wrap { position: relative; display: flex; align-items: center; }
-.nx-input {
-  width: 100%; padding: 0.7rem 0.9rem; font-size: 0.9375rem; color: var(--ink);
-  background: #fff; border: 1.5px solid var(--grey-line); border-radius: 12px;
-  transition: border-color .15s ease, box-shadow .15s ease;
+
+/* NEXORA replacement career illustration */
+.hero-illustration {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.nx-input::placeholder { color: #A6A9B6; }
-.nx-input:hover { border-color: #CFCBC0; }
-.nx-input:focus { outline: none; border-color: var(--indigo); box-shadow: 0 0 0 4px rgba(108,92,245,0.14); }
-.nx-input.is-invalid { border-color: var(--rose); }
-.nx-input.is-invalid:focus { box-shadow: 0 0 0 4px rgba(255,107,135,0.18); }
-.nx-input:disabled { background: var(--cream); color: var(--grey); cursor: not-allowed; }
-.nx-input.pad-left { padding-left: 2.6rem; }
-.nx-input.pad-right { padding-right: 2.9rem; }
-.nx-input-icon { position: absolute; left: 0.9rem; width: 1.05rem; height: 1.05rem; color: var(--grey); pointer-events: none; }
-.nx-eye { position: absolute; right: 0.35rem; width: 2.25rem; height: 2.25rem; display: inline-flex; align-items: center; justify-content: center; color: var(--grey); border-radius: 10px; }
-.nx-eye:hover { color: var(--navy); background: rgba(11,18,48,0.05); }
-.nx-error { margin-top: 0.4rem; font-size: 0.78rem; color: #C23856; display: flex; gap: 0.35rem; align-items: flex-start; }
-.nx-hint { margin-top: 0.4rem; font-size: 0.75rem; color: var(--grey); }
-
-.nx-section { display: flex; align-items: center; gap: 0.65rem; margin: 1.5rem 0 0; padding-top: 1.25rem; border-top: 1px solid var(--grey-line); }
-.nx-section:first-of-type { margin-top: 1.25rem; padding-top: 0; border-top: 0; }
-.nx-section h2 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: 0.9375rem; color: var(--navy); }
-
-.nx-select-flag { position: relative; display: flex; align-items: center; }
-.nx-select-flag img { position: absolute; left: 0.85rem; width: 20px; height: 14px; object-fit: cover; border-radius: 2px; box-shadow: 0 0 0 1px rgba(11,18,48,0.12); pointer-events: none; }
-.nx-select-flag select { padding-left: 2.6rem; padding-right: 2rem; appearance: none; -webkit-appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238B8F9E' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.8rem center; }
-.nx-phone { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 0.6rem; }
-@media (max-width: 420px) { .nx-phone { grid-template-columns: 1fr; } }
-
-.nx-radio-row { display: flex; gap: 1.5rem; padding: 0.35rem 0; }
-.nx-radio { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--ink); cursor: pointer; }
-.nx-radio input { width: 1.1rem; height: 1.1rem; accent-color: var(--indigo); cursor: pointer; }
-
-.nx-divider { display: flex; align-items: center; gap: 0.75rem; margin: 1.1rem 0; font-size: 0.75rem; color: var(--grey); }
-.nx-divider::before, .nx-divider::after { content: ''; flex: 1; height: 1px; background: var(--grey-line); }
-.btn-block { width: 100%; padding-top: 0.85rem; padding-bottom: 0.85rem; }
-.btn-google { width: 100%; padding-top: 0.8rem; padding-bottom: 0.8rem; background: #fff; color: var(--navy); border: 1.5px solid var(--grey-line); }
-.btn-google:hover { border-color: #CFCBC0; background: var(--cream); }
-.btn.is-loading { pointer-events: none; opacity: 0.75; }
-.btn.is-loading .btn-label::after { content: ''; display: inline-block; width: 0.85em; height: 0.85em; margin-left: 0.55rem; vertical-align: -1px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: nx-orbit 0.7s linear infinite; }
-
-.nx-alert { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 1.1rem; padding: 0.75rem 0.9rem; border-radius: 12px; font-size: 0.8125rem; line-height: 1.45; background: rgba(255,107,135,0.1); color: #A82B49; border: 1px solid rgba(255,107,135,0.3); }
-.nx-alert.is-info { background: rgba(108,92,245,0.08); color: var(--indigo-dark); border-color: rgba(108,92,245,0.25); }
-.nx-alert.is-success { background: var(--mint-soft); color: #0E7A64; border-color: rgba(43,224,190,0.4); }
-
-.chip-amber { background: rgba(255,183,74,0.18); color: #8A5A00; border-color: transparent; }
-.chip-grey { background: #ECEAE4; color: #6B6F7E; border-color: transparent; }
-
-
-/* ============================================================
-   Job-seeker portal (dashboard, profile, applications, resume, upgrade)
-   Pastel tints mirror the product flow design.
-   ============================================================ */
-.dash-shell { background: #EAF3FF; border: 1.5px solid #BFD8FF; border-radius: 26px; padding: 1.5rem; color: var(--ink); }
-@media (min-width: 768px) { .dash-shell { padding: 2rem; } }
-.tint { border-radius: 18px; border: 1.5px solid transparent; }
-.tint-mint  { background: #E6F8F1; border-color: #B5E8D5; }
-.tint-lav   { background: #EFEBFF; border-color: #D3C9FF; }
-.tint-rose  { background: #FFECEF; border-color: #FFC9D2; }
-.tint-amber { background: #FFF3DB; border-color: #FFDDA0; }
-.tint-green { background: #E4F7EA; border-color: #B4E3C3; }
-.tint-white { background: #fff; border-color: var(--grey-line); }
-.tile-link { transition: transform .15s ease, box-shadow .15s ease; }
-.tile-link:hover { transform: translateY(-2px); box-shadow: 0 14px 28px -16px rgba(11,18,48,0.35); }
-.match-pct { color: #0E8A6F; font-weight: 600; font-size: 0.8125rem; }
-.btn-soft { background: #fff; color: #1E5BD6; border: 1.5px solid #BFD8FF; font-weight: 600; }
-.btn-soft:hover { background: #F3F8FF; border-color: #8DB8FF; }
-.btn-purple { background: linear-gradient(135deg, #7A3CF0, #5B2ED0); color: #fff; font-weight: 600; }
-.btn-purple:hover { filter: brightness(1.08); }
-.check-dot { width: 1.25rem; height: 1.25rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.check-dot.is-done { background: #16A36B; color: #fff; }
-.check-dot.is-todo { border: 2px solid #5B6EE8; background: #fff; }
-.status-chip { display: inline-flex; align-items: center; padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
-.status-Applied { background: #E1EEFF; color: #1E5BD6; }
-.status-Shortlisted { background: #D5F5E6; color: #0E7A4F; }
-.status-Interview { background: #FFF0C2; color: #8A5A00; }
-.status-Rejected { background: #FFDDE3; color: #B02A45; }
-
-/* Profile accordion */
-.acc { border: 1.5px solid var(--grey-line); border-radius: 18px; background: #fff; overflow: hidden; }
-.acc + .acc { margin-top: 0.85rem; }
-.acc > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 0.85rem; padding: 1rem 1.25rem; }
-.acc > summary::-webkit-details-marker { display: none; }
-.acc[open] > summary { border-bottom: 1px solid var(--grey-line); background: #FBFAF7; }
-.acc .acc-chevron { margin-left: auto; transition: transform .2s ease; color: var(--grey); }
-.acc[open] .acc-chevron { transform: rotate(180deg); }
-.acc-body { padding: 0.25rem 1.25rem 1.4rem; }
-.repeat-card { border: 1.5px dashed var(--grey-line); border-radius: 14px; padding: 0.25rem 1rem 1rem; margin-top: 1rem; }
-.nx-textarea { min-height: 96px; resize: vertical; line-height: 1.5; }
-
-/* Resume preview sheet */
-.resume-paper { background: #fff; color: #1B1D33; border-radius: 6px; box-shadow: 0 24px 50px -24px rgba(0,0,0,0.6); padding: 2.25rem 2.25rem 2.5rem; font-size: 0.8125rem; line-height: 1.55; }
-.resume-paper h1 { font-size: 1.6rem; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em; }
-.resume-paper h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; font-weight: 700; margin: 1.25rem 0 0.5rem; }
-.resume-paper .r-sub { color: #5A5E73; }
-.resume-paper .r-item { margin-bottom: 0.75rem; }
-.resume-paper .r-chip { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 999px; background: #F0EEFF; color: #4A3BC4; font-size: 0.72rem; margin: 0 0.3rem 0.3rem 0; }
-.resume-paper.tpl-modern .r-head { background: #0B1230; color: #F8F6F1; margin: -2.25rem -2.25rem 1.1rem; padding: 1.75rem 2.25rem; border-radius: 6px 6px 0 0; }
-.resume-paper.tpl-modern .r-head .r-sub { color: #9FB0FF; }
-.resume-paper.tpl-modern h2 { color: #5342D6; border-bottom: 2px solid #E7E3FF; padding-bottom: 0.25rem; }
-.resume-paper.tpl-classic { font-family: Georgia, 'Times New Roman', serif; }
-.resume-paper.tpl-classic .r-head { text-align: center; border-bottom: 2px solid #1B1D33; padding-bottom: 0.9rem; margin-bottom: 0.4rem; }
-.resume-paper.tpl-classic h2 { border-bottom: 1px solid #C9CBD6; padding-bottom: 0.2rem; letter-spacing: 0.1em; }
-.resume-paper.tpl-classic .r-chip { background: transparent; color: #1B1D33; border: 1px solid #C9CBD6; border-radius: 3px; }
-.resume-paper.tpl-minimal .r-head { margin-bottom: 0.5rem; }
-.resume-paper.tpl-minimal h1 { font-weight: 300; font-size: 1.9rem; }
-.resume-paper.tpl-minimal h2 { color: #0E9D85; letter-spacing: 0.2em; font-weight: 600; }
-.resume-paper.tpl-minimal .r-chip { background: #E4F7F2; color: #0E7A64; }
-.tpl-option { border: 2px solid var(--grey-line); border-radius: 14px; padding: 0.75rem; cursor: pointer; background: #fff; transition: border-color .15s ease, box-shadow .15s ease; display: block; }
-.tpl-option:hover { border-color: #CFCBC0; }
-.tpl-option input:checked + .tpl-body { color: var(--navy); }
-.tpl-option:has(input:checked) { border-color: var(--indigo); box-shadow: 0 0 0 4px rgba(108,92,245,0.14); }
-.tpl-option:has(input:focus-visible) { outline: 2px solid var(--indigo); outline-offset: 2px; }
-
-@media print {
-  body * { visibility: hidden !important; }
-  #resume-sheet, #resume-sheet * { visibility: visible !important; }
-  #resume-sheet { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; border-radius: 0 !important; margin: 0 !important; }
-  .resume-paper.tpl-modern .r-head { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .resume-paper .r-chip { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  @page { margin: 12mm; }
+.nexora-career-image {
+  display: block;
+  width: 100%;
+  max-width: 650px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 22px;
+  box-shadow: 0 18px 48px rgba(4, 10, 35, 0.18);
+  animation: nexoraHeroFloat 6s ease-in-out infinite;
 }
-.chip-active { background: var(--indigo); color: #fff; border-color: transparent; }
+@keyframes nexoraHeroFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+@media (max-width: 1023px) {
+  .nexora-career-image { max-width: 560px; margin: 1.5rem auto 0; }
+}
+@media (max-width: 639px) {
+  .nexora-career-image { max-width: 100%; border-radius: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nexora-career-image { animation: none; }
+}
