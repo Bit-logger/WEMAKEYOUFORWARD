@@ -1,162 +1,744 @@
 {% extends "base.html" %}
-{% from "seeker/_macros.html" import ring, match_card with context %}
-{% block title %}Dashboard — NEXORA{% endblock %}
+{% block title %}Overview — NEXORA Dashboard{% endblock %}
+
+{# Completely remove the global website top header to prevent ANY duplicate bars #}
+{% block site_header %}{% endblock %}
+{% block site_footer %}{% endblock %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-10">
-  <section class="dash-shell seeker-dashboard" aria-labelledby="dash-title">
+<div class="min-h-screen bg-[#070C1E] text-white">
+  
+  <div class="max-w-[1680px] mx-auto grid lg:grid-cols-[250px_1fr] min-h-screen">
+    
+    <!-- ======================================================== -->
+    <!-- LEFT SIDEBAR (Starts from top with NEXORA Logo)          -->
+    <!-- Exactly matching Reference Mockup (Image 3)              -->
+    <!-- ======================================================== -->
+    <aside id="sidebar-drawer" class="bg-[#0C1530] border-r border-white/10 p-4 space-y-4 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto z-40 hidden lg:block">
+      
+      <!-- Logo Branding at Top of Sidebar -->
+      <a href="{{ url_for('index') }}" class="flex items-center gap-2.5 px-2 py-2 mb-2 group">
+        <svg class="w-8 h-8 shrink-0 icon-bounce-hover" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="17" cy="17" r="16" stroke="#2BE0BE" stroke-width="1.5" opacity="0.9"/>
+          <circle cx="9" cy="22" r="3" fill="#6C5CF5"/>
+          <circle cx="25" cy="12" r="3" fill="#2BE0BE"/>
+          <path d="M9 22 C 14 16, 19 18, 25 12" stroke="#2BE0BE" stroke-width="1.5" stroke-dasharray="1 3.4"/>
+          <circle cx="25" cy="12" r="1.3" fill="#0B1230"/>
+        </svg>
+        <span class="font-display font-extrabold text-lg tracking-wider text-white">NEXORA</span>
+      </a>
 
-    <!-- Header -->
-    <div class="flex items-center justify-between gap-4 flex-wrap mb-6">
-      <div class="flex items-center gap-4 min-w-0">
-        <span class="w-14 h-14 rounded-2xl flex items-center justify-center text-white shrink-0" style="background:linear-gradient(135deg,#1E6BFF,#1450D6)"><i data-lucide="home" class="w-7 h-7"></i></span>
-        <div class="min-w-0">
-          <h1 id="dash-title" class="font-display text-3xl font-bold text-navy tracking-tight">Dashboard</h1>
-          <p class="text-sm text-ink/60">Welcome back, {{ seeker_user.first_name }}. Here's your job search progress.</p>
+      <!-- Primary Sidebar Navigation Menu -->
+      <nav class="space-y-1 text-xs font-medium">
+        <a href="{{ url_for('seeker_dashboard') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-white font-semibold shadow-md" style="background:linear-gradient(135deg,#1E6BFF,#1450D6)">
+          <i data-lucide="home" class="w-4 h-4 text-white"></i> Overview
+        </a>
+        <a href="{{ url_for('jobs') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-cream/70 hover:text-white hover:bg-white/5 transition-colors">
+          <i data-lucide="search" class="w-4 h-4 text-cream/50"></i> Discover Jobs
+        </a>
+        <a href="{{ url_for('seeker.applications') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-cream/70 hover:text-white hover:bg-white/5 transition-colors">
+          <i data-lucide="file-check-2" class="w-4 h-4 text-cream/50"></i> My Applications
+        </a>
+        <a href="{{ url_for('seeker.profile') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-cream/70 hover:text-white hover:bg-white/5 transition-colors">
+          <i data-lucide="user-round" class="w-4 h-4 text-cream/50"></i> Career Profile
+        </a>
+        <a href="{{ url_for('seeker.resume') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-cream/70 hover:text-white hover:bg-white/5 transition-colors">
+          <i data-lucide="file-text" class="w-4 h-4 text-cream/50"></i> Resume Studio
+        </a>
+        <a href="#" onclick="showToast('Interview Practice module coming soon!', {icon:'info'})" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-cream/70 hover:text-white hover:bg-white/5 transition-colors">
+          <i data-lucide="monitor-play" class="w-4 h-4 text-cream/50"></i> Interview Practice
+        </a>
+        <a href="#saved" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-cream/70 hover:text-white hover:bg-white/5 transition-colors">
+          <i data-lucide="bookmark" class="w-4 h-4 text-cream/50"></i> Saved Roles
+        </a>
+
+        <!-- Divider Line -->
+        <div class="pt-2 my-2 border-t border-white/10"></div>
+
+        <a href="#" onclick="showToast('Job Alerts configured.', {icon:'bell'})" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-cream/70 hover:text-white hover:bg-white/5 transition-colors">
+          <i data-lucide="bell" class="w-4 h-4 text-cream/50"></i> Job Alerts
+        </a>
+        <a href="{{ url_for('companies') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-cream/70 hover:text-white hover:bg-white/5 transition-colors">
+          <i data-lucide="building-2" class="w-4 h-4 text-cream/50"></i> Companies
+        </a>
+        <a href="#" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-cream/70 hover:text-white hover:bg-white/5 transition-colors">
+          <i data-lucide="book-open" class="w-4 h-4 text-cream/50"></i> Career Resources
+        </a>
+      </nav>
+
+      <!-- Go Premium Quick Card -->
+      <a href="{{ url_for('seeker.upgrade') }}" class="block p-3 rounded-2xl border border-white/10 hover:border-indigo transition-all shadow-lg" style="background:linear-gradient(135deg,#23164D,#120E30)">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-amber/20 text-amber flex items-center justify-center shrink-0">
+            <i data-lucide="crown" class="w-4 h-4 text-[#FFB74A]"></i>
+          </span>
+          <div class="min-w-0 flex-1">
+            <p class="font-display font-bold text-xs text-white">Go Premium</p>
+            <p class="text-[10px] text-cream/60 truncate">Unlock more opportunities and personalised insights.</p>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-cream/40 shrink-0"></i>
         </div>
-      </div>
-      <a href="{{ url_for('jobs') }}" class="btn btn-primary"><i data-lucide="search" class="w-4 h-4"></i>Find Jobs</a>
-    </div>
+      </a>
 
-    <!-- Profile completion + resume status -->
-    <div class="grid sm:grid-cols-2 gap-4">
-      <a href="{{ url_for('seeker.profile') }}" class="tint tint-mint tile-link p-4 flex items-center gap-4" aria-label="Profile completion {{ percent }} percent. Open My Profile">
-        {{ ring(percent, 64) }}
-        <div class="min-w-0">
-          <p class="font-display font-semibold text-navy leading-tight">Profile<br>Completion</p>
-          <p class="text-xs text-ink/55 mt-1">{% set todo = sections|rejectattr('done')|list|length %}{{ 'All sections complete' if todo == 0 else (todo ~ (' section' if todo == 1 else ' sections') ~ ' to go') }}</p>
+      <!-- ======================================================== -->
+      <!-- CHOOSE YOUR PLAN — ADVERTISEMENT SLIDER SECTION          -->
+      <!-- Built per specs 1–7 with Rocket 🚀 & 4s Auto-Swipe       -->
+      <!-- ======================================================== -->
+      <div class="relative bg-gradient-to-b from-[#0E1738] via-[#0C1430] to-[#0A1028] border-2 border-[#6C5CF5]/50 rounded-2xl p-3.5 shadow-2xl overflow-hidden group" id="plan-ad-section">
+        
+        <!-- Ambient Glow -->
+        <div class="absolute -top-10 -right-10 w-24 h-24 bg-[#6C5CF5]/20 rounded-full blur-xl pointer-events-none"></div>
+
+        <!-- Header -->
+        <div class="flex items-center gap-2 mb-1 relative z-10">
+          <span class="text-sm">👑</span>
+          <div>
+            <h3 class="font-display font-bold text-xs text-white leading-tight">Choose Your Plan</h3>
+            <p class="text-[10px] text-cream/60 leading-none">Unlock better matches & premium features</p>
+          </div>
         </div>
-        <i data-lucide="chevron-right" class="w-5 h-5 text-ink/40 ml-auto shrink-0"></i>
-      </a>
-      <a href="{{ url_for('seeker.resume') }}" class="tint tint-lav tile-link p-4 flex items-center gap-4" aria-label="Resume status {{ resume_status }}. Open Resume Builder">
-        <span class="w-14 h-14 rounded-xl flex items-center justify-center text-white shrink-0" style="background:linear-gradient(135deg,#7A5CF5,#5B3FD8)"><i data-lucide="file-text" class="w-7 h-7"></i></span>
-        <div class="min-w-0">
-          <p class="font-display font-semibold text-navy leading-tight">Resume<br>Status</p>
-          <p class="text-sm font-semibold mt-1 {{ 'text-[#0E8A6F]' if resume_status == 'Completed' else ('text-[#A06A00]' if resume_status == 'In progress' else 'text-ink/55') }}">{{ resume_status }}</p>
-        </div>
-        <i data-lucide="chevron-right" class="w-5 h-5 text-ink/40 ml-auto shrink-0"></i>
-      </a>
-    </div>
 
-    <!-- Overview -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4" aria-label="Job search overview">
-      {% for label, value, icon, href in [
-        ('Applied', applications|length, 'send', url_for('seeker.applications')),
-        ('Shortlisted', status_counts['Shortlisted'], 'star', url_for('seeker.applications', status='Shortlisted')),
-        ('Interviews', status_counts['Interview'], 'calendar-check', url_for('seeker.applications', status='Interview')),
-        ('Saved jobs', saved|length, 'bookmark', '#saved')] %}
-      <a href="{{ href }}" class="tint tint-white tile-link p-3.5 flex items-center gap-3">
-        <span class="icon-badge icon-badge-indigo w-9 h-9"><i data-lucide="{{ icon }}" class="w-4 h-4"></i></span>
-        <div><p class="font-display text-xl font-bold text-navy leading-none" data-counter="{{ value }}">{{ value }}</p><p class="text-[11px] text-ink/55 mt-1">{{ label }}</p></div>
-      </a>
-      {% endfor %}
-    </div>
+        <!-- Slider Card Area with Left/Right Navigation Arrows -->
+        <div class="relative mt-3">
+          
+          <!-- Left Arrow Button -->
+          <button type="button" onclick="prevPlanSlide()" class="absolute -left-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#18234D] hover:bg-indigo border border-white/20 text-white flex items-center justify-center z-20 shadow-md transition-all text-xs" aria-label="Previous Plan">
+            ‹
+          </button>
+          
+          <!-- Right Arrow Button -->
+          <button type="button" onclick="nextPlanSlide()" class="absolute -right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-[#18234D] hover:bg-indigo border border-white/20 text-white flex items-center justify-center z-20 shadow-md transition-all text-xs" aria-label="Next Plan">
+            ›
+          </button>
 
-    <!-- Recommended jobs -->
-    <div class="tint tint-rose mt-4 p-4 md:p-5">
-      <h2 class="font-display font-semibold text-navy text-center mb-4">Recommended Jobs (Top 3)</h2>
-      {% if matches %}
-      <div class="grid sm:grid-cols-3 gap-3">
-        {% for m in matches[:3] %}{{ match_card(m) }}{% endfor %}
-      </div>
-      {% else %}
-      <div class="bg-white/70 rounded-2xl p-6 text-center">
-        <i data-lucide="sparkles" class="w-7 h-7 mx-auto mb-2 text-indigo"></i>
-        <p class="font-semibold text-navy text-sm">No matches yet</p>
-        <p class="text-xs text-ink/60 mt-1 max-w-sm mx-auto">Add your headline and at least 3 skills to your profile and we'll find the roles that fit you best.</p>
-        <a href="{{ url_for('seeker.profile') }}" class="btn btn-primary btn-sm mt-4 inline-flex">Complete my profile</a>
-      </div>
-      {% endif %}
-
-      <!-- Locked / unlocked extra matches -->
-      {% if is_premium %}
-      <div class="mt-4 bg-white/70 rounded-2xl p-4 flex items-center gap-4 flex-wrap">
-        <span class="w-11 h-11 rounded-xl bg-[#D5F5E6] text-[#0E7A4F] flex items-center justify-center"><i data-lucide="lock-open" class="w-5 h-5"></i></span>
-        <div class="flex-1 min-w-[200px]">
-          <p class="font-display font-semibold text-navy text-sm">All matching jobs unlocked</p>
-          <p class="text-xs text-ink/60">{{ total_matches }} role{{ '' if total_matches == 1 else 's' }} match your profile.</p>
-        </div>
-        <a href="{{ url_for('seeker.matches') }}" class="btn btn-soft btn-sm">View all matches</a>
-      </div>
-      {% else %}
-      <div class="mt-4 bg-white/60 border border-[#FFC9D2] rounded-2xl p-4 text-center">
-        <p class="font-display font-semibold text-navy text-sm flex items-center justify-center gap-2"><i data-lucide="lock" class="w-4 h-4"></i>More Matching Jobs (Locked)</p>
-        <p class="text-xs text-ink/60 mt-1">{% if locked_count %}{{ locked_count }} more role{{ '' if locked_count == 1 else 's' }} match you. {% endif %}Upgrade to see all matching jobs</p>
-        <a href="{{ url_for('seeker.upgrade') }}" class="btn btn-purple btn-sm mt-3 inline-flex">Upgrade Plan</a>
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- Quick access -->
-    <h2 class="font-display font-semibold text-navy mt-8 mb-3">Quick access</h2>
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-      <a href="{{ url_for('jobs') }}" class="tint tint-green tile-link p-4">
-        <span class="w-10 h-10 rounded-xl bg-[#17A34A] text-white flex items-center justify-center mb-3"><i data-lucide="search" class="w-5 h-5"></i></span>
-        <p class="font-display font-semibold text-navy">Find Jobs</p>
-        <p class="text-xs text-ink/60 mt-1">Search, filter and apply to jobs directly.</p>
-      </a>
-      <a href="{{ url_for('seeker.profile') }}" class="tint tint-lav tile-link p-4">
-        <span class="w-10 h-10 rounded-xl text-white flex items-center justify-center mb-3" style="background:#7A4DF0"><i data-lucide="user-round" class="w-5 h-5"></i></span>
-        <p class="font-display font-semibold text-navy">My Profile</p>
-        <p class="text-xs text-ink/60 mt-1">Better profile, better job matching.</p>
-      </a>
-      <a href="{{ url_for('seeker.applications') }}" class="tint tint-rose tile-link p-4">
-        <span class="w-10 h-10 rounded-xl text-white flex items-center justify-center mb-3" style="background:#F0476A"><i data-lucide="file-check-2" class="w-5 h-5"></i></span>
-        <p class="font-display font-semibold text-navy">My Applications</p>
-        <p class="text-xs text-ink/60 mt-1">Track the progress of every application.</p>
-      </a>
-      <a href="{{ url_for('seeker.resume') }}" class="tint tint-amber tile-link p-4">
-        <span class="w-10 h-10 rounded-xl text-white flex items-center justify-center mb-3" style="background:#F59E0B"><i data-lucide="file-text" class="w-5 h-5"></i></span>
-        <p class="font-display font-semibold text-navy">Resume Builder</p>
-        <p class="text-xs text-ink/60 mt-1">Create, preview and download your resume.</p>
-      </a>
-    </div>
-
-    <!-- Recent applications + saved -->
-    <div class="grid lg:grid-cols-2 gap-4 mt-6">
-      <div class="tint tint-white p-5" id="applications">
-        <div class="flex items-center justify-between mb-3">
-          <h2 class="font-display font-semibold text-navy text-sm">Recent applications</h2>
-          {% if applications %}<a href="{{ url_for('seeker.applications') }}" class="text-xs font-semibold text-indigo hover:text-indigo-dark">View all</a>{% endif %}
-        </div>
-        {% if applications %}
-        <ul class="flex flex-col gap-3">
-          {% for a in applications[:3] %}
-          <li class="flex items-center gap-3">
-            <span class="w-9 h-9 rounded-lg flex items-center justify-center text-white text-[11px] font-bold shrink-0" style="background:{{ a.job.company_color }}">{{ a.job.company_initials }}</span>
-            <div class="min-w-0 flex-1">
-              <a href="{{ url_for('job_details', job_id=a.job.id) }}" class="text-sm font-semibold text-navy hover:text-indigo truncate block">{{ a.job.title }}</a>
-              <p class="text-xs text-ink/50 truncate">{{ a.job.company }} · {{ a.applied_label }}</p>
+          <!-- Slides Container (Auto-slides every 4s, pauses on hover) -->
+          <div class="rounded-xl p-3 text-white border border-white/10" style="background:linear-gradient(180deg,#151F47,#0C132E)">
+            
+            <!-- SLIDE 1: Free Plan -->
+            <div class="plan-card-slide transition-opacity duration-500 opacity-0 hidden" data-slide-idx="0">
+              <span class="inline-block px-2 py-0.5 rounded-full bg-white/15 text-[10px] font-semibold text-mint mb-1.5">
+                🌱 Free Plan
+              </span>
+              <h4 class="font-display font-bold text-sm text-white mb-2">Explore Opportunities</h4>
+              <ul class="space-y-1 text-[11px] text-cream/80 mb-3">
+                <li class="flex items-center gap-1.5"><span class="text-mint font-bold text-xs">✓</span> Top 3 Job Recommendations</li>
+                <li class="flex items-center gap-1.5"><span class="text-mint font-bold text-xs">✓</span> Basic Resume Builder</li>
+                <li class="flex items-center gap-1.5"><span class="text-mint font-bold text-xs">✓</span> Unlimited Applications</li>
+              </ul>
+              <a href="{{ url_for('seeker.upgrade') }}" class="btn btn-outline on-dark btn-sm w-full justify-center text-xs py-1.5">
+                View Plans →
+              </a>
             </div>
-            <span class="status-chip status-{{ a.status }}">{{ a.status }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p class="text-sm text-ink/55 py-4 text-center">You haven't applied to any jobs yet. <a class="auth-link" href="{{ url_for('jobs') }}">Browse jobs</a></p>
-        {% endif %}
+
+            <!-- SLIDE 2: Pro Plan (Default featured with Rocket 🚀) -->
+            <div class="plan-card-slide transition-opacity duration-500 opacity-100 block" data-slide-idx="1">
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="inline-block px-2 py-0.5 rounded-full bg-mint/20 text-[10px] font-semibold text-mint mb-1.5">
+                    ⭐ Pro Plan
+                  </span>
+                  <h4 class="font-display font-bold text-sm text-white">Boost Your Career</h4>
+                </div>
+                <!-- Rocket Graphic -->
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo to-mint flex items-center justify-center text-lg shadow-lg">
+                  🚀
+                </div>
+              </div>
+              <ul class="space-y-1 text-[11px] text-cream/85 my-2.5">
+                <li class="flex items-center gap-1.5"><span class="text-mint font-bold text-xs">✓</span> Unlimited applications</li>
+                <li class="flex items-center gap-1.5"><span class="text-mint font-bold text-xs">✓</span> AI resume analysis</li>
+                <li class="flex items-center gap-1.5"><span class="text-mint font-bold text-xs">✓</span> Higher match accuracy</li>
+              </ul>
+              <a href="{{ url_for('seeker.upgrade') }}" class="btn btn-primary btn-sm w-full justify-center text-xs py-1.5 shadow-lg shadow-indigo/40" style="background:linear-gradient(135deg,#1E6BFF,#6C5CF5)">
+                View Plans →
+              </a>
+            </div>
+
+            <!-- SLIDE 3: Premium Plan -->
+            <div class="plan-card-slide transition-opacity duration-500 opacity-0 hidden" data-slide-idx="2">
+              <div class="flex items-start justify-between">
+                <div>
+                  <span class="inline-block px-2 py-0.5 rounded-full bg-amber/20 text-[10px] font-semibold text-amber mb-1.5">
+                    👑 Premium Plan
+                  </span>
+                  <h4 class="font-display font-bold text-sm text-white">Fast-Track Hiring</h4>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-amber/20 text-amber flex items-center justify-center text-lg shadow-lg">
+                  💎
+                </div>
+              </div>
+              <ul class="space-y-1 text-[11px] text-cream/85 my-2.5">
+                <li class="flex items-center gap-1.5"><span class="text-amber font-bold text-xs">✓</span> Top Applicant Badge</li>
+                <li class="flex items-center gap-1.5"><span class="text-amber font-bold text-xs">✓</span> Priority recruiter direct routing</li>
+                <li class="flex items-center gap-1.5"><span class="text-amber font-bold text-xs">✓</span> 1-on-1 interview practice</li>
+              </ul>
+              <a href="{{ url_for('seeker.upgrade') }}" class="btn btn-purple btn-sm w-full justify-center text-xs py-1.5">
+                View Plans →
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Navigation Dots -->
+        <div class="flex items-center justify-center gap-1.5 mt-2.5" id="plan-nav-dots">
+          <button type="button" onclick="goToPlanSlide(0)" class="w-2 h-2 rounded-full bg-white/30 transition-all plan-dot-btn" aria-label="Free Plan"></button>
+          <button type="button" onclick="goToPlanSlide(1)" class="w-4 h-2 rounded-full bg-[#2BE0BE] transition-all plan-dot-btn" aria-label="Pro Plan"></button>
+          <button type="button" onclick="goToPlanSlide(2)" class="w-2 h-2 rounded-full bg-white/30 transition-all plan-dot-btn" aria-label="Premium Plan"></button>
+        </div>
+
       </div>
 
-      <div class="tint tint-white p-5" id="saved">
-        <h2 class="font-display font-semibold text-navy text-sm mb-3">Saved jobs</h2>
-        {% if saved %}
-        <ul class="flex flex-col gap-3">
-          {% for job in saved[:4] %}
-          <li class="flex items-center gap-3">
-            <span class="w-9 h-9 rounded-lg flex items-center justify-center text-white text-[11px] font-bold shrink-0" style="background:{{ job.company_color }}">{{ job.company_initials }}</span>
-            <div class="min-w-0 flex-1">
-              <a href="{{ url_for('job_details', job_id=job.id) }}" class="text-sm font-semibold text-navy hover:text-indigo truncate block">{{ job.title }}</a>
-              <p class="text-xs text-ink/50 truncate">{{ job.company }} · {{ job.location }}</p>
+    </aside>
+
+    <!-- ======================================================== -->
+    <!-- RIGHT MAIN WORKSPACE (Single Header + Dashboard Content)  -->
+    <!-- Exactly matching Reference Mockup (Image 3)              -->
+    <!-- ======================================================== -->
+    <div class="min-w-0 flex flex-col min-h-screen">
+      
+      <!-- Top Workspace Header (Search + Bell + Messages + User Profile) -->
+      <header class="border-b border-white/10 bg-[#070C1E]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
+        
+        <!-- Mobile Sidebar Hamburger Toggle -->
+        <button type="button" onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl bg-white/5 hover:bg-white/10 text-cream" aria-label="Toggle Menu">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+
+        <!-- Center Search Bar (Search jobs, companies, or skills...) -->
+        <div class="flex-1 max-w-xl">
+          <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 text-cream/40 absolute left-3.5 top-2.5"></i>
+            <input type="text" placeholder="Search jobs, companies, or skills..." class="w-full bg-[#101935] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder-cream/40 focus:border-[#2BE0BE] outline-none">
+          </div>
+        </div>
+
+        <!-- Right Header Items: Notifications (3), Message, Single User Avatar -->
+        <div class="flex items-center gap-3 shrink-0">
+          <!-- Notification Bell with Badge (3) -->
+          <button type="button" onclick="showToast('You have 3 new notifications.', {icon:'bell'})" class="relative p-2 rounded-xl bg-white/5 hover:bg-white/10 text-cream/80" aria-label="Notifications">
+            <i data-lucide="bell" class="w-4 h-4"></i>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose font-mono text-[8px] flex items-center justify-center"></span>
+          </button>
+          
+          <!-- Message Icon -->
+          <button type="button" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-cream/80" aria-label="Messages">
+            <i data-lucide="message-square" class="w-4 h-4"></i>
+          </button>
+          
+          <!-- Single User Avatar Dropdown (Matches Reference Image 3) -->
+          <a href="{{ url_for('seeker.profile') }}" class="flex items-center gap-2.5 pl-1.5 pr-3 py-1 rounded-full bg-[#101935] border border-white/10 hover:border-white/20 transition-all">
+            <span id="dash-user-avatar-circle" class="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo to-mint text-white font-bold text-xs flex items-center justify-center overflow-hidden">
+              <span id="dash-user-initials">{{ (seeker_user.first_name[0] if seeker_user and seeker_user.first_name else 'R') }}</span>
+              <img id="dash-user-img" class="w-full h-full object-cover hidden" alt="Avatar">
+            </span>
+            <div class="text-left hidden md:block">
+              <p class="text-xs font-semibold text-white leading-tight leading-none">{{ seeker_user.first_name or 'Ravikiran' }} {{ seeker_user.last_name or 'Teja' }}</p>
+              <p class="text-[10px] text-cream/50 leading-none mt-0.5">Job Seeker</p>
             </div>
-            <a href="{{ url_for('job_details', job_id=job.id) }}" class="btn btn-soft btn-sm shrink-0">View</a>
-          </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p class="text-sm text-ink/55 py-4 text-center">Jobs you save will appear here.</p>
-        {% endif %}
-      </div>
+            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-cream/40 hidden md:block"></i>
+          </a>
+        </div>
+
+      </header>
+
+      <!-- Workspace Body Padding -->
+      <main class="p-4 sm:p-6 lg:p-8 space-y-6 flex-1">
+        
+        <!-- ================= HERO BANNER: "Your next chapter starts here" ================= -->
+        <section class="relative bg-gradient-to-r from-[#0C1530] via-[#101E42] to-[#0D1836] border border-white/10 rounded-3xl p-6 sm:p-8 text-white shadow-2xl overflow-hidden">
+          
+          <!-- Glowing Skyline & Career Journey Illustration (Right side of banner) -->
+          <div class="absolute right-0 top-0 bottom-0 w-1/2 opacity-30 lg:opacity-75 pointer-events-none hidden md:block">
+            <svg class="w-full h-full" viewBox="0 0 500 240" fill="none" preserveAspectRatio="none">
+              <path d="M0 200 C 150 180, 280 120, 500 80" stroke="#2BE0BE" stroke-width="2" stroke-dasharray="4 4" opacity="0.6"/>
+              <circle cx="120" cy="180" r="4" fill="#2BE0BE"/>
+              <text x="100" y="170" fill="#2BE0BE" font-size="10" font-family="sans-serif">Explore</text>
+              <circle cx="260" cy="140" r="4" fill="#6C5CF5"/>
+              <text x="245" y="130" fill="#6C5CF5" font-size="10" font-family="sans-serif">Apply</text>
+              <circle cx="380" cy="105" r="4" fill="#FFB74A"/>
+              <text x="360" y="95" fill="#FFB74A" font-size="10" font-family="sans-serif">Interview</text>
+              <circle cx="470" cy="80" r="5" fill="#2BE0BE"/>
+              <text x="440" y="70" fill="#2BE0BE" font-size="10" font-weight="bold" font-family="sans-serif">Get Hired ⛳</text>
+            </svg>
+          </div>
+
+          <div class="relative z-10 max-w-xl">
+            <p class="text-xs text-cream/70 font-medium mb-1">Welcome back, {{ seeker_user.first_name or 'Ravikiran' }}! 👋</p>
+            <h1 class="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+              Your next chapter <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#2BE0BE] to-[#6C5CF5]">starts here</span>
+            </h1>
+            <p class="text-xs sm:text-sm text-cream/70 mt-2">
+              Discover meaningful opportunities, get personalised recommendations and take the next step in your career.
+            </p>
+          </div>
+
+          <!-- Integrated Hero Search Bar with 3 Inputs -->
+          <form action="{{ url_for('jobs') }}" method="get" class="relative z-10 mt-6 bg-white rounded-2xl p-2 shadow-2xl flex flex-col md:flex-row items-center gap-2 text-ink">
+            
+            <div class="flex items-center gap-2.5 px-3 py-2 flex-1 w-full min-w-0">
+              <i data-lucide="briefcase" class="w-4 h-4 text-indigo shrink-0"></i>
+              <input type="text" name="q" placeholder="Job role, keyword or company" class="w-full text-xs outline-none placeholder:text-grey text-navy font-medium">
+            </div>
+
+            <div class="hidden md:block w-px bg-grey-line h-6"></div>
+
+            <div class="flex items-center gap-2.5 px-3 py-2 md:w-44 w-full shrink-0">
+              <i data-lucide="map-pin" class="w-4 h-4 text-mint shrink-0"></i>
+              <input type="text" name="location" placeholder="Location" class="w-full text-xs outline-none placeholder:text-grey text-navy font-medium">
+            </div>
+
+            <div class="hidden md:block w-px bg-grey-line h-6"></div>
+
+            <div class="flex items-center gap-2.5 px-3 py-2 md:w-36 w-full shrink-0">
+              <i data-lucide="cpu" class="w-4 h-4 text-amber shrink-0"></i>
+              <input type="text" placeholder="Skills" class="w-full text-xs outline-none placeholder:text-grey text-navy font-medium">
+            </div>
+
+            <button type="submit" class="btn btn-accent btn-sm md:btn-md shrink-0 w-full md:w-auto px-5 font-bold shadow-md">
+              Find my next role →
+            </button>
+          </form>
+
+          <!-- Popular Searches Pills -->
+          <div class="relative z-10 mt-4 flex items-center gap-2 text-xs text-cream/60 flex-wrap">
+            <span class="text-[11px]">Popular searches:</span>
+            {% for tag in ['Python', 'Software Engineer', 'Data Analyst', 'Full Stack Developer', 'Remote', 'Sydney', 'Melbourne'] %}
+            <a href="{{ url_for('jobs', q=tag) }}" class="px-2.5 py-0.5 rounded-full bg-white/10 hover:bg-white/20 text-cream/80 text-[11px] transition-colors">
+              {{ tag }}
+            </a>
+            {% endfor %}
+          </div>
+
+        </section>
+
+        <!-- ================= ROW 2: THREE ANALYTICS CARDS ================= -->
+        <div class="grid lg:grid-cols-3 gap-5">
+          
+          <!-- CARD 1: Career Constellation -->
+          <div class="bg-[#0C1530] border border-white/10 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <h3 class="font-display font-bold text-sm text-white flex items-center gap-1.5">
+                  <span class="text-indigo">✦</span> Career Constellation
+                </h3>
+                <a href="{{ url_for('seeker.profile') }}" class="text-[11px] text-[#2BE0BE] hover:underline flex items-center gap-1">
+                  View Details →
+                </a>
+              </div>
+              <p class="text-[10px] text-cream/60 mb-4">Your skills and interests match with in-demand roles</p>
+
+              <div class="grid grid-cols-[1.1fr_0.9fr] gap-3 items-center">
+                
+                <!-- Orbital Strength Hub -->
+                <div class="relative w-32 h-32 mx-auto flex items-center justify-center">
+                  <div class="absolute inset-0 rounded-full border border-white/10"></div>
+                  <div class="absolute inset-3 rounded-full border border-indigo/30 animate-spin" style="animation-duration: 20s;"></div>
+                  
+                  <span class="absolute top-0 px-1.5 py-0.5 rounded bg-indigo/40 text-[9px] text-cream font-mono">Python</span>
+                  <span class="absolute right-0 top-8 px-1.5 py-0.5 rounded bg-mint/30 text-[9px] text-mint font-mono">Web</span>
+                  <span class="absolute bottom-0 px-1.5 py-0.5 rounded bg-amber/30 text-[9px] text-amber font-mono">Data</span>
+                  <span class="absolute left-0 top-12 px-1.5 py-0.5 rounded bg-rose/30 text-[9px] text-rose font-mono">ML</span>
+
+                  <div class="w-16 h-16 rounded-full bg-[#111C3D] border-2 border-indigo flex flex-col items-center justify-center text-center shadow-lg">
+                    <span class="font-display font-extrabold text-sm text-white leading-none">82%</span>
+                    <span class="text-[8px] text-cream/60 leading-none mt-0.5">Profile Strength</span>
+                  </div>
+                </div>
+
+                <!-- Breakdown Stats -->
+                <div class="space-y-2 text-[11px]">
+                  <div>
+                    <div class="flex justify-between text-cream/70 mb-0.5">
+                      <span>Technical Skills</span> <span class="font-bold text-white">85%</span>
+                    </div>
+                    <div class="w-full bg-white/10 h-1 rounded-full"><div class="bg-indigo h-full rounded-full" style="width:85%"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-cream/70 mb-0.5">
+                      <span>Experience</span> <span class="font-bold text-white">70%</span>
+                    </div>
+                    <div class="w-full bg-white/10 h-1 rounded-full"><div class="bg-mint h-full rounded-full" style="width:70%"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-cream/70 mb-0.5">
+                      <span>Education</span> <span class="font-bold text-white">90%</span>
+                    </div>
+                    <div class="w-full bg-white/10 h-1 rounded-full"><div class="bg-amber h-full rounded-full" style="width:90%"></div></div>
+                  </div>
+                  <div>
+                    <div class="flex justify-between text-cream/70 mb-0.5">
+                      <span>Completeness</span> <span class="font-bold text-[#2BE0BE]">80%</span>
+                    </div>
+                    <div class="w-full bg-white/10 h-1 rounded-full"><div class="bg-[#2BE0BE] h-full rounded-full" style="width:80%"></div></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[10px] text-cream/60">
+              <span class="flex items-center gap-1.5 text-amber">
+                <i data-lucide="zap" class="w-3.5 h-3.5"></i> Complete profile to unlock more matches.
+              </span>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </div>
+          </div>
+
+          <!-- CARD 2: Next Best Move -->
+          <div class="bg-[#0C1530] border border-white/10 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-display font-bold text-sm text-white flex items-center gap-1.5">
+                  <span class="w-5 h-5 rounded-lg bg-indigo/20 text-indigo flex items-center justify-center text-xs">🎯</span> Next Best Move
+                </h3>
+                <div class="flex items-center gap-1 text-cream/40 text-xs">
+                  <button type="button" class="hover:text-white">‹</button>
+                  <button type="button" class="hover:text-white">›</button>
+                </div>
+              </div>
+
+              <div class="p-3.5 rounded-xl bg-gradient-to-r from-[#14234C] to-[#121B3B] border border-white/10 mb-4">
+                <div class="flex items-start gap-3">
+                  <span class="w-8 h-8 rounded-lg bg-mint/20 text-mint flex items-center justify-center shrink-0 font-bold">
+                    +
+                  </span>
+                  <div>
+                    <h4 class="font-display font-bold text-xs text-white">Add 2 more skills to get better job matches</h4>
+                    <p class="text-[10px] text-cream/60 mt-0.5 leading-relaxed">Candidates with 5+ verified skills receive 3x more interview requests.</p>
+                  </div>
+                </div>
+                <a href="{{ url_for('seeker.profile') }}" class="btn btn-accent btn-sm text-[11px] w-full justify-center mt-3 py-1 font-semibold">
+                  Add Skills Now →
+                </a>
+              </div>
+
+              <div>
+                <div class="flex justify-between text-xs text-cream/70 mb-1">
+                  <span>Profile Completion</span>
+                  <span class="font-bold text-mint">{{ percent }}%</span>
+                </div>
+                <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden mb-3">
+                  <div class="bg-mint h-full rounded-full" style="width:{{ percent }}%"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-y-1.5 text-[11px] text-cream/80">
+                  <span class="flex items-center gap-1.5"><span class="text-mint font-bold">✓</span> Basic Information</span>
+                  <span class="flex items-center gap-1.5"><span class="text-mint font-bold">✓</span> Work Preferences</span>
+                  <span class="flex items-center gap-1.5"><span class="text-mint font-bold">✓</span> Skills (4/5)</span>
+                  <span class="flex items-center gap-1.5"><span class="text-mint font-bold">✓</span> Profile Photo</span>
+                  <span class="flex items-center gap-1.5"><span class="text-mint font-bold">✓</span> Resume Upload</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CARD 3: Activity & Upcoming Interview -->
+          <div class="bg-[#0C1530] border border-white/10 rounded-2xl p-5 shadow-xl flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-display font-bold text-sm text-white flex items-center gap-1.5">
+                  <i data-lucide="trending-up" class="w-4 h-4 text-mint"></i> Your Activity
+                </h3>
+                <span class="text-[10px] text-cream/50 bg-white/5 px-2 py-0.5 rounded-md">Last 30 days ▾</span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-2.5 mb-4">
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <div class="flex items-center gap-1.5 text-indigo text-xs mb-1">
+                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                    <span class="font-display font-bold text-lg text-white">56</span>
+                  </div>
+                  <p class="text-[10px] text-cream/60">Jobs Viewed</p>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <div class="flex items-center gap-1.5 text-rose text-xs mb-1">
+                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                    <span class="font-display font-bold text-lg text-white">{{ applications|length or 12 }}</span>
+                  </div>
+                  <p class="text-[10px] text-cream/60">Applications</p>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <div class="flex items-center gap-1.5 text-amber text-xs mb-1">
+                    <i data-lucide="star" class="w-3.5 h-3.5"></i>
+                    <span class="font-display font-bold text-lg text-white">{{ status_counts['Shortlisted'] or 8 }}</span>
+                  </div>
+                  <p class="text-[10px] text-cream/60">Shortlisted</p>
+                </div>
+
+                <div class="p-2.5 rounded-xl bg-white/5 border border-white/5">
+                  <div class="flex items-center gap-1.5 text-mint text-xs mb-1">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+                    <span class="font-display font-bold text-lg text-white">{{ status_counts['Interview'] or 3 }}</span>
+                  </div>
+                  <p class="text-[10px] text-cream/60">Interviews</p>
+                </div>
+              </div>
+
+              <!-- Upcoming Interview -->
+              <div class="pt-3 border-t border-white/10">
+                <div class="flex items-center justify-between text-[11px] mb-2">
+                  <span class="font-semibold text-white flex items-center gap-1.5">
+                    <i data-lucide="calendar-check" class="w-3.5 h-3.5 text-amber"></i> Upcoming Interview
+                  </span>
+                  <a href="{{ url_for('seeker.applications', status='Interview') }}" class="text-[#2BE0BE] hover:underline text-[10px]">View All →</a>
+                </div>
+                <div class="p-2.5 rounded-xl bg-[#131F45] border border-white/10 flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-8 h-8 rounded-lg bg-rose text-white font-extrabold text-[10px] flex items-center justify-center">
+                      TCS
+                    </span>
+                    <div>
+                      <p class="font-bold text-xs text-white">TCS Software Engineer</p>
+                      <p class="text-[10px] text-cream/60">Oct 20, 2026 • 11:00 AM</p>
+                    </div>
+                  </div>
+                  <span class="text-[9px] px-2 py-0.5 rounded-full bg-mint/20 text-mint font-semibold">Online Interview</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================= ROW 3: MADE FOR YOU (JOB RECOMMENDATIONS) ================= -->
+        <section class="bg-[#0C1530] border border-white/10 rounded-2xl p-5 sm:p-6 shadow-xl">
+          <div class="flex items-center justify-between gap-4 mb-5 flex-wrap">
+            <div>
+              <h2 class="font-display font-bold text-lg text-white flex items-center gap-2">
+                <span class="text-[#2BE0BE]">✦</span> Made for you
+              </h2>
+              <p class="text-xs text-cream/60 mt-0.5">Jobs based on your profile, skills and preferences</p>
+            </div>
+            <a href="{{ url_for('jobs') }}" class="text-xs font-semibold text-[#2BE0BE] hover:underline flex items-center gap-1">
+              View All Jobs →
+            </a>
+          </div>
+
+          <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            
+            <!-- Card 1: Google -->
+            <div class="bg-[#101C3D] border border-white/10 hover:border-indigo/50 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+              <div>
+                <div class="flex items-start justify-between gap-2 mb-3">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-xl bg-white text-navy font-bold text-sm flex items-center justify-center shadow-md">
+                      G
+                    </span>
+                    <div>
+                      <h3 class="font-display font-bold text-sm text-white truncate max-w-[130px]">Software Engineer</h3>
+                      <p class="text-[11px] text-cream/60">Google • Sydney (Hybrid)</p>
+                    </div>
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-mint/20 text-mint font-bold shrink-0">92% Match</span>
+                </div>
+
+                <p class="font-display font-bold text-sm text-[#2BE0BE] mb-2">$140k - $180k AUD</p>
+
+                <div class="flex flex-wrap gap-1.5 mb-4">
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">Python</span>
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">System Design</span>
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">Backend</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 pt-3 border-t border-white/10">
+                <button type="button" class="btn btn-outline on-dark btn-sm flex-1 text-xs py-1.5">Save</button>
+                <a href="{{ url_for('jobs') }}" class="btn btn-primary btn-sm flex-1 text-xs py-1.5 justify-center font-bold">Apply Now →</a>
+              </div>
+            </div>
+
+            <!-- Card 2: Microsoft -->
+            <div class="bg-[#101C3D] border border-white/10 hover:border-indigo/50 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+              <div>
+                <div class="flex items-start justify-between gap-2 mb-3">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-xl bg-indigo text-white font-bold text-sm flex items-center justify-center shadow-md">
+                      M
+                    </span>
+                    <div>
+                      <h3 class="font-display font-bold text-sm text-white truncate max-w-[130px]">Software Developer</h3>
+                      <p class="text-[11px] text-cream/60">Microsoft • Melbourne</p>
+                    </div>
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-mint/20 text-mint font-bold shrink-0">88% Match</span>
+                </div>
+
+                <p class="font-display font-bold text-sm text-[#2BE0BE] mb-2">$130k - $160k AUD</p>
+
+                <div class="flex flex-wrap gap-1.5 mb-4">
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">Python</span>
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">Azure</span>
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">Full Stack</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 pt-3 border-t border-white/10">
+                <button type="button" class="btn btn-outline on-dark btn-sm flex-1 text-xs py-1.5">Save</button>
+                <a href="{{ url_for('jobs') }}" class="btn btn-primary btn-sm flex-1 text-xs py-1.5 justify-center font-bold">Apply Now →</a>
+              </div>
+            </div>
+
+            <!-- Card 3: Amazon -->
+            <div class="bg-[#101C3D] border border-white/10 hover:border-indigo/50 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+              <div>
+                <div class="flex items-start justify-between gap-2 mb-3">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-xl bg-amber text-navy font-bold text-sm flex items-center justify-center shadow-md">
+                      A
+                    </span>
+                    <div>
+                      <h3 class="font-display font-bold text-sm text-white truncate max-w-[130px]">Data Analyst</h3>
+                      <p class="text-[11px] text-cream/60">Amazon • Brisbane (Remote)</p>
+                    </div>
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-mint/20 text-mint font-bold shrink-0">86% Match</span>
+                </div>
+
+                <p class="font-display font-bold text-sm text-[#2BE0BE] mb-2">$115k - $138k AUD</p>
+
+                <div class="flex flex-wrap gap-1.5 mb-4">
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">SQL</span>
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">Python</span>
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">Analytics</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 pt-3 border-t border-white/10">
+                <button type="button" class="btn btn-outline on-dark btn-sm flex-1 text-xs py-1.5">Save</button>
+                <a href="{{ url_for('jobs') }}" class="btn btn-primary btn-sm flex-1 text-xs py-1.5 justify-center font-bold">Apply Now →</a>
+              </div>
+            </div>
+
+            <!-- Card 4: Atlassian -->
+            <div class="bg-[#101C3D] border border-white/10 hover:border-indigo/50 rounded-2xl p-4 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+              <div>
+                <div class="flex items-start justify-between gap-2 mb-3">
+                  <div class="flex items-center gap-2.5">
+                    <span class="w-9 h-9 rounded-xl bg-mint text-navy font-bold text-sm flex items-center justify-center shadow-md">
+                      At
+                    </span>
+                    <div>
+                      <h3 class="font-display font-bold text-sm text-white truncate max-w-[130px]">Full Stack Dev</h3>
+                      <p class="text-[11px] text-cream/60">Atlassian • Sydney</p>
+                    </div>
+                  </div>
+                  <span class="text-[10px] px-2 py-0.5 rounded-full bg-mint/20 text-mint font-bold shrink-0">80% Match</span>
+                </div>
+
+                <p class="font-display font-bold text-sm text-[#2BE0BE] mb-2">$125k - $155k AUD</p>
+
+                <div class="flex flex-wrap gap-1.5 mb-4">
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">React</span>
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">Python</span>
+                  <span class="px-2 py-0.5 rounded-md bg-white/5 text-[10px] text-cream/80">Cloud</span>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 pt-3 border-t border-white/10">
+                <button type="button" class="btn btn-outline on-dark btn-sm flex-1 text-xs py-1.5">Save</button>
+                <a href="{{ url_for('jobs') }}" class="btn btn-primary btn-sm flex-1 text-xs py-1.5 justify-center font-bold">Apply Now →</a>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+
     </div>
-  </section>
+
+  </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Mobile drawer toggle
+  function toggleSidebar() {
+    const sb = document.getElementById('sidebar-drawer');
+    if (!sb) return;
+    sb.classList.toggle('hidden');
+  }
+
+  // Load avatar if user previously uploaded one in profile
+  (function loadUserAvatar() {
+    const savedAvatar = localStorage.getItem('nexora_user_avatar');
+    if (savedAvatar) {
+      const img = document.getElementById('dash-user-img');
+      const initials = document.getElementById('dash-user-initials');
+      if (img && initials) {
+        img.src = savedAvatar;
+        img.classList.remove('hidden');
+        initials.classList.add('hidden');
+      }
+    }
+  })();
+
+  // ========================================================
+  // PLAN ADVERTISEMENT SECTION — SLIDER LOGIC
+  // Exactly matching Specification in Reference Image:
+  // - Auto-swipe every 4 seconds
+  // - Pause on hover (laptop/PC)
+  // - Left / Right manual navigation arrows
+  // - Indicator dots
+  // - Click redirect to pricing
+  // ========================================================
+  (function initPlanSlider() {
+    const sliderContainer = document.getElementById('plan-ad-section');
+    if (!sliderContainer) return;
+
+    const slides = sliderContainer.querySelectorAll('.plan-card-slide');
+    const dots = sliderContainer.querySelectorAll('.plan-dot-btn');
+    let currentIdx = 1; // Default to Pro Plan (matching reference)
+    let autoInterval = null;
+
+    function renderSlide(index) {
+      if (!slides.length) return;
+      currentIdx = (index + slides.length) % slides.length;
+
+      slides.forEach((slide, i) => {
+        const isCurrent = i === currentIdx;
+        slide.classList.toggle('block', isCurrent);
+        slide.classList.toggle('hidden', !isCurrent);
+        slide.classList.toggle('opacity-100', isCurrent);
+        slide.classList.toggle('opacity-0', !isCurrent);
+      });
+
+      dots.forEach((dot, i) => {
+        const isCurrent = i === currentIdx;
+        dot.classList.toggle('bg-[#2BE0BE]', isCurrent);
+        dot.classList.toggle('w-4', isCurrent);
+        dot.classList.toggle('bg-white/30', !isCurrent);
+        dot.classList.toggle('w-2', !isCurrent);
+      });
+    }
+
+    function startAutoSwipe() {
+      stopAutoSwipe();
+      autoInterval = setInterval(() => {
+        renderSlide(currentIdx + 1);
+      }, 4000); // 4 seconds interval per spec 2
+    }
+
+    function stopAutoSwipe() {
+      if (autoInterval) {
+        clearInterval(autoInterval);
+        autoInterval = null;
+      }
+    }
+
+    window.nextPlanSlide = () => { renderSlide(currentIdx + 1); startAutoSwipe(); };
+    window.prevPlanSlide = () => { renderSlide(currentIdx - 1); startAutoSwipe(); };
+    window.goToPlanSlide = (idx) => { renderSlide(idx); startAutoSwipe(); };
+
+    sliderContainer.addEventListener('mouseenter', stopAutoSwipe);
+    sliderContainer.addEventListener('mouseleave', startAutoSwipe);
+
+    renderSlide(currentIdx);
+    startAutoSwipe();
+  })();
+</script>
 {% endblock %}
