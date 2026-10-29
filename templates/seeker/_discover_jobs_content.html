@@ -1,0 +1,82 @@
+{% set is_preview = preview_mode|default(false) %}
+<div class="nx-discover-page" data-preview-mode="{{ 'true' if is_preview else 'false' }}">
+  <div class="nx-discover-main">
+    <section class="nx-discover-hero" aria-labelledby="nx-discover-title">
+      <div class="nx-discover-banner" role="img" aria-label="Sydney Harbour and the Australian skyline"></div>
+      <div class="nx-discover-hero-copy">
+        <div class="nx-discover-breadcrumb"><a href="/">Home</a><i data-lucide="chevron-right"></i><span>Discover Jobs</span></div>
+        <h1 id="nx-discover-title">Discover <span>Jobs</span></h1>
+        <p>Find the right opportunity in Australia and take the next step in your career.</p>
+      </div>
+    </section>
+
+    <form class="nx-discover-search-panel" id="discover-search-form" role="search">
+      <label class="nx-discover-field nx-field-keyword">
+        <i data-lucide="search"></i><span class="nx-discover-field-copy"><small>Job title, skills or keywords</small><input id="filter-keyword" type="search" placeholder="e.g. Software Engineer, Data Analyst" aria-label="Job title, skills or keywords"></span>
+      </label>
+      <label class="nx-discover-field nx-field-location">
+        <i data-lucide="map-pin"></i><span class="nx-discover-field-copy"><small>Location</small><input id="filter-location" type="search" placeholder="Australia (All cities)" aria-label="Location"></span><i data-lucide="chevron-down" class="nx-field-chevron"></i>
+      </label>
+      <label class="nx-discover-field nx-field-select">
+        <i data-lucide="briefcase-business"></i><span class="nx-discover-field-copy"><small>Work type</small><select id="discover-filter-type" aria-label="Work type"><option value="">Any type</option>{% for item in job_types %}<option value="{{ item }}">{{ item }}</option>{% endfor %}</select></span><i data-lucide="chevron-down" class="nx-field-chevron"></i>
+      </label>
+      <label class="nx-discover-field nx-field-select">
+        <i data-lucide="chart-no-axes-column-increasing"></i><span class="nx-discover-field-copy"><small>Experience level</small><select id="discover-filter-experience" aria-label="Experience level"><option value="">Any level</option>{% for item in experience_levels %}<option value="{{ item }}">{{ item }}</option>{% endfor %}</select></span><i data-lucide="chevron-down" class="nx-field-chevron"></i>
+      </label>
+      <button class="nx-discover-search-button" type="submit">Search Jobs <i data-lucide="arrow-right"></i></button>
+    </form>
+
+    <div class="nx-discover-quick-filters" aria-label="Quick filters">
+      <button type="button" class="nx-discover-filter-pill" data-work-mode="Remote"><i data-lucide="wifi"></i>Remote</button>
+      <button type="button" class="nx-discover-filter-pill" data-work-mode="Hybrid"><i data-lucide="building-2"></i>Hybrid</button>
+      <button type="button" class="nx-discover-filter-pill" data-work-mode="On-site"><i data-lucide="accessibility"></i>On-site</button>
+      <button type="button" class="nx-discover-filter-pill" data-job-type="Full-time"><i data-lucide="clock-3"></i>Full-time <i data-lucide="chevron-down" class="nx-pill-chevron"></i></button>
+      <button type="button" class="nx-discover-filter-pill" data-job-type="Part-time"><i data-lucide="scale"></i>Part-time</button>
+      <button type="button" class="nx-discover-filter-pill" data-job-type="Contract"><i data-lucide="briefcase-business"></i>Contract</button>
+      <button type="button" class="nx-discover-filter-pill" data-job-type="Internship"><i data-lucide="graduation-cap"></i>Internship</button>
+      <button type="button" class="nx-discover-filter-pill nx-discover-more-button" id="discover-more-toggle" aria-expanded="false"><i data-lucide="sliders-horizontal"></i>More Filters</button>
+    </div>
+
+    <div class="nx-discover-popular-row"><strong>Popular:</strong>
+      {% for query in ['Python', 'Data Analyst', 'Software Engineer', 'Web Developer', 'Machine Learning', 'Cloud', 'Cyber Security'] %}<button type="button" class="nx-discover-popular-chip" data-popular-query="{{ query }}">{{ query }}</button>{% endfor %}
+    </div>
+
+    <section class="nx-discover-more-panel" id="discover-more-panel" hidden aria-label="More job filters">
+      <div class="nx-discover-more-heading"><strong>More filters</strong><button type="button" id="discover-clear-filters">Clear all</button></div>
+      <div class="nx-discover-industry-filters">{% for industry in industries %}<label><input type="checkbox" value="{{ industry }}" data-industry-filter><span>{{ industry }}</span></label>{% endfor %}</div>
+      <label class="nx-discover-salary-filter"><span>Minimum salary</span><input type="range" min="0" max="150000" step="10000" value="0" id="discover-min-salary"><strong id="discover-min-salary-label">A$0+</strong></label>
+    </section>
+
+    <div class="nx-discover-layout">
+      <section class="nx-discover-results" aria-label="Job search results">
+        <div class="nx-discover-results-heading"><h2><strong id="results-count">{{ jobs_json|length }}</strong> jobs found</h2><label class="nx-discover-sort"><span>Sort by:</span><select id="discover-sort"><option value="relevance">Most relevant</option><option value="newest">Newest</option><option value="salary">Highest salary</option></select><i data-lucide="chevron-down"></i></label></div>
+        <div class="nx-discover-job-list" id="job-list" aria-live="polite"></div>
+        <div class="nx-discover-empty" id="empty-state" hidden><i data-lucide="search-x"></i><strong>No jobs match those filters</strong><p>Try broadening your search or clearing a filter.</p><button type="button" id="discover-empty-clear">Clear filters</button></div>
+      </section>
+
+      <aside class="nx-discover-insights" aria-label="Job search tools">
+        <section class="nx-discover-side-panel nx-saved-searches-panel">
+          <div class="nx-discover-side-heading"><i data-lucide="bookmark"></i><h2>Saved Searches</h2><a href="#saved-searches" id="discover-view-saved">View all <i data-lucide="arrow-right"></i></a></div>
+          <div class="nx-discover-saved-search" role="button" tabindex="0" data-saved-search="Python Developer"><span class="nx-side-search-icon"><i data-lucide="plus-circle"></i></span><span><strong>Python Developer</strong><small>Sydney, NSW · Full-time</small></span><i data-lucide="bell" class="nx-side-bell"></i><i data-lucide="more-vertical" class="nx-side-more"></i></div>
+          <div class="nx-discover-saved-search" role="button" tabindex="0" data-saved-search="Data Analyst"><span class="nx-side-search-icon"><i data-lucide="briefcase-business"></i></span><span><strong>Data Analyst</strong><small>Melbourne, VIC · Hybrid</small></span><i data-lucide="bell" class="nx-side-bell"></i><i data-lucide="more-vertical" class="nx-side-more"></i></div>
+          <div class="nx-discover-saved-search" role="button" tabindex="0" data-saved-search="Software Engineer"><span class="nx-side-search-icon"><i data-lucide="settings"></i></span><span><strong>Software Engineer</strong><small>Remote · Full-time</small></span><i data-lucide="bell" class="nx-side-bell"></i><i data-lucide="more-vertical" class="nx-side-more"></i></div>
+        </section>
+
+        <section class="nx-discover-alert-panel">
+          <div class="nx-discover-alert-heading"><i data-lucide="bell-ring"></i><div><h2>Job Alerts</h2><p>Get notified when new jobs match your preferences.</p></div></div>
+          <button type="button" id="discover-create-alert"><i data-lucide="bell"></i>Create Job Alert</button>
+        </section>
+
+        <section class="nx-discover-side-panel nx-discover-categories-panel">
+          <div class="nx-discover-side-heading"><h2>Explore by Category</h2><a href="#categories" id="discover-view-categories">View all <i data-lucide="arrow-right"></i></a></div>
+          <div class="nx-discover-categories-list">
+            {% for industry in industries %}
+              <button type="button" class="nx-discover-category" data-category="{{ industry }}"><span class="nx-category-icon nx-category-{{ loop.index0 % 7 }}"><i data-lucide="{{ ['briefcase-business','chart-no-axes-column-increasing','palette','layers','headset','megaphone','boxes'][loop.index0 % 7] }}"></i></span><span>{{ industry if industry != 'Technology' else 'Software Engineering' }}</span><strong data-category-count="{{ industry }}">0</strong></button>
+            {% endfor %}
+          </div>
+        </section>
+      </aside>
+    </div>
+  </div>
+</div>
+<div class="nx-discover-toast" id="nx-discover-toast" aria-live="polite" role="status"></div>

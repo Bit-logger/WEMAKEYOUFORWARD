@@ -1,0 +1,42 @@
+<header class="nx-apps-topbar">
+  <a class="nx-apps-brand" href="/" aria-label="NEXORA home">
+    <svg class="nx-apps-brand-mark" viewBox="0 0 48 48" aria-hidden="true">
+      <circle cx="24" cy="24" r="20" fill="none" stroke="#3C91FF" stroke-width="2.7"/>
+      <ellipse cx="24" cy="24" rx="29" ry="10" fill="none" stroke="#25D2E6" stroke-width="1.7" transform="rotate(-25 24 24)"/>
+      <circle cx="13" cy="31" r="3" fill="#7E66FF"/><circle cx="37" cy="17" r="2.7" fill="#28D6E6"/>
+    </svg>
+    <span>NEXORA</span>
+  </a>
+  <div class="nx-apps-global-search">
+    <i data-lucide="search"></i>
+    <input type="search" aria-label="Search jobs, companies, or skills" placeholder="Search jobs, companies, or skills (e.g. Python, Software Engineer)">
+  </div>
+  <button class="nx-apps-location" type="button"><i data-lucide="map-pin"></i><span>Australia</span><i data-lucide="chevron-down" class="nx-apps-chev"></i></button>
+  <button class="nx-apps-top-icon" type="button" aria-label="Notifications"><i data-lucide="bell"></i><span class="nx-apps-notification-dot">1</span></button>
+  <button class="nx-apps-user" type="button" aria-label="User account">
+    <span class="nx-apps-avatar">{{ seeker_user.initials if seeker_user is defined and seeker_user else 'R' }}</span>
+    <span class="nx-apps-user-name">{{ seeker_user.first_name if seeker_user is defined and seeker_user else 'Ravi' }}</span>
+    <i data-lucide="chevron-down"></i>
+  </button>
+</header>
+
+<aside class="nx-apps-sidebar" aria-label="Job seeker navigation">
+  <nav class="nx-apps-nav">
+    <a href="/dashboard/seeker" class="nx-apps-nav-item"><i data-lucide="house"></i><span>Overview</span></a>
+    <a href="/jobs" class="nx-apps-nav-item"><i data-lucide="search"></i><span>Discover Jobs</span></a>
+    <a href="/seeker/applications" class="nx-apps-nav-item is-active" aria-current="page"><i data-lucide="file-text"></i><span>My Applications</span></a>
+    <a href="/seeker/profile" class="nx-apps-nav-item"><i data-lucide="user-round"></i><span>Career Profile</span></a>
+    <a href="/seeker/resume" class="nx-apps-nav-item"><i data-lucide="file-text"></i><span>Resume Studio</span></a>
+    <a href="/seeker/matches" class="nx-apps-nav-item"><i data-lucide="chart-no-axes-column-increasing"></i><span>Interview Practice</span></a>
+    <a href="/seeker/matches" class="nx-apps-nav-item"><i data-lucide="bookmark"></i><span>Saved Roles</span></a>
+    <a href="/seeker/matches" class="nx-apps-nav-item nx-apps-nav-separated"><i data-lucide="bell-ring"></i><span>Job Alerts</span></a>
+    <a href="/companies" class="nx-apps-nav-item"><i data-lucide="building-2"></i><span>Companies</span></a>
+    <a href="/jobs" class="nx-apps-nav-item"><i data-lucide="book-open"></i><span>Career Resources</span></a>
+  </nav>
+  <div class="nx-apps-premium-card">
+    <div class="nx-apps-premium-title"><span class="nx-apps-crown"><i data-lucide="crown"></i></span><strong>Go Premium</strong></div>
+    <p>Unlock more opportunities and personalised insights for your Australian career.</p>
+    <ul><li><i data-lucide="check-circle-2"></i>Track unlimited applications</li><li><i data-lucide="check-circle-2"></i>Get interview tips</li><li><i data-lucide="check-circle-2"></i>AI application insights</li><li><i data-lucide="check-circle-2"></i>Priority job alerts</li></ul>
+    <a href="/seeker/upgrade" class="nx-apps-premium-button">View Plans <i data-lucide="arrow-right"></i></a>
+  </div>
+</aside>
