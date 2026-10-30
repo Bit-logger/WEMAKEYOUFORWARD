@@ -1,0 +1,136 @@
+{% set preview = preview_mode|default(false) %}
+{% if preview %}
+  {% set metric_total = 32 %}{% set metric_review = 12 %}{% set metric_interviews = 8 %}{% set metric_offers = 2 %}{% set metric_rejected = 10 %}
+{% else %}
+  {% set metric_total = total|default(apps|length) %}
+  {% set metric_review = counts.get('Shortlisted', 0) %}
+  {% set metric_interviews = counts.get('Interview', 0) %}
+  {% set metric_offers = counts.get('Offer Received', 0) %}
+  {% set metric_rejected = counts.get('Rejected', 0) %}
+{% endif %}
+<div class="nx-apps-page" data-preview-mode="{{ 'true' if preview else 'false' }}">
+  <div class="nx-apps-main">
+    <section class="nx-apps-hero" aria-labelledby="nx-apps-title">
+      <div class="nx-apps-sydney-banner" role="img" aria-label="Sydney Harbour, Australia"></div>
+      <div class="nx-apps-hero-copy">
+        <div class="nx-apps-breadcrumb"><a href="/">Home</a><i data-lucide="chevron-right"></i><span>My Applications</span></div>
+        <h1 id="nx-apps-title">My <span>Applications</span></h1>
+        <p>Track, manage and stay updated on all your job applications in one place.</p>
+      </div>
+    </section>
+
+    <section class="nx-apps-stat-grid" aria-label="Application summary">
+      <article class="nx-apps-stat-card nx-stat-total"><span class="nx-apps-stat-icon"><i data-lucide="file-text"></i></span><div class="nx-apps-stat-copy"><strong data-metric="total">{{ metric_total }}</strong><span>Total Applications</span><small>{{ '+5 this month' if preview else 'Across all job applications' }}</small></div></article>
+      <article class="nx-apps-stat-card nx-stat-review"><span class="nx-apps-stat-icon"><i data-lucide="clock-3"></i></span><div class="nx-apps-stat-copy"><strong data-metric="review">{{ metric_review }}</strong><span>Under Review</span><small>{{ '37% of total' if preview else ((metric_review * 100 // metric_total if metric_total else 0)|string ~ '% of total') }}</small></div><span class="nx-apps-ring nx-ring-blue"><i></i></span></article>
+      <article class="nx-apps-stat-card nx-stat-interviews"><span class="nx-apps-stat-icon"><i data-lucide="users-round"></i></span><div class="nx-apps-stat-copy"><strong data-metric="interviews">{{ metric_interviews }}</strong><span>Interviews</span><small>{{ '25% of total' if preview else ((metric_interviews * 100 // metric_total if metric_total else 0)|string ~ '% of total') }}</small></div><span class="nx-apps-ring nx-ring-purple"><i></i></span></article>
+      <article class="nx-apps-stat-card nx-stat-offers"><span class="nx-apps-stat-icon"><i data-lucide="briefcase-business"></i></span><div class="nx-apps-stat-copy"><strong data-metric="offers">{{ metric_offers }}</strong><span>Offers</span><small>{{ '6% of total' if preview else ((metric_offers * 100 // metric_total if metric_total else 0)|string ~ '% of total') }}</small></div><span class="nx-apps-ring nx-ring-green"><i></i></span></article>
+      <article class="nx-apps-stat-card nx-stat-rejected"><span class="nx-apps-stat-icon"><i data-lucide="circle-x"></i></span><div class="nx-apps-stat-copy"><strong data-metric="rejected">{{ metric_rejected }}</strong><span>Not Selected</span><small>{{ '31% of total' if preview else ((metric_rejected * 100 // metric_total if metric_total else 0)|string ~ '% of total') }}</small></div><span class="nx-apps-ring nx-ring-red"><i></i></span></article>
+    </section>
+
+    <div class="nx-apps-dashboard-grid">
+      <section class="nx-apps-list-column" aria-label="Your job applications">
+        <div class="nx-apps-toolbar">
+          <div class="nx-apps-tabs" role="tablist" aria-label="Filter applications">
+            {% if preview %}
+              <button type="button" class="nx-apps-tab is-active" data-filter="all">All (32)</button>
+              <button type="button" class="nx-apps-tab" data-filter="review">Under Review (12)</button>
+              <button type="button" class="nx-apps-tab" data-filter="interviews">Interviews (8)</button>
+              <button type="button" class="nx-apps-tab" data-filter="offers">Offers (2)</button>
+              <button type="button" class="nx-apps-tab" data-filter="rejected">Not Selected (10)</button>
+            {% else %}
+              <a href="{{ url_for('seeker.applications') }}" class="nx-apps-tab {{ 'is-active' if not active else '' }}">All ({{ total }})</a>
+              {% for st in statuses %}
+                {% set tab_label = {'Applied':'Applied','Shortlisted':'Under Review','Interview':'Interviews','Rejected':'Not Selected'}.get(st, st) %}
+                <a href="{{ url_for('seeker.applications', status=st) }}" class="nx-apps-tab {{ 'is-active' if active == st else '' }}">{{ tab_label }} ({{ counts[st] }})</a>
+              {% endfor %}
+            {% endif %}
+          </div>
+          <label class="nx-apps-search"><i data-lucide="search"></i><input type="search" placeholder="Search your applications..." aria-label="Search your applications" data-application-search></label>
+        </div>
+
+        <div class="nx-apps-rows" data-app-rows>
+          {% for a in apps %}
+            {% if preview %}
+              {% set display_status = a.display_status %}{% set category = a.category %}{% set action_title = a.action_title %}{% set action_subtitle = a.action_subtitle %}{% set action_icon = a.action_icon %}
+            {% else %}
+              {% set category = {'Applied':'applied','Shortlisted':'review','Interview':'interviews','Rejected':'rejected'}.get(a.status, 'applied') %}
+              {% set display_status = {'Applied':'Applied','Shortlisted':'Under Review','Interview':'Interview Scheduled','Rejected':'Not Selected'}.get(a.status, a.status) %}
+              {% set action_title = {'Applied':'Application Submitted','Shortlisted':'Reviewing','Interview':'Interview Details','Rejected':'Feedback Available'}.get(a.status, 'View Application') %}
+              {% set action_subtitle = {'Applied':'Application received','Shortlisted':'Your application is being reviewed','Interview':'Open interview details','Rejected':'View application feedback'}.get(a.status, 'View status') %}
+              {% set action_icon = {'Applied':'file-check-2','Shortlisted':'clock-3','Interview':'calendar-days','Rejected':'file-text'}.get(a.status, 'arrow-up-right') %}
+            {% endif %}
+            <article class="nx-app-row" data-app-row data-app-id="{{ a.id }}" data-category="{{ category }}" data-status="{{ a.status }}" data-search-text="{{ (a.job.company ~ ' ' ~ a.job.title ~ ' ' ~ display_status ~ ' ' ~ a.job.location)|lower }}">
+              <div class="nx-app-company-mark {% if preview %}nx-logo-{{ a.logo_key }}{% endif %}" {% if not preview %}style="--company-color:{{ a.job.company_color }}"{% endif %} aria-hidden="true">
+                {% if preview %}
+                  {% if a.logo_key == 'google' %}<span class="nx-logo-google-letter">G</span>{% elif a.logo_key == 'canva' %}<span class="nx-logo-canva-letter">Canva</span>{% elif a.logo_key == 'atlassian' %}<span class="nx-logo-atlassian-mark"></span>{% elif a.logo_key == 'cba' %}<span class="nx-logo-cba-mark"></span>{% elif a.logo_key == 'seek' %}<span class="nx-logo-seek-mark">✣</span>{% elif a.logo_key == 'deloitte' %}<span class="nx-logo-deloitte-letter">D<span>.</span></span>{% elif a.logo_key == 'woolworths' %}<span class="nx-logo-woolworths-mark">w</span>{% else %}{{ a.job.company_initials }}{% endif %}
+                {% else %}{{ a.job.company_initials }}{% endif %}
+              </div>
+              <div class="nx-app-job-info">
+                <a href="/jobs/{{ a.job.id }}" class="nx-app-job-title">{{ a.job.company }}</a>
+                <p class="nx-app-job-role">{{ a.job.title }}</p>
+                <div class="nx-app-job-meta"><i data-lucide="map-pin"></i><span>{{ a.job.location }}</span><b>•</b><span>{{ a.job.type }}</span><b>•</b><span>{{ a.job.mode }}</span></div>
+              </div>
+              <div class="nx-app-status-col">
+                <span class="nx-app-status nx-status-{{ category }}" data-app-status>{{ display_status }}</span>
+                <span class="nx-app-applied-date">Applied on<br>{{ a.applied_label }}</span>
+              </div>
+              <div class="nx-app-row-actions">
+                <a href="/jobs/{{ a.job.id }}" class="nx-app-action-card nx-action-{{ category }}"><span class="nx-app-action-icon"><i data-lucide="{{ action_icon }}"></i></span><span><strong>{{ action_title }}</strong><small>{{ action_subtitle }}</small></span><i data-lucide="chevron-right" class="nx-app-action-chevron"></i></a>
+                <div class="nx-app-menu-wrap">
+                  <button type="button" class="nx-app-menu-btn" data-menu-btn aria-label="More actions for {{ a.job.title }}" aria-expanded="false"><i data-lucide="ellipsis-vertical"></i></button>
+                  <div class="nx-app-menu" data-app-menu>
+                    <strong>Update progress</strong>
+                    {% for st in statuses %}<button type="button" data-set-status="{{ st }}" data-app-id="{{ a.id }}">{{ {'Applied':'Applied','Shortlisted':'Under Review','Interview':'Interview','Rejected':'Not Selected'}.get(st, st) }}</button>{% endfor %}
+                    <button type="button" class="nx-app-remove" data-remove="{{ a.id }}"><i data-lucide="trash-2"></i>Remove application</button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+          <div class="nx-apps-no-results" data-no-results {% if apps %}hidden{% endif %}>
+            <i data-lucide="search-x"></i><strong>No applications found</strong><span>Try another search or choose a different filter.</span>
+          </div>
+        </div>
+        {% if not apps %}
+          <div class="nx-apps-empty-state"><i data-lucide="inbox"></i><h2>{% if total %}No {{ active|lower }} applications{% else %}You haven't applied to any jobs yet{% endif %}</h2><p>Find a role you like and apply in a couple of clicks.</p><a href="/jobs" class="nx-apps-empty-button">Discover jobs <i data-lucide="arrow-right"></i></a></div>
+        {% endif %}
+      </section>
+
+      <aside class="nx-apps-insights" aria-label="Application insights">
+        <section class="nx-apps-panel nx-progress-panel">
+          <div class="nx-apps-panel-heading"><h2>Application Progress</h2><select aria-label="Application progress period" data-progress-range><option>Last 3 months</option><option>Last 6 months</option><option>This year</option></select></div>
+          <div class="nx-apps-chart">
+            <div class="nx-chart-plot" aria-label="Monthly application progress chart">
+              <div class="nx-chart-month"><div class="nx-chart-bars"><i class="bar-applied" style="height:50%"></i><i class="bar-interview" style="height:22%"></i><i class="bar-offer" style="height:13%"></i></div><span>Aug</span></div>
+              <div class="nx-chart-month"><div class="nx-chart-bars"><i class="bar-applied" style="height:88%"></i><i class="bar-interview" style="height:36%"></i><i class="bar-offer" style="height:22%"></i></div><span>Sep</span></div>
+              <div class="nx-chart-month"><div class="nx-chart-bars"><i class="bar-applied" style="height:55%"></i><i class="bar-interview" style="height:65%"></i><i class="bar-offer" style="height:26%"></i></div><span>Oct</span></div>
+            </div>
+            <div class="nx-chart-legend"><span><i class="legend-applied"></i>Applied <b>{{ 18 if preview else metric_total }}</b></span><span><i class="legend-interviews"></i>Interviews <b>{{ 8 if preview else metric_interviews }}</b></span><span><i class="legend-offers"></i>Offers <b>{{ 2 if preview else metric_offers }}</b></span><span><i class="legend-rejected"></i>Not Selected <b>{{ 10 if preview else metric_rejected }}</b></span></div>
+          </div>
+        </section>
+
+        <section class="nx-apps-panel nx-upcoming-panel">
+          <div class="nx-apps-panel-heading"><h2>Upcoming Interviews</h2><a href="/seeker/applications?status=Interview">View all <i data-lucide="arrow-right"></i></a></div>
+          {% if preview %}
+            <div class="nx-upcoming-item"><span class="nx-upcoming-logo nx-logo-google"><span class="nx-logo-google-letter">G</span></span><div><strong>Google</strong><span>Software Engineer</span></div><div class="nx-upcoming-date"><i data-lucide="calendar-days"></i><span>28 Oct 2026<br><small>10:00 AM (AEDT)</small></span></div><i data-lucide="chevron-right" class="nx-upcoming-arrow"></i></div>
+            <div class="nx-upcoming-item"><span class="nx-upcoming-logo nx-logo-atlassian"><span class="nx-logo-atlassian-mark"></span></span><div><strong>Atlassian</strong><span>Software Engineer</span></div><div class="nx-upcoming-date"><i data-lucide="calendar-days"></i><span>20 Oct 2026<br><small>2:00 PM (AEDT)</small></span></div><i data-lucide="chevron-right" class="nx-upcoming-arrow"></i></div>
+          {% else %}
+            {% set has_upcoming = namespace(value=false) %}
+            {% for a in apps if a.status == 'Interview' %}
+              {% if loop.index <= 2 %}{% set has_upcoming.value = true %}
+                <div class="nx-upcoming-item"><span class="nx-upcoming-logo">{{ a.job.company_initials }}</span><div><strong>{{ a.job.company }}</strong><span>{{ a.job.title }}</span></div><div class="nx-upcoming-date"><i data-lucide="calendar-days"></i><span>Interview scheduled<br><small>Open application</small></span></div><i data-lucide="chevron-right" class="nx-upcoming-arrow"></i></div>
+              {% endif %}
+            {% endfor %}
+            {% if not has_upcoming.value %}<p class="nx-upcoming-empty">No upcoming interviews are listed here yet.</p>{% endif %}
+          {% endif %}
+        </section>
+
+        <section class="nx-apps-tips-panel">
+          <div class="nx-apps-tips-heading"><span>💡</span><h2>Tips for Better Applications</h2><i data-lucide="info"></i></div>
+          <ul><li>Keep your resume tailored to each role.</li><li>Highlight skills in demand in Australia.</li><li>Follow up after 1–2 weeks.</li><li>Use keywords from the job description.</li><li>Practice interview questions.</li></ul>
+          <a href="/seeker/matches" class="nx-apps-tips-button">View More Tips <i data-lucide="arrow-right"></i></a>
+        </section>
+      </aside>
+    </div>
+  </div>
+</div>
