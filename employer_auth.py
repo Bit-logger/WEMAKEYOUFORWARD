@@ -208,14 +208,18 @@ def login():
                     auth = db.get_auth_client()
                     result = auth.auth.sign_in_with_password({"email": email, "password": password})
                     auth_user = getattr(result, "user", None)
-                    if auth_user and emp:
-                        ac.clear_failures(key)
-                        _start_session(emp["id"])
-                        return _after_login(emp, next_url)
-                    if auth_user and not emp:
-                        errors["form"] = "Your Supabase account is not enabled as a NEXORA employer. Contact the NEXORA administrator."
-                    else:
-                        errors["form"] = "Incorrect email or password."
+                    if auth_user:
+                        if not emp:
+                            try:
+                                employer_id = db.create_employer(email, password_hash=None, onboarding_complete=False)
+                                emp = db.get_employer(employer_id)
+                            except Exception:
+                                emp = db.get_employer_by_email(email)
+                        if emp:
+                            ac.clear_failures(key)
+                            _start_session(emp["id"])
+                            return _after_login(emp, next_url)
+                    errors["form"] = "Incorrect email or password."
                 except Exception:
                     ac.record_failure(key)
                     errors["form"] = "Incorrect email or password, or email confirmation is still pending."
