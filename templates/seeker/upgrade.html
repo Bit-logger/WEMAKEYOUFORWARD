@@ -4,7 +4,7 @@
 
 {% macro feature(text, soon=false) %}
   <li class="flex items-start gap-2.5 text-sm text-ink">
-    <i data-lucide="check" class="w-4 h-4 mt-0.5 shrink-0" style="color:#0E9D6B"></i>
+    <i data-lucide="check" class="w-4 h-4 mt-0.5 shrink-0" style="color:#2BE0BE"></i>
     <span>{{ text }}{% if soon %} <span class="chip chip-amber !text-[10px] !py-0 !px-1.5 ml-1 align-middle">Coming soon</span>{% endif %}</span>
   </li>
 {% endmacro %}
@@ -38,7 +38,7 @@
     </section>
 
     <!-- Premium -->
-    <section class="rounded-2xl p-6 flex flex-col border-2 border-[#C7B6FF] relative overflow-hidden" style="background:linear-gradient(180deg,#F4EFFF,#fff)" aria-labelledby="plan-premium">
+    <section class="rounded-2xl p-6 flex flex-col border-2 border-[#8B7DFA]/60 relative overflow-hidden shadow-[0_30px_60px_-30px_rgba(108,92,245,0.9)]" style="background:radial-gradient(120% 80% at 100% 0%,rgba(108,92,245,0.35),transparent 60%),linear-gradient(180deg,#1A1550,#0E1236)" aria-labelledby="plan-premium">
       <div class="flex items-center justify-between mb-1">
         <h2 id="plan-premium" class="font-display font-semibold text-xl text-navy flex items-center gap-2"><i data-lucide="crown" class="w-5 h-5" style="color:#E0475F"></i>Premium</h2>
         {% if is_premium %}<span class="chip chip-mint">Current plan</span>{% endif %}

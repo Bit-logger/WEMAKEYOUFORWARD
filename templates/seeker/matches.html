@@ -40,7 +40,7 @@
     {% endif %}
 
     {% if not is_premium and locked_count %}
-    <div class="mt-4 bg-white/60 border border-[#FFC9D2] rounded-2xl p-5 text-center">
+    <div class="mt-4 bg-amber/[0.07] border border-amber/30 rounded-2xl p-5 text-center">
       <p class="font-display font-semibold text-navy flex items-center justify-center gap-2"><i data-lucide="lock" class="w-4 h-4"></i>{{ locked_count }} more matching job{{ '' if locked_count == 1 else 's' }} (Locked)</p>
       <p class="text-xs text-ink/60 mt-1">The Free plan shows your top {{ free_limit }} matches. Upgrade to see all matching jobs.</p>
       <a href="{{ url_for('seeker.upgrade') }}" class="btn btn-purple btn-sm mt-3 inline-flex">Upgrade Plan</a>

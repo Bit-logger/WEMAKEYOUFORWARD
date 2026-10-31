@@ -440,6 +440,16 @@
       </div>
     </div></div>
 </section>
+<!-- Header image: night city + career path (static/images). Wide image on laptop/desktop, taller crop on phones. -->
+<div class="max-w-7xl mx-auto px-5 md:px-8 -mt-6 md:-mt-10 mb-10">
+  <picture>
+    <source media="(max-width: 767px)" srcset="{{ url_for('static', filename='images/hero-seeker-mobile.svg') }}" type="image/svg+xml">
+    <source media="(max-width: 767px)" srcset="{{ url_for('static', filename='images/hero-seeker-mobile.webp') }}" type="image/webp">
+    <source srcset="{{ url_for('static', filename='images/hero-seeker.svg') }}" type="image/svg+xml">
+    <source srcset="{{ url_for('static', filename='images/hero-seeker.webp') }}" type="image/webp">
+    <img src="{{ url_for('static', filename='images/hero-seeker.jpg') }}" alt="Night city with a job seeker following a glowing path: Explore, Apply, Interview, Get Hired" class="w-full h-auto rounded-3xl border border-white/10 shadow-[0_40px_80px_-40px_rgba(47,107,255,0.6)]" width="1600" height="600" decoding="async">
+  </picture>
+</div>
 
 <!-- ============ WHY NEXORA ============ -->
 <section class="bg-white border-y border-grey-line">

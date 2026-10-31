@@ -1,10 +1,9 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+<meta name="theme-color" content="#060B1C">
 <title>{% block title %}NEXORA — Find work that moves you forward{% endblock %}</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,7 +11,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
 <script src="https://cdn.tailwindcss.com"></script>
-
 <script>
 tailwind.config = {
   theme: {
@@ -24,1092 +22,502 @@ tailwind.config = {
         ink: '#12142B',
         cream: '#F8F6F1',
         'cream-dim': '#EFEBE2',
-        indigo: {
-          DEFAULT: '#6C5CF5',
-          dark: '#5342D6'
-        },
-        mint: {
-          DEFAULT: '#2BE0BE',
-          soft: '#E2F7F2'
-        },
+        indigo: { DEFAULT: '#6C5CF5', dark: '#5342D6' },
+        mint: { DEFAULT: '#2BE0BE', soft: '#E2F7F2' },
         amber: '#FFB74A',
         rose: '#FF6B87',
-        grey: {
-          DEFAULT: '#8B8F9E',
-          line: '#E4E1D9'
-        }
+        sky: { DEFAULT: '#3B82F6' },
+        grey: { DEFAULT: '#8B8F9E', line: '#E4E1D9' }
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         display: ['Plus Jakarta Sans', 'sans-serif']
       },
-      borderRadius: {
-        '2xl': '18px',
-        '3xl': '22px'
-      }
+      borderRadius: { '2xl': '18px', '3xl': '22px' }
     }
   }
 };
 </script>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
-
-<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
 
 {% block head %}{% endblock %}
 </head>
 
-<body class="bg-navy">
-
 {% set current_role = demo_role|default('guest', true) %}
+{% set app_shell = current_role in ('seeker', 'employer') %}
+{% set ep = request.endpoint or '' %}
+
+<body class="{% block body_class %}nx-dark{% if app_shell %} nx-has-shell{% endif %}{% endblock %}">
 
 <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
-<!-- ==================== NAVIGATION ==================== -->
+{% macro brand(size='md') %}
+  <a href="{{ url_for('index') }}" class="flex items-center gap-2.5 shrink-0 group" aria-label="NEXORA home">
+    <svg class="nx-mark icon-bounce-hover" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs><linearGradient id="nxg-{{ size }}" x1="0" y1="0" x2="34" y2="34"><stop stop-color="#2BE0BE"/><stop offset="1" stop-color="#6C5CF5"/></linearGradient></defs>
+      <circle cx="17" cy="17" r="16" stroke="url(#nxg-{{ size }})" stroke-width="1.6"/>
+      <circle cx="9" cy="22" r="3" fill="#6C5CF5"/>
+      <circle cx="25" cy="12" r="3" fill="#2BE0BE"/>
+      <path d="M9 22 C14 16, 19 18, 25 12" stroke="#F8F6F1" stroke-width="1.4" stroke-dasharray="1 3.4" stroke-linecap="round" opacity="0.85"/>
+      <g class="nx-orbit-dot"><circle cx="25" cy="12" r="1.3" fill="#0B1230"/></g>
+    </svg>
+    <span class="nx-wordmark">NEXORA</span>
+  </a>
+{% endmacro %}
 
+{% macro side_link(href, icon, label, active=False, onclick=None, badge=None) %}
+  <a href="{{ href }}" {% if onclick %}onclick="{{ onclick }}; return false;"{% endif %}
+     class="nx-side-link{% if active %} is-active{% endif %}"{% if active %} aria-current="page"{% endif %}>
+    <i data-lucide="{{ icon }}" class="w-[18px] h-[18px] shrink-0"></i>
+    <span class="flex-1 truncate">{{ label }}</span>
+    {% if badge %}<span class="nx-side-badge">{{ badge }}</span>{% endif %}
+  </a>
+{% endmacro %}
+
+{# ================================================================== #}
+{#  HEADER — sidebar + top bar for signed-in users, top nav for others #}
+{# ================================================================== #}
 {% block site_header %}
-
-<header class="sticky top-0 z-50 bg-navy/85 backdrop-blur-md border-b border-white/10">
-
-  <div class="max-w-7xl mx-auto px-5 md:px-8">
-
-    <div class="flex items-center justify-between h-16">
-
-      <!-- BRAND -->
-
-      <a href="{{ url_for('index') }}"
-         class="flex items-center gap-2.5 shrink-0 group"
-         aria-label="NEXORA home">
-
-        <svg class="nx-mark icon-bounce-hover"
-             viewBox="0 0 34 34"
-             fill="none"
-             xmlns="http://www.w3.org/2000/svg"
-             aria-hidden="true">
-
-          <circle cx="17" cy="17" r="16"
-                  stroke="#F8F6F1"
-                  stroke-width="1.4"
-                  opacity="0.9"/>
-
-          <circle cx="9" cy="22" r="3" fill="#6C5CF5"/>
-          <circle cx="25" cy="12" r="3" fill="#2BE0BE"/>
-
-          <path d="M9 22 C14 16, 19 18, 25 12"
-                stroke="#F8F6F1"
-                stroke-width="1.4"
-                stroke-dasharray="1 3.4"
-                stroke-linecap="round"
-                opacity="0.85"/>
-
-          <g class="nx-orbit-dot">
-            <circle cx="25" cy="12" r="1.3" fill="#0B1230"/>
-          </g>
-
-        </svg>
-
-        <span class="nx-wordmark">NEXORA</span>
-
-      </a>
-
-      <!-- DESKTOP NAVIGATION -->
-
-      <nav class="hidden lg:flex items-center gap-1 text-sm font-medium text-cream/70"
-           aria-label="Main navigation">
-
-        {% if current_role == 'seeker' %}
-
-          <a href="{{ url_for('seeker_dashboard') }}"
-             class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path == '/dashboard/seeker' %}text-mint font-semibold{% endif %}">
-            Dashboard
-          </a>
-
-          <a href="{{ url_for('jobs') }}"
-             class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path == '/jobs' %}text-mint font-semibold{% endif %}">
-            Find Jobs
-          </a>
-
-          <a href="{{ url_for('seeker.applications') }}"
-             class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path == '/seeker/applications' %}text-mint font-semibold{% endif %}">
-            My Applications
-          </a>
-
-          <a href="{{ url_for('seeker.resume') }}"
-             class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path == '/seeker/resume' %}text-mint font-semibold{% endif %}">
-            Resume Builder
-          </a>
-
-        {% elif current_role == 'employer' %}
-
-          <a href="{{ url_for('jobs') }}"
-             class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path == '/jobs' %}text-mint font-semibold{% endif %}">
-            Find Jobs
-          </a>
-
-          <a href="{{ url_for('companies') }}"
-             class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path.startswith('/companies') %}text-mint font-semibold{% endif %}">
-            Companies
-          </a>
-
-          <a href="{{ url_for('employer_dashboard') }}"
-             class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path in ['/dashboard/employer', '/applicants', '/post-job', '/checkout'] %}text-mint font-semibold{% endif %}">
-            For Employers
-          </a>
-
-          <a href="{{ url_for('pricing') }}"
-             class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path == '/pricing' %}text-mint font-semibold{% endif %}">
-            Pricing
-          </a>
-
-        {% else %}
-
-          <a href="{{ url_for('jobs') }}"
-             class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path == '/jobs' %}text-mint font-semibold{% endif %}">
-            Find Jobs
-          </a>
-
-          <a href="{{ url_for('companies') }}"
-             class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream {% if request.path.startswith('/companies') %}text-mint font-semibold{% endif %}">
-            Explore Top Companies
-          </a>
-
-          <div class="nx-dd relative">
-
-            <button type="button"
-                    class="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-cream inline-flex items-center gap-1"
-                    aria-haspopup="true">
-              For Employers
-              <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
-            </button>
-
-            <div class="nx-dd-menu">
-
-              <a href="{{ url_for('employer.login') }}">
-                <i data-lucide="log-in" class="w-4 h-4"></i>
-                Employer Login
-              </a>
-
-              <a href="{{ url_for('employer.register') }}">
-                <i data-lucide="building-2" class="w-4 h-4"></i>
-                Employer Register
-              </a>
-
-            </div>
-
-          </div>
-
-        {% endif %}
-
-      </nav>
-
-      <!-- RIGHT SIDE ACTIONS -->
-
-      <div class="flex items-center gap-2">
-
-        {% if current_role == 'employer' %}
-
-          <!-- Notifications -->
-
-          <button type="button"
-                  onclick="showToast('You have no new notifications.', {icon: 'bell'})"
-                  class="w-9 h-9 rounded-full inline-flex items-center justify-center text-cream/70 hover:bg-white/5 hover:text-cream"
-                  aria-label="Notifications">
-
-            <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
-
-          </button>
-
-          <!-- EMPLOYER ACCOUNT -->
-
-          <div class="relative" id="user-menu">
-
-            <button type="button"
-                    id="user-menu-btn"
-                    onclick="toggleUserMenu()"
-                    aria-haspopup="menu"
-                    aria-expanded="false"
-                    aria-controls="user-menu-panel"
-                    class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full hover:bg-white/5 text-sm font-medium text-cream/90">
-
-              <span class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-                    style="background:var(--indigo)">
-
-                {{ employer_company.initials if employer_company is defined and employer_company else '?' }}
-
-              </span>
-
-              <span class="hidden sm:inline max-w-[150px] truncate">
-
-                {% if employer_company is defined and employer_company %}
-                  {{ employer_company.name }}
-                {% elif employer_user is defined and employer_user %}
-                  {{ employer_user.email }}
-                {% else %}
-                  Employer
-                {% endif %}
-
-              </span>
-
-              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-cream/60"></i>
-
-            </button>
-
-            <div id="user-menu-panel"
-                 role="menu"
-                 class="hidden absolute right-0 mt-2 w-60 bg-white rounded-2xl border border-grey-line shadow-xl p-1.5 z-[60]">
-
-              {% set soon = 'w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] text-ink hover:bg-cream-dim' %}
-
-              <button type="button"
-                      role="menuitem"
-                      class="{{ soon }}"
-                      onclick="comingSoon('Account settings')">
-
-                <i data-lucide="settings" class="w-4 h-4 text-ink/60"></i>
-                Account settings
-
-              </button>
-
-              <button type="button"
-                      role="menuitem"
-                      class="{{ soon }}"
-                      onclick="comingSoon('Payable invoices')">
-
-                <i data-lucide="file-text" class="w-4 h-4 text-ink/60"></i>
-                Payable invoices
-
-              </button>
-
-              <button type="button"
-                      role="menuitem"
-                      class="{{ soon }}"
-                      onclick="comingSoon('Invoice history')">
-
-                <i data-lucide="history" class="w-4 h-4 text-ink/60"></i>
-                Invoice history
-
-              </button>
-
-              <a role="menuitem"
-                 class="{{ soon }}"
-                 href="{{ url_for('employer.setup') }}">
-
-                <i data-lucide="building-2" class="w-4 h-4 text-ink/60"></i>
-                Company Profile
-
-              </a>
-
-              <button type="button"
-                      role="menuitem"
-                      class="{{ soon }}"
-                      onclick="comingSoon('Logos and brands')">
-
-                <i data-lucide="image" class="w-4 h-4 text-ink/60"></i>
-                Logos and brands
-
-              </button>
-
-              <a role="menuitem"
-                 class="{{ soon }}"
-                 href="{{ url_for('pricing') }}">
-
-                <i data-lucide="tag" class="w-4 h-4 text-ink/60"></i>
-                Ad price lookup
-
-              </a>
-
-              <a role="menuitem"
-                 class="{{ soon }}"
-                 href="{{ url_for('post_job') }}">
-
-                <i data-lucide="plus" class="w-4 h-4 text-ink/60"></i>
-                Create a job ad
-
-              </a>
-
-              <button type="button"
-                      role="menuitem"
-                      class="{{ soon }}"
-                      onclick="comingSoon('Contact us')">
-
-                <i data-lucide="mail" class="w-4 h-4 text-ink/60"></i>
-                Contact us
-
-              </button>
-
-              <div class="my-1 border-t border-grey-line"></div>
-
-              <form method="post" action="{{ url_for('employer.logout') }}">
-
-                <input type="hidden"
-                       name="csrf_token"
-                       value="{{ csrf_token() }}">
-
-                <button type="submit"
-                        role="menuitem"
-                        class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium text-rose hover:bg-rose/10">
-
-                  <i data-lucide="log-out" class="w-4 h-4"></i>
-                  Sign out
-
-                </button>
-
-              </form>
-
-            </div>
-
-          </div>
-
-        {% elif current_role == 'seeker' %}
-
-          <!-- JOB SEEKER ACCOUNT -->
-
-          <div class="relative" id="user-menu">
-
-            <button type="button"
-                    id="user-menu-btn"
-                    onclick="toggleUserMenu()"
-                    aria-haspopup="menu"
-                    aria-expanded="false"
-                    aria-controls="user-menu-panel"
-                    class="flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full hover:bg-white/5 text-sm font-medium text-cream/90">
-
-              <span class="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-                    style="background:var(--indigo)">
-
-                {{ seeker_user.initials if seeker_user is defined and seeker_user else '?' }}
-
-              </span>
-
-              <span class="hidden sm:inline max-w-[140px] truncate">
-
-                {{ seeker_user.first_name if seeker_user is defined and seeker_user else 'Job Seeker' }}
-
-              </span>
-
-              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-cream/60"></i>
-
-            </button>
-
-            <div id="user-menu-panel"
-                 role="menu"
-                 class="hidden absolute right-0 mt-2 w-60 bg-white rounded-2xl border border-grey-line shadow-xl p-1.5 z-[60]">
-
-              <div class="px-3 py-2 mb-1 border-b border-grey-line">
-
-                <p class="text-sm font-semibold text-navy truncate">
-
-                  {{ seeker_user.full_name if seeker_user is defined and seeker_user else 'Job Seeker' }}
-
-                </p>
-
-                <p class="text-xs text-ink/50 truncate">
-
-                  {{ seeker_user.email if seeker_user is defined and seeker_user else '' }}
-
-                </p>
-
-                {% if seeker_user is defined and seeker_user %}
-
-                  <span class="chip {{ 'chip-mint' if seeker_user.is_premium else '' }} mt-1.5 !text-[10px]">
-
-                    {{ 'Premium plan' if seeker_user.is_premium else 'Free plan' }}
-
-                  </span>
-
-                {% endif %}
-
-              </div>
-
-              {% set item = 'w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] text-ink hover:bg-cream-dim' %}
-
-              <a role="menuitem"
-                 class="{{ item }}"
-                 href="{{ url_for('seeker_dashboard') }}">
-
-                <i data-lucide="layout-dashboard" class="w-4 h-4 text-ink/60"></i>
-                Dashboard
-
-              </a>
-
-              <a role="menuitem"
-                 class="{{ item }}"
-                 href="{{ url_for('seeker.profile') }}">
-
-                <i data-lucide="user-round" class="w-4 h-4 text-ink/60"></i>
-                My Profile
-
-              </a>
-
-              <a role="menuitem"
-                 class="{{ item }}"
-                 href="{{ url_for('seeker.applications') }}">
-
-                <i data-lucide="file-check-2" class="w-4 h-4 text-ink/60"></i>
-                My Applications
-
-              </a>
-
-              <a role="menuitem"
-                 class="{{ item }}"
-                 href="{{ url_for('seeker.resume') }}">
-
-                <i data-lucide="file-text" class="w-4 h-4 text-ink/60"></i>
-                Resume Builder
-
-              </a>
-
-              <a role="menuitem"
-                 class="{{ item }}"
-                 href="{{ url_for('seeker_dashboard') }}#saved">
-
-                <i data-lucide="bookmark" class="w-4 h-4 text-ink/60"></i>
-                Saved jobs
-
-                <span class="ml-auto text-xs text-ink/40" data-saved-count>
-                  {{ saved_count|default(0) }}
-                </span>
-
-              </a>
-
-              <a role="menuitem"
-                 class="{{ item }}"
-                 href="{{ url_for('seeker.upgrade') }}">
-
-                <i data-lucide="crown" class="w-4 h-4 text-ink/60"></i>
-                Upgrade Plan
-
-              </a>
-
-              <div class="my-1 border-t border-grey-line"></div>
-
-              <form method="post" action="{{ url_for('seeker.logout') }}">
-
-                <input type="hidden"
-                       name="csrf_token"
-                       value="{{ csrf_token() }}">
-
-                <button type="submit"
-                        role="menuitem"
-                        class="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-[13px] font-medium text-rose hover:bg-rose/10">
-
-                  <i data-lucide="log-out" class="w-4 h-4"></i>
-                  Sign out
-
-                </button>
-
-              </form>
-
-            </div>
-
-          </div>
-
-        {% else %}
-
-          <!-- GUEST / VISITOR -->
-
-          <a href="{{ url_for('seeker.login') }}"
-             class="hidden sm:inline-flex btn btn-ghost btn-sm on-dark">
-
-            Login
-
-          </a>
-
-          <a href="{{ url_for('seeker.register') }}"
-             class="btn btn-primary btn-sm">
-
-            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
-            Register
-
-          </a>
-
-        {% endif %}
-
-        <!-- MOBILE MENU BUTTON -->
-
-        <button id="mobile-nav-btn"
-                type="button"
-                class="lg:hidden btn btn-ghost btn-sm on-dark !px-2"
-                aria-label="Open navigation menu"
-                aria-controls="mobile-nav-drawer"
-                aria-expanded="false">
-
-          <i data-lucide="menu" class="w-5 h-5"></i>
-
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</header>
-
-<!-- ==================== MOBILE NAVIGATION ==================== -->
-
-<div class="nx-overlay"
-     id="mobile-nav-overlay"
-     onclick="closeMobileNav()"
-     aria-hidden="true"></div>
-
-<div class="nx-drawer"
-     id="mobile-nav-drawer"
-     aria-label="Mobile navigation">
-
-  <div class="p-5 flex items-center justify-between border-b border-grey-line">
-
-    <span class="nx-wordmark" style="color:var(--navy)">NEXORA</span>
-
-    <button type="button"
-            onclick="closeMobileNav()"
-            class="btn btn-ghost btn-sm !px-2"
-            aria-label="Close navigation menu">
-
+{% if app_shell %}
+
+<div id="mobile-nav-overlay" class="nx-overlay nx-side-overlay" onclick="closeMobileNav()"></div>
+
+<!-- ---------------- LEFT SIDEBAR ---------------- -->
+<aside id="mobile-nav-drawer" class="nx-side" aria-label="Main navigation">
+  <div class="flex items-center justify-between px-2 pt-1 pb-5">
+    {{ brand('side') }}
+    <button type="button" onclick="closeMobileNav()" class="lg:hidden w-9 h-9 rounded-xl inline-flex items-center justify-center text-cream/70 hover:bg-white/5" aria-label="Close menu">
       <i data-lucide="x" class="w-5 h-5"></i>
-
     </button>
-
   </div>
 
-  <nav class="p-3 flex flex-col text-sm font-medium"
-       aria-label="Mobile main navigation">
-
-    {% if current_role == 'seeker' %}
-
-      <a href="{{ url_for('seeker_dashboard') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="layout-dashboard" class="w-4 h-4 text-indigo"></i>
-        Dashboard
-
-      </a>
-
-      <a href="{{ url_for('jobs') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="search" class="w-4 h-4 text-indigo"></i>
-        Find Jobs
-
-      </a>
-
-      <a href="{{ url_for('seeker.applications') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="file-check-2" class="w-4 h-4 text-rose"></i>
-        My Applications
-
-      </a>
-
-      <a href="{{ url_for('seeker.profile') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="user-round" class="w-4 h-4 text-indigo"></i>
-        My Profile
-
-      </a>
-
-      <a href="{{ url_for('seeker.resume') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="file-text" class="w-4 h-4 text-amber" style="color:#B4790A"></i>
-        Resume Builder
-
-      </a>
-
-      <a href="{{ url_for('seeker.upgrade') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="crown" class="w-4 h-4 text-rose"></i>
-        Upgrade Plan
-
-      </a>
-
-      <form method="post" action="{{ url_for('seeker.logout') }}">
-
-        <input type="hidden"
-               name="csrf_token"
-               value="{{ csrf_token() }}">
-
-        <button type="submit"
-                class="w-full px-3 py-3 rounded-lg hover:bg-rose/10 flex items-center gap-2.5 text-left text-rose">
-
-          <i data-lucide="log-out" class="w-4 h-4"></i>
-          Sign out
-
-        </button>
-
-      </form>
-
-    {% elif current_role == 'employer' %}
-
-      <a href="{{ url_for('employer_dashboard') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="layout-dashboard" class="w-4 h-4 text-indigo"></i>
-        Dashboard
-
-      </a>
-
-      <a href="{{ url_for('jobs') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="search" class="w-4 h-4 text-indigo"></i>
-        Find Jobs
-
-      </a>
-
-      <a href="{{ url_for('companies') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="building" class="w-4 h-4 text-indigo"></i>
-        Companies
-
-      </a>
-
-      <a href="{{ url_for('applicants') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="users" class="w-4 h-4 text-mint" style="color:#0E9D85"></i>
-        Applicants
-
-      </a>
-
-      <a href="{{ url_for('post_job') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="plus-circle" class="w-4 h-4 text-amber" style="color:#B4790A"></i>
-        Post a Job
-
-      </a>
-
-      <a href="{{ url_for('pricing') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="tag" class="w-4 h-4 text-indigo"></i>
-        Pricing
-
-      </a>
-
-      <a href="{{ url_for('employer.setup') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="building-2" class="w-4 h-4 text-indigo"></i>
-        Company Profile
-
-      </a>
-
-      <form method="post" action="{{ url_for('employer.logout') }}">
-
-        <input type="hidden"
-               name="csrf_token"
-               value="{{ csrf_token() }}">
-
-        <button type="submit"
-                class="w-full px-3 py-3 rounded-lg hover:bg-rose/10 flex items-center gap-2.5 text-left text-rose">
-
-          <i data-lucide="log-out" class="w-4 h-4"></i>
-          Sign out
-
-        </button>
-
-      </form>
-
-    {% else %}
-
-      <a href="{{ url_for('jobs') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="search" class="w-4 h-4 text-indigo"></i>
-        Find Jobs
-
-      </a>
-
-      <a href="{{ url_for('companies') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="building-2" class="w-4 h-4 text-mint" style="color:#0E9D85"></i>
-        Explore Top Companies
-
-      </a>
-
-      <a href="{{ url_for('employer.login') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="briefcase" class="w-4 h-4 text-amber" style="color:#B4790A"></i>
-        Employer Login
-
-      </a>
-
-      <a href="{{ url_for('employer.register') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="building" class="w-4 h-4 text-amber" style="color:#B4790A"></i>
-        Employer Register
-
-      </a>
-
-      <a href="{{ url_for('seeker.login') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="log-in" class="w-4 h-4 text-indigo"></i>
-        Login
-
-      </a>
-
-      <a href="{{ url_for('seeker.register') }}"
-         class="px-3 py-3 rounded-lg hover:bg-navy/5 flex items-center gap-2.5">
-
-        <i data-lucide="user-plus" class="w-4 h-4 text-rose"></i>
-        Register
-
-      </a>
-
-    {% endif %}
-
+  {% if current_role == 'seeker' %}
+  <nav class="space-y-1">
+    {{ side_link(url_for('seeker_dashboard'), 'layout-dashboard', 'Overview', ep == 'seeker_dashboard') }}
+    {{ side_link(url_for('jobs'), 'compass', 'Discover Jobs', ep in ('jobs', 'job_details')) }}
+    {{ side_link(url_for('seeker.applications'), 'file-check-2', 'My Applications', ep == 'seeker.applications') }}
+    {{ side_link(url_for('seeker.profile'), 'user-round', 'Career Profile', ep == 'seeker.profile') }}
+    {{ side_link(url_for('seeker.resume'), 'file-text', 'Resume Studio', ep == 'seeker.resume') }}
+    {{ side_link('#', 'mic', 'Interview Practice', False, "comingSoon('Interview Practice')") }}
+    {{ side_link(url_for('seeker_dashboard') ~ '#saved', 'bookmark', 'Saved Roles', False, None, saved_count if saved_count else None) }}
+  </nav>
+  <div class="nx-side-divider"></div>
+  <nav class="space-y-1">
+    {{ side_link(url_for('seeker.matches'), 'sparkles', 'Job Matches', ep == 'seeker.matches') }}
+    {{ side_link('#', 'bell-ring', 'Job Alerts', False, "comingSoon('Job Alerts')") }}
+    {{ side_link(url_for('companies'), 'building-2', 'Companies', ep in ('companies', 'company_jobs')) }}
+    {{ side_link('#', 'book-open', 'Career Resources', False, "comingSoon('Career Resources')") }}
   </nav>
 
-</div>
+  {% if not (seeker_user and seeker_user.is_premium) %}
+  <a href="{{ url_for('seeker.upgrade') }}" class="nx-premium-card mt-5">
+    <span class="nx-premium-crown"><i data-lucide="crown" class="w-4 h-4"></i></span>
+    <span class="min-w-0 flex-1">
+      <span class="block font-display font-bold text-sm text-white">Go Premium</span>
+      <span class="block text-[11px] text-cream/60 leading-snug">Unlock more opportunities and personalised insights.</span>
+    </span>
+    <i data-lucide="chevron-right" class="w-4 h-4 text-cream/40 shrink-0"></i>
+  </a>
+  {% else %}
+  <div class="nx-premium-card mt-5">
+    <span class="nx-premium-crown"><i data-lucide="crown" class="w-4 h-4"></i></span>
+    <span class="min-w-0 flex-1">
+      <span class="block font-display font-bold text-sm text-white">Premium member</span>
+      <span class="block text-[11px] text-cream/60 leading-snug">All matches and insights unlocked.</span>
+    </span>
+  </div>
+  {% endif %}
 
+  <!-- Choose your plan carousel -->
+  <div class="nx-plan mt-4" id="plan-ad-section" data-plan-carousel>
+    <div class="flex items-center gap-2 relative z-10">
+      <span class="text-base" aria-hidden="true">👑</span>
+      <div>
+        <p class="font-display font-bold text-[13px] text-white leading-tight">Choose Your Plan</p>
+        <p class="text-[10.5px] text-cream/55 leading-tight">Unlock better matches &amp; premium features</p>
+      </div>
+    </div>
+    <div class="relative mt-3">
+      <button type="button" data-plan-prev class="nx-plan-arrow -left-2" aria-label="Previous plan"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
+      <button type="button" data-plan-next class="nx-plan-arrow -right-2" aria-label="Next plan"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button>
+      <div class="nx-plan-inner">
+        <div class="nx-plan-slide" data-plan-slide>
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="nx-plan-tag text-mint bg-mint/15">🌱 Free Plan</span>
+              <p class="font-display font-bold text-sm text-white mt-1.5">Explore Opportunities</p>
+            </div>
+            <span class="nx-plan-art" aria-hidden="true">🧭</span>
+          </div>
+          <ul class="nx-plan-list"><li>Top job recommendations</li><li>Basic resume builder</li><li>Unlimited applications</li></ul>
+        </div>
+        <div class="nx-plan-slide is-active" data-plan-slide>
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="nx-plan-tag text-[#9DB8FF] bg-sky/20">⭐ Pro Plan</span>
+              <p class="font-display font-bold text-sm text-white mt-1.5">Boost Your Career</p>
+            </div>
+            <span class="nx-plan-art nx-rocket" aria-hidden="true">🚀</span>
+          </div>
+          <ul class="nx-plan-list"><li>Unlimited applications</li><li>AI resume analysis</li><li>Higher match accuracy</li></ul>
+        </div>
+        <div class="nx-plan-slide" data-plan-slide>
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="nx-plan-tag text-amber bg-amber/15">👑 Premium</span>
+              <p class="font-display font-bold text-sm text-white mt-1.5">Fast-Track Hiring</p>
+            </div>
+            <span class="nx-plan-art" aria-hidden="true">💎</span>
+          </div>
+          <ul class="nx-plan-list"><li>All job matches unlocked</li><li>Priority recruiter routing</li><li>Top applicant badge</li></ul>
+        </div>
+        <a href="{{ url_for('seeker.upgrade') }}" class="btn btn-sm w-full justify-center mt-3 nx-btn-glow">View Plans <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
+      </div>
+    </div>
+    <div class="flex items-center justify-center gap-1.5 mt-3" data-plan-dots>
+      <button type="button" class="nx-plan-dot" aria-label="Free plan"></button>
+      <button type="button" class="nx-plan-dot is-active" aria-label="Pro plan"></button>
+      <button type="button" class="nx-plan-dot" aria-label="Premium plan"></button>
+    </div>
+  </div>
+
+  {% else %}{# ---------------- employer ---------------- #}
+  <nav class="space-y-1">
+    {{ side_link(url_for('employer_dashboard'), 'layout-dashboard', 'Overview', ep == 'employer_dashboard') }}
+    {{ side_link(url_for('post_job'), 'square-plus', 'Post a Job', ep in ('post_job', 'checkout')) }}
+    {{ side_link(url_for('employer_dashboard') ~ '#my-jobs', 'briefcase', 'My Job Listings') }}
+    {{ side_link(url_for('applicants'), 'users-round', 'Applicants', ep == 'applicants') }}
+    {{ side_link('#', 'user-search', 'Find Candidates', False, "comingSoon('Candidate search')") }}
+    {{ side_link(url_for('employer.setup'), 'building', 'Company Profile', ep == 'employer.setup') }}
+  </nav>
+  <div class="nx-side-divider"></div>
+  <nav class="space-y-1">
+    {{ side_link(url_for('jobs'), 'compass', 'Job Market', ep in ('jobs', 'job_details')) }}
+    {{ side_link(url_for('companies'), 'building-2', 'Companies', ep in ('companies', 'company_jobs')) }}
+    {{ side_link(url_for('pricing'), 'gem', 'Pricing & Packages', ep == 'pricing') }}
+    {{ side_link('#', 'receipt', 'Billing', False, "comingSoon('Billing')") }}
+  </nav>
+
+  <a href="{{ url_for('pricing') }}" class="nx-premium-card mt-5">
+    <span class="nx-premium-crown"><i data-lucide="rocket" class="w-4 h-4"></i></span>
+    <span class="min-w-0 flex-1">
+      <span class="block font-display font-bold text-sm text-white">Boost a listing</span>
+      <span class="block text-[11px] text-cream/60 leading-snug">Featured jobs get seen first by matching candidates.</span>
+    </span>
+    <i data-lucide="chevron-right" class="w-4 h-4 text-cream/40 shrink-0"></i>
+  </a>
+  <div class="nx-plan mt-4">
+    <div class="flex items-start justify-between gap-2 relative z-10">
+      <div>
+        <span class="nx-plan-tag text-mint bg-mint/15">⚡ Hiring tip</span>
+        <p class="font-display font-bold text-sm text-white mt-1.5">Move fast on great people</p>
+        <p class="text-[11px] text-cream/60 mt-1 leading-snug">Candidates you shortlist within 48 hours are far more likely to accept.</p>
+      </div>
+      <span class="nx-plan-art nx-rocket" aria-hidden="true">🎯</span>
+    </div>
+    <a href="{{ url_for('applicants') }}" class="btn btn-sm w-full justify-center mt-3 nx-btn-glow">Review applicants <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
+  </div>
+  {% endif %}
+
+  <div class="h-20 lg:h-6"></div>
+</aside>
+
+<!-- ---------------- TOP BAR ---------------- -->
+<header id="nx-topbar" class="nx-topbar">
+  <button id="mobile-nav-btn" type="button" class="nx-icon-btn inline-flex lg:hidden" aria-label="Open menu">
+    <i data-lucide="menu" class="w-5 h-5"></i>
+  </button>
+  <div class="lg:hidden">{{ brand('top') }}</div>
+
+  <form action="{{ url_for('jobs') }}" method="get" class="nx-top-search hidden md:flex" role="search">
+    <i data-lucide="search" class="w-4 h-4 text-cream/40 shrink-0"></i>
+    <input type="search" name="q" placeholder="Search jobs, companies, or skills…" aria-label="Search jobs" class="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-cream/40">
+    <kbd class="hidden xl:inline-flex text-[10px] text-cream/40 border border-white/10 rounded-md px-1.5 py-0.5">Enter</kbd>
+  </form>
+
+  <div class="flex items-center gap-2 sm:gap-2.5 ml-auto">
+    <button type="button" class="nx-icon-btn inline-flex" onclick="showToast('You\'re all caught up — no new notifications.', {icon: 'bell'})" aria-label="Notifications">
+      <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+    </button>
+    <button type="button" class="nx-icon-btn hidden sm:inline-flex" onclick="comingSoon('Messages')" aria-label="Messages">
+      <i data-lucide="message-square-text" class="w-[18px] h-[18px]"></i>
+    </button>
+
+    <div class="relative" id="user-menu">
+      {% if current_role == 'seeker' %}
+        {% set who_name = seeker_user.full_name if seeker_user else 'Job seeker' %}
+        {% set who_initials = seeker_user.initials if seeker_user else 'JS' %}
+        {% set who_role = 'Premium member' if seeker_user and seeker_user.is_premium else 'Job Seeker' %}
+        {% set who_email = seeker_user.email if seeker_user else '' %}
+      {% else %}
+        {% set who_name = employer_company.name if employer_company else (employer_user.email if employer_user else 'Employer') %}
+        {% set who_initials = employer_company.initials if employer_company else ((employer_user.email[:1]|upper) if employer_user else 'E') %}
+        {% set who_role = 'Employer' %}
+        {% set who_email = employer_user.email if employer_user else '' %}
+      {% endif %}
+      <button id="user-menu-btn" type="button" onclick="toggleUserMenu()" aria-haspopup="true" aria-expanded="false" class="nx-user-chip">
+        <span class="nx-avatar">{{ who_initials }}</span>
+        <span class="hidden md:block text-left min-w-0">
+          <span class="block text-[13px] font-semibold text-white leading-tight truncate max-w-[150px]">{{ who_name }}</span>
+          <span class="block text-[11px] text-cream/50 leading-tight">{{ who_role }}</span>
+        </span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-cream/40 hidden md:block"></i>
+      </button>
+
+      <div id="user-menu-panel" class="hidden nx-menu" role="menu">
+        <div class="px-3 py-2.5 border-b border-white/10 mb-1">
+          <p class="text-sm font-semibold text-white truncate">{{ who_name }}</p>
+          <p class="text-xs text-cream/50 truncate">{{ who_email }}</p>
+        </div>
+        {% if current_role == 'seeker' %}
+          <a role="menuitem" href="{{ url_for('seeker_dashboard') }}"><i data-lucide="layout-dashboard" class="w-4 h-4"></i>Overview</a>
+          <a role="menuitem" href="{{ url_for('seeker.profile') }}"><i data-lucide="user-round" class="w-4 h-4"></i>Career Profile</a>
+          <a role="menuitem" href="{{ url_for('seeker.applications') }}"><i data-lucide="file-check-2" class="w-4 h-4"></i>My Applications</a>
+          <a role="menuitem" href="{{ url_for('seeker.resume') }}"><i data-lucide="file-text" class="w-4 h-4"></i>Resume Studio</a>
+          <a role="menuitem" href="{{ url_for('seeker_dashboard') }}#saved"><i data-lucide="bookmark" class="w-4 h-4"></i>Saved Roles <span class="ml-auto text-xs text-cream/50" data-saved-count>{{ saved_count }}</span></a>
+          <a role="menuitem" href="{{ url_for('seeker.upgrade') }}"><i data-lucide="crown" class="w-4 h-4"></i>Plans &amp; Upgrade</a>
+          <form method="post" action="{{ url_for('seeker.logout') }}" class="border-t border-white/10 mt-1 pt-1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" role="menuitem" class="!text-rose"><i data-lucide="log-out" class="w-4 h-4"></i>Log out</button>
+          </form>
+        {% else %}
+          <a role="menuitem" href="{{ url_for('employer_dashboard') }}"><i data-lucide="layout-dashboard" class="w-4 h-4"></i>Overview</a>
+          <a role="menuitem" href="{{ url_for('employer.setup') }}"><i data-lucide="building" class="w-4 h-4"></i>Company profile</a>
+          <a role="menuitem" href="{{ url_for('post_job') }}"><i data-lucide="square-plus" class="w-4 h-4"></i>Post a job</a>
+          <a role="menuitem" href="{{ url_for('pricing') }}"><i data-lucide="gem" class="w-4 h-4"></i>Pricing &amp; packages</a>
+          <button type="button" role="menuitem" onclick="comingSoon('Account settings')"><i data-lucide="settings" class="w-4 h-4"></i>Account settings</button>
+          <button type="button" role="menuitem" onclick="comingSoon('Invoice history')"><i data-lucide="receipt" class="w-4 h-4"></i>Invoice history</button>
+          <button type="button" role="menuitem" onclick="comingSoon('Contact us')"><i data-lucide="life-buoy" class="w-4 h-4"></i>Contact us</button>
+          <form method="post" action="{{ url_for('employer.logout') }}" class="border-t border-white/10 mt-1 pt-1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" role="menuitem" class="!text-rose"><i data-lucide="log-out" class="w-4 h-4"></i>Log out</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</header>
+
+{% else %}
+
+<!-- ---------------- PUBLIC TOP NAV (visitors & admin) ---------------- -->
+<header class="nx-pubnav sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 md:px-8">
+    <div class="flex items-center justify-between h-16 gap-4">
+      {{ brand('pub') }}
+
+      <nav class="hidden lg:flex items-center gap-1 text-sm font-medium" aria-label="Main navigation">
+        <a href="{{ url_for('jobs') }}" class="nx-pub-link {% if ep in ('jobs','job_details') %}is-active{% endif %}">Find Jobs</a>
+        <a href="{{ url_for('companies') }}" class="nx-pub-link {% if ep in ('companies','company_jobs') %}is-active{% endif %}">Explore Top Companies</a>
+        <div class="nx-dd">
+          <button type="button" class="nx-pub-link inline-flex items-center gap-1" aria-haspopup="true">For Employers <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+          <div class="nx-dd-menu">
+            <a href="{{ url_for('employer.login') }}"><i data-lucide="log-in" class="w-4 h-4"></i>Employer Login</a>
+            <a href="{{ url_for('employer.register') }}"><i data-lucide="building-2" class="w-4 h-4"></i>Employer Register</a>
+            <a href="{{ url_for('pricing') }}"><i data-lucide="gem" class="w-4 h-4"></i>Pricing</a>
+          </div>
+        </div>
+        {% if current_role == 'admin' %}
+        <a href="{{ url_for('admin') }}" class="nx-pub-link {% if ep == 'admin' %}is-active{% endif %}">Admin</a>
+        {% endif %}
+      </nav>
+
+      <div class="flex items-center gap-2">
+        <span class="hidden sm:flex items-center gap-2"><a href="{{ url_for('seeker.login') }}" class="btn btn-ghost on-dark btn-sm">Login</a>
+        <a href="{{ url_for('seeker.register') }}" class="btn btn-sm nx-btn-glow">Register</a></span>
+        <button id="mobile-nav-btn" type="button" class="nx-icon-btn inline-flex lg:hidden" aria-label="Open menu">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div id="mobile-nav-overlay" class="nx-overlay" onclick="closeMobileNav()"></div>
+<aside id="mobile-nav-drawer" class="nx-drawer nx-drawer-dark" aria-label="Mobile navigation">
+  <div class="flex items-center justify-between p-5 border-b border-white/10">
+    {{ brand('drawer') }}
+    <button type="button" onclick="closeMobileNav()" class="nx-icon-btn inline-flex" aria-label="Close menu"><i data-lucide="x" class="w-5 h-5"></i></button>
+  </div>
+  <nav class="p-3 space-y-1">
+    {{ side_link(url_for('index'), 'home', 'Home', ep == 'index') }}
+    {{ side_link(url_for('jobs'), 'compass', 'Find Jobs', ep in ('jobs','job_details')) }}
+    {{ side_link(url_for('companies'), 'building-2', 'Explore Top Companies', ep in ('companies','company_jobs')) }}
+    {{ side_link(url_for('pricing'), 'gem', 'Pricing', ep == 'pricing') }}
+    {% if current_role == 'admin' %}{{ side_link(url_for('admin'), 'shield-check', 'Admin', ep == 'admin') }}{% endif %}
+    <div class="nx-side-divider"></div>
+    <p class="px-3 pt-1 pb-1 text-[11px] uppercase tracking-wider text-cream/35 font-semibold">Job seekers</p>
+    {{ side_link(url_for('seeker.login'), 'log-in', 'Job seeker login') }}
+    {{ side_link(url_for('seeker.register'), 'user-plus', 'Create free account') }}
+    <p class="px-3 pt-3 pb-1 text-[11px] uppercase tracking-wider text-cream/35 font-semibold">Employers</p>
+    {{ side_link(url_for('employer.login'), 'briefcase', 'Employer login') }}
+    {{ side_link(url_for('employer.register'), 'building', 'Employer register') }}
+  </nav>
+</aside>
+
+{% endif %}
 {% endblock %}
 
-<!-- ==================== MAIN CONTENT ==================== -->
-
-<main id="main-content">
+<!-- ==================== PAGE CONTENT ==================== -->
+<main id="main-content" class="nx-main">
   {% block content %}{% endblock %}
 </main>
 
 <!-- ==================== FOOTER ==================== -->
-
 {% block site_footer %}
-
-<footer class="border-t border-white/10 mt-20"
-        style="background:var(--navy-soft)">
-
-  <div class="max-w-7xl mx-auto px-5 md:px-8 py-12 grid grid-cols-2 md:grid-cols-5 gap-8">
-
-    <!-- BRAND INFORMATION -->
-
-    <div class="col-span-2">
-
-      <div class="flex items-center gap-2 mb-3">
-
-        <svg class="nx-mark"
-             viewBox="0 0 34 34"
-             fill="none"
-             xmlns="http://www.w3.org/2000/svg"
-             aria-hidden="true">
-
-          <circle cx="17" cy="17" r="16"
-                  stroke="#F8F6F1"
-                  stroke-width="1.4"
-                  opacity="0.9"/>
-
-          <circle cx="9" cy="22" r="3" fill="#6C5CF5"/>
-          <circle cx="25" cy="12" r="3" fill="#2BE0BE"/>
-
-          <path d="M9 22 C14 16, 19 18, 25 12"
-                stroke="#F8F6F1"
-                stroke-width="1.4"
-                stroke-dasharray="1 3.4"
-                stroke-linecap="round"
-                opacity="0.85"/>
-
-        </svg>
-
-        <span class="nx-wordmark">NEXORA</span>
-
-      </div>
-
-      <p class="text-sm text-cream/50 max-w-xs">
-
-        Find work that moves you forward. An Australian employment marketplace connecting job seekers and employers.
-
-      </p>
-
-      <div class="flex items-center gap-2 mt-4">
-
-        <span class="icon-badge icon-badge-indigo w-8 h-8"
-              aria-label="LinkedIn">
-
-          <i data-lucide="linkedin" class="w-4 h-4"></i>
-
-        </span>
-
-        <span class="icon-badge icon-badge-mint w-8 h-8"
-              aria-label="Instagram">
-
-          <i data-lucide="instagram" class="w-4 h-4"></i>
-
-        </span>
-
-        <span class="icon-badge icon-badge-rose w-8 h-8"
-              aria-label="Facebook">
-
-          <i data-lucide="facebook" class="w-4 h-4"></i>
-
-        </span>
-
-      </div>
-
-    </div>
-
-    <!-- JOB SEEKERS -->
-
-    <div>
-
-      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">
-        Job seekers
-      </p>
-
-      <ul class="space-y-2 text-sm text-cream/60">
-
-        <li>
-          <a href="{{ url_for('jobs') }}"
-             class="hover:text-mint transition-colors">
-            Find Jobs
-          </a>
-        </li>
-
-        <li>
-          <a href="{{ url_for('companies') }}"
-             class="hover:text-mint transition-colors">
-            Browse Companies
-          </a>
-        </li>
-
-      </ul>
-
-    </div>
-
-    <!-- EMPLOYERS -->
-
-    <div>
-
-      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">
-        Employers
-      </p>
-
-      <ul class="space-y-2 text-sm text-cream/60">
-
-        <li>
-          <a href="{{ url_for('post_job') }}"
-             class="hover:text-mint transition-colors">
-            Post a Job
-          </a>
-        </li>
-
-        <li>
-          <a href="{{ url_for('pricing') }}"
-             class="hover:text-mint transition-colors">
-            Pricing
-          </a>
-        </li>
-
-      </ul>
-
-    </div>
-
-    <!-- COMPANY -->
-
-    <div>
-
-      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">
-        Company
-      </p>
-
-      <ul class="space-y-2 text-sm text-cream/60">
-
-        <li>
-          <span class="cursor-default">About</span>
-        </li>
-
-        <li>
-          <span class="cursor-default">Contact</span>
-        </li>
-
-      </ul>
-
-    </div>
-
-  </div>
-
-  <div class="border-t border-white/10 py-5 text-center text-xs text-cream/35">
-
-    © 2026 NEXORA. Client demonstration build — not for production use.
-
-  </div>
-
+{% if app_shell %}
+<footer class="nx-shell-footer">
+  <span>© 2026 NEXORA · Australian careers marketplace</span>
+  <span class="flex items-center gap-4">
+    <a href="{{ url_for('jobs') }}" class="hover:text-mint">Jobs</a>
+    <a href="{{ url_for('companies') }}" class="hover:text-mint">Companies</a>
+    <a href="{{ url_for('pricing') }}" class="hover:text-mint">Pricing</a>
+  </span>
 </footer>
-
+{% else %}
+<footer class="nx-footer mt-20">
+  <div class="max-w-7xl mx-auto px-5 md:px-8 py-12 grid grid-cols-2 md:grid-cols-5 gap-8">
+    <div class="col-span-2">
+      <div class="mb-3">{{ brand('foot') }}</div>
+      <p class="text-sm text-cream/50 max-w-xs">Find work that moves you forward. An Australian employment marketplace connecting job seekers and employers.</p>
+      <div class="flex items-center gap-2 mt-4">
+        <span class="icon-badge icon-badge-indigo w-8 h-8" aria-label="LinkedIn"><i data-lucide="linkedin" class="w-4 h-4"></i></span>
+        <span class="icon-badge icon-badge-mint w-8 h-8" aria-label="Instagram"><i data-lucide="instagram" class="w-4 h-4"></i></span>
+        <span class="icon-badge icon-badge-rose w-8 h-8" aria-label="Facebook"><i data-lucide="facebook" class="w-4 h-4"></i></span>
+      </div>
+    </div>
+    <div>
+      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Job seekers</p>
+      <ul class="space-y-2 text-sm text-cream/60">
+        <li><a href="{{ url_for('jobs') }}" class="hover:text-mint transition-colors">Find Jobs</a></li>
+        <li><a href="{{ url_for('companies') }}" class="hover:text-mint transition-colors">Browse Companies</a></li>
+        <li><a href="{{ url_for('seeker.register') }}" class="hover:text-mint transition-colors">Create account</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Employers</p>
+      <ul class="space-y-2 text-sm text-cream/60">
+        <li><a href="{{ url_for('post_job') }}" class="hover:text-mint transition-colors">Post a Job</a></li>
+        <li><a href="{{ url_for('pricing') }}" class="hover:text-mint transition-colors">Pricing</a></li>
+        <li><a href="{{ url_for('employer.register') }}" class="hover:text-mint transition-colors">Employer register</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Company</p>
+      <ul class="space-y-2 text-sm text-cream/60">
+        <li><span class="cursor-default">About</span></li>
+        <li><span class="cursor-default">Contact</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-white/10 py-5 text-center text-xs text-cream/35">© 2026 NEXORA. Client demonstration build — not for production use.</div>
+</footer>
+{% endif %}
 {% endblock %}
 
 <!-- ==================== DEMO CONTROLS ==================== -->
-
 {% block demo_controls %}
-
-<div id="demo-controls"
-     class="flex items-center gap-2.5">
-
+{% if not app_shell %}
+<div id="demo-controls" class="flex items-center gap-2.5">
   <div class="relative" id="demo-switcher">
-
-    <button id="demo-switcher-btn"
-            type="button"
-            class="btn btn-sm text-white flex items-center gap-2"
-            onclick="toggleDemoMenu()">
-
-      <i data-lucide="sparkles"
-         class="w-3.5 h-3.5 icon-spin-slow"></i>
-
+    <button id="demo-switcher-btn" type="button" class="btn btn-sm text-white flex items-center gap-2" onclick="toggleDemoMenu()">
+      <i data-lucide="sparkles" class="w-3.5 h-3.5 icon-spin-slow"></i>
       Select mode:
-
-      <span id="demo-role-label" class="font-semibold capitalize">
-
-        {{ 'Visitor' if current_role == 'guest' else current_role }}
-
-      </span>
-
+      <span id="demo-role-label" class="font-semibold capitalize">{{ 'Visitor' if current_role == 'guest' else current_role }}</span>
       <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
-
     </button>
-
-    <div id="demo-menu"
-         class="hidden absolute bottom-12 left-0 w-52 bg-white border border-grey-line rounded-2xl shadow-xl p-1.5">
-
-      <button type="button"
-              onclick="setDemoRole('guest')"
-              class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-cream-dim flex items-center gap-2">
-
-        <span class="icon-badge icon-badge-amber w-7 h-7">
-          <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-        </span>
-
-        Visitor
-
-      </button>
-
-      <button type="button"
-              onclick="setDemoRole('seeker')"
-              class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-cream-dim flex items-center gap-2">
-
-        <span class="icon-badge icon-badge-indigo w-7 h-7">
-          <i data-lucide="user" class="w-3.5 h-3.5"></i>
-        </span>
-
-        Job Seeker
-
-      </button>
-
-      <button type="button"
-              onclick="setDemoRole('employer')"
-              class="w-full text-left px-3 py-2.5 rounded-xl text-sm hover:bg-cream-dim flex items-center gap-2">
-
-        <span class="icon-badge icon-badge-mint w-7 h-7">
-          <i data-lucide="briefcase" class="w-3.5 h-3.5"></i>
-        </span>
-
-        Employer
-
-      </button>
-
+    <div id="demo-menu" class="hidden absolute bottom-12 left-0 w-52 nx-menu p-1.5">
+      <button type="button" onclick="setDemoRole('guest')"><span class="icon-badge icon-badge-amber w-7 h-7"><i data-lucide="eye" class="w-3.5 h-3.5"></i></span>Visitor</button>
+      <button type="button" onclick="setDemoRole('seeker')"><span class="icon-badge icon-badge-indigo w-7 h-7"><i data-lucide="user" class="w-3.5 h-3.5"></i></span>Job Seeker</button>
+      <button type="button" onclick="setDemoRole('employer')"><span class="icon-badge icon-badge-mint w-7 h-7"><i data-lucide="briefcase" class="w-3.5 h-3.5"></i></span>Employer</button>
     </div>
-
   </div>
-
   {% if current_role == 'guest' %}
-
-    <button id="tour-trigger-btn"
-            type="button"
-            class="btn btn-sm flex items-center gap-2"
-            onclick="startWebsiteTour()">
-
-      <i data-lucide="compass"
-         class="w-3.5 h-3.5 icon-spin-slow"></i>
-
-      Website Tour
-
-    </button>
-
+  <button id="tour-trigger-btn" type="button" class="btn btn-sm flex items-center gap-2" onclick="startWebsiteTour()">
+    <i data-lucide="compass" class="w-3.5 h-3.5 icon-spin-slow"></i>
+    Website Tour
+  </button>
   {% endif %}
-
 </div>
-
+{% endif %}
 {% endblock %}
 
 <!-- ==================== JAVASCRIPT ==================== -->
-
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-
 <script src="{{ url_for('static', filename='js/tour.js') }}"></script>
+
+<script>
+/* Sidebar "Choose your plan" carousel: auto-swipes every 4s, pauses on hover. */
+(function () {
+  document.querySelectorAll('[data-plan-carousel]').forEach(function (root) {
+    var slides = root.querySelectorAll('[data-plan-slide]');
+    var dots = root.querySelectorAll('[data-plan-dots] button');
+    if (!slides.length) return;
+    var idx = 1, timer = null;
+    function show(i) {
+      idx = (i + slides.length) % slides.length;
+      slides.forEach(function (s, n) { s.classList.toggle('is-active', n === idx); });
+      dots.forEach(function (d, n) { d.classList.toggle('is-active', n === idx); });
+    }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    function start() { stop(); timer = setInterval(function () { show(idx + 1); }, 4000); }
+    root.querySelector('[data-plan-prev]').addEventListener('click', function () { show(idx - 1); start(); });
+    root.querySelector('[data-plan-next]').addEventListener('click', function () { show(idx + 1); start(); });
+    dots.forEach(function (d, n) { d.addEventListener('click', function () { show(n); start(); }); });
+    root.addEventListener('mouseenter', stop);
+    root.addEventListener('mouseleave', start);
+    show(idx); start();
+  });
+})();
+
+/* Reveal-on-scroll for elements marked .nx-reveal */
+(function () {
+  var els = document.querySelectorAll('.nx-reveal');
+  if (!('IntersectionObserver' in window)) { els.forEach(function (e) { e.classList.add('is-in'); }); return; }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } });
+  }, { threshold: 0.08 });
+  els.forEach(function (e) { io.observe(e); });
+})();
+</script>
 
 {% block scripts %}{% endblock %}
 
 <!-- ==================== FLASH MESSAGES ==================== -->
-
 {% block flash_toasts %}
 {% with flashed = get_flashed_messages(with_categories=true) %}
   {% if flashed %}
-    <div
-      id="flash-messages-data"
-      data-messages='{{ flashed|tojson|forceescape }}'
-      hidden
-    ></div>
+    <div id="flash-messages-data" data-messages='{{ flashed|tojson|forceescape }}' hidden></div>
   {% endif %}
 {% endwith %}
-
 <script>
 (function () {
   function displayFlashMessages() {
-    const element = document.getElementById('flash-messages-data');
-
+    var element = document.getElementById('flash-messages-data');
     if (!element) return;
-
-    let messages;
-
-    try {
-      messages = JSON.parse(element.dataset.messages || '[]');
-    } catch (error) {
-      console.error('Unable to read flash messages:', error);
-      return;
-    }
-
+    var messages;
+    try { messages = JSON.parse(element.dataset.messages || '[]'); }
+    catch (error) { console.error('Unable to read flash messages:', error); return; }
     messages.forEach(function (item) {
-      const category = item[0];
-      const message = item[1];
-
-      let icon = 'check-circle-2';
-
-      if (category === 'error') {
-        icon = 'alert-circle';
-      } else if (category === 'info') {
-        icon = 'info';
-      }
-
-      if (typeof window.showToast === 'function') {
-        window.showToast(message, { icon: icon });
-      } else {
-        console.warn('showToast() is not available.');
-      }
+      var category = item[0], message = item[1];
+      var icon = category === 'error' ? 'alert-circle' : (category === 'info' ? 'info' : 'check-circle-2');
+      if (typeof window.showToast === 'function') window.showToast(message, { icon: icon });
     });
   }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', displayFlashMessages);
-  } else {
-    displayFlashMessages();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', displayFlashMessages);
+  else displayFlashMessages();
 })();
 </script>
 {% endblock %}
 
-<!-- ==================== ICON INITIALIZATION ==================== -->
+<!-- ==================== ICON INITIALISATION ==================== -->
+<script>
 document.addEventListener('DOMContentLoaded', function () {
-  if (window.lucide) {
-    window.lucide.createIcons();
-  }
+  if (window.lucide) window.lucide.createIcons();
 });
 </script>
 
 </body>
 </html>
-```

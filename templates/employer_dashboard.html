@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Employer Dashboard — NEXORA{% endblock %}
+{% from "_art.html" import hero_bg, hero_mobile with context %}
+{% block title %}Employer Overview — NEXORA{% endblock %}
 
 {% macro status_chip(status) %}
   {% if status == 'Approved' %}<span class="chip chip-mint">Live</span>
@@ -18,128 +19,209 @@
 {% endmacro %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-5 md:px-8 py-8 md:py-10">
+{% set who = company.contact_first if company and company.contact_first else (company.name if company else 'there') %}
+{% set has_jobs = my_jobs|length > 0 %}
+{% set new_count = recent_applicants|selectattr('stage', 'equalto', 'New')|list|length %}
+{% set apply_rate = ((total_apps / total_views * 100)|round|int) if total_views else 0 %}
+{% set short_rate = ((shortlisted / total_apps * 100)|round|int) if total_apps else 0 %}
+{% set live_pct = ((active_jobs / my_jobs|length * 100)|round|int) if has_jobs else 0 %}
+{% set R = 46 %}{% set C = 2 * 3.14159265 * R %}
 
-  <!-- Company header -->
-  <div class="flex items-center justify-between mb-8 flex-wrap gap-4">
-    <div class="flex items-center gap-4 min-w-0">
-      <span class="w-14 h-14 rounded-full flex items-center justify-center text-white font-display font-bold text-lg shrink-0" style="background:var(--indigo)">{{ company.initials }}</span>
-      <div class="min-w-0">
-        <h1 class="font-display text-2xl md:text-3xl font-bold text-cream tracking-tight truncate">{{ company.name }}</h1>
-        <p class="text-sm text-cream/50">Employer Dashboard</p>
+<div class="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6 max-w-[1500px]">
+
+  <!-- ================= HERO ================= -->
+  <section class="nx-glass relative overflow-hidden nx-reveal lg:min-h-[420px]" style="background:#0A1236">
+    {{ hero_bg("hero-employer", "Night city with a glowing hiring path: Post, Review, Interview, Hire") }}
+    <div class="relative z-10 p-6 sm:p-8 lg:p-10">
+      <div class="flex items-center gap-3">
+        <span class="w-11 h-11 rounded-2xl inline-flex items-center justify-center text-white font-display font-bold ring-1 ring-white/20 shadow-lg" style="background:{{ company.color if company else '#6C5CF5' }}">{{ company.initials if company else 'E' }}</span>
+        <div>
+          <p class="text-sm text-cream/75 font-medium">Welcome back, {{ who }}! 👋</p>
+          <p class="text-xs text-cream/45">{{ company.name if company else '' }} · Employer workspace</p>
+        </div>
+      </div>
+      <h1 class="font-display text-3xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight text-white leading-[1.1] mt-4 max-w-xl">
+        Find your next <span class="nx-grad-text">great hire</span>
+      </h1>
+      <p class="text-sm text-cream/65 mt-3 max-w-md">Post roles, review matched candidates and move them through your pipeline — all in one place.</p>
+      {{ hero_mobile("hero-employer") }}
+      <div class="mt-7 flex flex-wrap gap-3">
+        <a href="{{ url_for('post_job') }}" class="btn nx-btn-glow px-5 py-3 font-bold"><i data-lucide="square-plus" class="w-4 h-4"></i> Post a job</a>
+        <a href="{{ url_for('applicants') }}" class="btn btn-outline px-5 py-3"><i data-lucide="users-round" class="w-4 h-4"></i> Review applicants</a>
       </div>
     </div>
-    <a href="{{ url_for('post_job') }}" class="btn btn-accent"><i data-lucide="plus" class="w-4 h-4"></i>Post a job</a>
+  </section>
+
+  <!-- ================= ROW: 3 insight cards ================= -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 [&>*]:min-w-0">
+
+    <!-- Hiring funnel -->
+    <section class="nx-glass p-5 nx-reveal nx-d1 nx-lift">
+      <div class="flex items-center justify-between">
+        <h2 class="nx-h text-[15px] flex items-center gap-2"><span class="text-[#A78BFA]">✦</span> Hiring Funnel</h2>
+        <a href="{{ url_for('applicants') }}" class="nx-link text-xs">Pipeline <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
+      </div>
+      <p class="text-xs text-cream/55 mt-1">How candidates move through your live roles</p>
+      <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] gap-4 items-center mt-4">
+        <svg viewBox="0 0 120 120" class="w-full max-w-[150px] mx-auto" fill="none" role="img" aria-label="{{ live_pct }} percent of your jobs are live">
+          <defs><linearGradient id="ef-ring" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#2BE0BE"/><stop offset=".55" stop-color="#5B8CFF"/><stop offset="1" stop-color="#A78BFA"/></linearGradient></defs>
+          <circle cx="60" cy="60" r="56" stroke="rgba(148,163,255,.14)" stroke-dasharray="2 5" class="nx-spin-slow"/>
+          <circle cx="60" cy="60" r="{{ R }}" stroke="rgba(255,255,255,.08)" stroke-width="8"/>
+          {% if live_pct %}<circle cx="60" cy="60" r="{{ R }}" stroke="url(#ef-ring)" stroke-width="8" stroke-linecap="round" transform="rotate(-90 60 60)" stroke-dasharray="{{ (C * live_pct / 100)|round(2) }} {{ C|round(2) }}" class="nx-glow-ring"/>{% endif %}
+          <text x="60" y="60" text-anchor="middle" font-family="Plus Jakarta Sans, sans-serif" font-size="22" font-weight="800" fill="#fff">{{ active_jobs }}/{{ my_jobs|length }}</text>
+          <text x="60" y="76" text-anchor="middle" font-family="Inter, sans-serif" font-size="9" fill="rgba(226,232,255,.6)">jobs live</text>
+        </svg>
+        <div class="space-y-3 text-xs">
+          {% for label, val, pct, color in [('Views', total_views, 100 if total_views else 0, '#5B8CFF'), ('Applications', total_apps, apply_rate, '#2BE0BE'), ('Shortlisted+', shortlisted, short_rate, '#FFB74A')] %}
+          <div>
+            <div class="flex justify-between mb-1 gap-2"><span class="text-cream/70">{{ label }}</span><span class="font-bold text-white">{{ '{:,}'.format(val) }}</span></div>
+            <div class="nx-bar"><span style="width:{{ [pct, 100]|min }}%;background:{{ color }};box-shadow:0 0 12px {{ color }}"></span></div>
+          </div>
+          {% endfor %}
+          <p class="text-[11px] text-cream/45">{% if total_views %}{{ apply_rate }}% of viewers apply · {{ short_rate }}% get shortlisted{% else %}Numbers appear once your first job goes live.{% endif %}</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Next best move -->
+    <section class="nx-glass p-5 nx-reveal nx-d2 nx-lift flex flex-col">
+      <h2 class="nx-h text-[15px] flex items-center gap-2"><span class="w-6 h-6 rounded-lg bg-rose/15 text-rose inline-flex items-center justify-center"><i data-lucide="target" class="w-3.5 h-3.5"></i></span> Next Best Move</h2>
+      <div class="mt-4 p-4 rounded-2xl border border-white/10 flex-1 flex flex-col" style="background:linear-gradient(135deg,rgba(47,107,255,0.16),rgba(108,92,245,0.10))">
+        {% if not has_jobs %}
+          {% set m_icon, m_title, m_text, m_cta, m_href = 'square-plus', 'Post your first job', 'Live roles are matched to job seekers instantly. It takes about 3 minutes.', 'Post a job', url_for('post_job') %}
+        {% elif new_count %}
+          {% set m_icon, m_title, m_text, m_cta, m_href = 'user-check', 'Review ' ~ new_count ~ ' new applicant' ~ ('s' if new_count != 1 else ''), 'Fast replies keep great candidates interested. Shortlist or move them on today.', 'Open pipeline', url_for('applicants') %}
+        {% elif active_jobs == 0 %}
+          {% set m_icon, m_title, m_text, m_cta, m_href = 'rocket', 'Get a role live', 'None of your jobs are live right now. Publish or reopen one to start receiving applications.', 'Post a job', url_for('post_job') %}
+        {% else %}
+          {% set m_icon, m_title, m_text, m_cta, m_href = 'trending-up', 'Boost your reach', 'Featured listings appear first for matching candidates.', 'View packages', url_for('pricing') %}
+        {% endif %}
+        <div class="flex items-start gap-3">
+          <span class="w-9 h-9 rounded-xl bg-mint/15 text-mint inline-flex items-center justify-center shrink-0"><i data-lucide="{{ m_icon }}" class="w-4 h-4"></i></span>
+          <div>
+            <p class="font-display font-bold text-sm text-white leading-snug">{{ m_title }}</p>
+            <p class="text-xs text-cream/60 mt-1 leading-relaxed">{{ m_text }}</p>
+          </div>
+        </div>
+        <a href="{{ m_href }}" class="btn btn-accent btn-sm w-full justify-center mt-auto pt-2.5 font-bold">{{ m_cta }} <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
+      </div>
+      <ul class="mt-4 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+        {% for label, done, href in [('Company profile', company is not none, url_for('employer.setup')), ('First job posted', has_jobs, url_for('post_job')), ('A job is live', active_jobs > 0, url_for('employer_dashboard') ~ '#my-jobs'), ('Applicant shortlisted', shortlisted > 0, url_for('applicants'))] %}
+        <li><a href="{{ href }}" class="flex items-center gap-2 {{ 'text-cream/85' if done else 'text-cream/50 hover:text-white' }}">
+          <span class="w-4 h-4 rounded-full inline-flex items-center justify-center shrink-0 {{ 'bg-mint text-[#04122A]' if done else 'border border-white/25' }}">{% if done %}<i data-lucide="check" class="w-2.5 h-2.5"></i>{% endif %}</span>{{ label }}</a></li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <!-- Activity -->
+    <section class="nx-glass p-5 nx-reveal nx-d3 nx-lift">
+      <div class="flex items-center justify-between">
+        <h2 class="nx-h text-[15px] flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4 text-mint"></i> Your Activity</h2>
+        <span class="text-[11px] text-cream/45 bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">All time</span>
+      </div>
+      <div class="grid grid-cols-2 gap-2.5 mt-4">
+        {% for label, val, icon, cls, link in [
+            ('Active Jobs', active_jobs, 'briefcase', 'nx-stat-blue', url_for('employer_dashboard') ~ '#my-jobs'),
+            ('Applications', total_apps, 'send', 'nx-stat-violet', url_for('applicants')),
+            ('Job Views', total_views, 'eye', 'nx-stat-amber', url_for('employer_dashboard') ~ '#my-jobs'),
+            ('Shortlisted', shortlisted, 'star', 'nx-stat-mint', url_for('applicants'))] %}
+        <a href="{{ link }}" class="nx-stat {{ cls }} hover:-translate-y-0.5 transition-transform">
+          <i data-lucide="{{ icon }}" class="w-4 h-4"></i>
+          <p class="font-display font-extrabold text-2xl text-white mt-1.5 leading-none" data-counter="{{ val }}">{{ val }}</p>
+          <p class="text-[11px] text-cream/60 mt-1">{{ label }}</p>
+        </a>
+        {% endfor %}
+      </div>
+      <a href="{{ url_for('pricing') }}" class="mt-4 flex items-center gap-3 p-3 rounded-xl border border-amber/25 bg-amber/[0.06] hover:bg-amber/10">
+        <span class="w-9 h-9 rounded-xl inline-flex items-center justify-center bg-amber/15 text-amber shrink-0"><i data-lucide="sparkles" class="w-4 h-4"></i></span>
+        <span class="text-xs text-cream/75 flex-1"><b class="text-white">Featured listings</b> get seen first by matching candidates.</span>
+        <i data-lucide="chevron-right" class="w-4 h-4 text-amber"></i>
+      </a>
+    </section>
   </div>
 
-  <!-- Metrics -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-    <div class="card p-5">
-      <span class="icon-badge icon-badge-indigo w-10 h-10 mb-4"><i data-lucide="briefcase" class="w-[18px] h-[18px]"></i></span>
-      <p class="text-xs font-semibold text-ink/50 mb-1">Active Jobs</p>
-      <p class="font-display text-3xl font-bold text-navy" data-counter="{{ active_jobs }}">0</p>
-    </div>
-    <div class="card p-5">
-      <span class="icon-badge icon-badge-mint w-10 h-10 mb-4"><i data-lucide="send" class="w-[18px] h-[18px]"></i></span>
-      <p class="text-xs font-semibold text-ink/50 mb-1">Applications</p>
-      <p class="font-display text-3xl font-bold text-navy" data-counter="{{ total_apps }}">0</p>
-    </div>
-    <div class="card p-5">
-      <span class="icon-badge icon-badge-amber w-10 h-10 mb-4"><i data-lucide="eye" class="w-[18px] h-[18px]"></i></span>
-      <p class="text-xs font-semibold text-ink/50 mb-1">Views</p>
-      <p class="font-display text-3xl font-bold text-navy" data-counter="{{ total_views }}">0</p>
-    </div>
-    <div class="card p-5">
-      <span class="icon-badge icon-badge-rose w-10 h-10 mb-4"><i data-lucide="users" class="w-[18px] h-[18px]"></i></span>
-      <p class="text-xs font-semibold text-ink/50 mb-1">Shortlisted</p>
-      <p class="font-display text-3xl font-bold text-navy" data-counter="{{ shortlisted }}">0</p>
-    </div>
-  </div>
-
-  <div class="grid lg:grid-cols-[1fr_340px] gap-6 items-start">
-
-    <!-- Job performance -->
-    <section id="jobs" class="card p-0 overflow-hidden" aria-labelledby="perf-title">
-      <div class="px-6 py-5 border-b border-grey-line flex items-center justify-between">
-        <h2 id="perf-title" class="font-display font-semibold text-lg text-navy">Job performance</h2>
+  <!-- ================= JOB LISTINGS + RECENT APPLICANTS ================= -->
+  <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-5 items-start">
+    <section id="my-jobs" class="nx-glass overflow-hidden nx-reveal scroll-mt-24" aria-labelledby="perf-title">
+      <div class="px-5 sm:px-6 py-5 border-b border-white/10 flex items-center justify-between gap-3">
+        <div>
+          <h2 id="perf-title" class="nx-h text-lg flex items-center gap-2"><span class="text-mint">✦</span> My Job Listings</h2>
+          <p class="text-xs text-cream/55 mt-0.5">Views, applications and status for each of your roles</p>
+        </div>
         {% if my_jobs|length > 5 %}
-        <button type="button" id="toggle-jobs" class="text-xs font-semibold text-indigo hover:text-indigo-dark inline-flex items-center gap-1" aria-expanded="false">
-          <span>View all jobs</span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-        </button>
+        <button type="button" id="toggle-jobs" class="nx-link text-xs" aria-expanded="false"><span>View all jobs</span><i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></button>
         {% endif %}
       </div>
 
-      {% if my_jobs %}
+      {% if has_jobs %}
       <table class="nx-table w-full nx-table-desktop">
         <thead><tr><th>Job title</th><th>Status</th><th>Views</th><th>Applications</th><th>Posted</th></tr></thead>
         <tbody>
           {% for job in my_jobs %}
-          <tr {% if loop.index > 5 %}data-extra-job hidden{% endif %}>
-            <td><a href="{{ url_for('job_details', job_id=job.id) }}" class="font-medium text-navy hover:text-indigo">{{ job.title }}</a></td>
+          <tr {% if loop.index > 5 %}data-extra-job hidden{% endif %} class="hover:bg-white/[0.03]">
+            <td>
+              <a href="{{ url_for('job_details', job_id=job.id) }}" class="font-semibold text-white hover:text-mint">{{ job.title }}</a>
+              <p class="text-xs text-cream/45 mt-0.5">{{ job.location }} · {{ job.type }}</p>
+            </td>
             <td>{{ status_chip(job.status) }}</td>
-            <td>{{ job.views }}</td>
-            <td>{{ job.applications_count }}</td>
-            <td class="text-ink/50 whitespace-nowrap">{{ job.posted_days_ago|posted_label }}</td>
+            <td>
+              <span class="text-white font-semibold">{{ job.views }}</span>
+            </td>
+            <td>
+              <div class="flex items-center gap-2"><span class="text-white font-semibold w-6">{{ job.applications_count }}</span>
+                <div class="nx-bar w-20"><span style="width:{{ [((job.applications_count / job.views * 400) if job.views else 0)|round|int, 100]|min }}%;background:linear-gradient(90deg,#2BE0BE,#5B8CFF)"></span></div></div>
+            </td>
+            <td class="whitespace-nowrap">{{ job.posted_days_ago|posted_label }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
       <div class="nx-table-mobile p-4 space-y-3">
         {% for job in my_jobs %}
-        <div class="border border-grey-line rounded-xl p-4" {% if loop.index > 5 %}data-extra-job hidden{% endif %}>
+        <div class="border border-white/10 bg-white/[0.03] rounded-xl p-4" {% if loop.index > 5 %}data-extra-job hidden{% endif %}>
           <div class="flex items-center justify-between gap-3 mb-2">
-            <a href="{{ url_for('job_details', job_id=job.id) }}" class="font-medium text-navy text-sm">{{ job.title }}</a>
+            <a href="{{ url_for('job_details', job_id=job.id) }}" class="font-semibold text-white text-sm">{{ job.title }}</a>
             {{ status_chip(job.status) }}
           </div>
-          <div class="flex gap-4 text-xs text-ink/50"><span>{{ job.views }} views</span><span>{{ job.applications_count }} applications</span><span>{{ job.posted_days_ago|posted_label }}</span></div>
+          <div class="flex gap-4 text-xs text-cream/55"><span>{{ job.views }} views</span><span>{{ job.applications_count }} applications</span><span>{{ job.posted_days_ago|posted_label }}</span></div>
         </div>
         {% endfor %}
       </div>
       {% else %}
       <div class="text-center py-14 px-6">
-        <span class="icon-badge icon-badge-indigo w-12 h-12 mx-auto mb-4"><i data-lucide="briefcase" class="w-5 h-5"></i></span>
-        <p class="font-display font-semibold text-navy">Post your first job</p>
-        <p class="text-sm text-ink/55 mt-1 max-w-sm mx-auto">Views, applications and status for each role will show up here once it's live.</p>
+        <div class="w-14 h-14 rounded-2xl mx-auto inline-flex items-center justify-center bg-gradient-to-br from-[#2F6BFF] to-[#6C5CF5] shadow-lg icon-float"><i data-lucide="briefcase" class="w-6 h-6 text-white"></i></div>
+        <p class="font-display text-base font-bold text-white mt-4">Post your first job</p>
+        <p class="text-xs text-cream/55 mt-1.5 max-w-sm mx-auto">Views, applications and status for each role will show up here once it's live.</p>
         <a href="{{ url_for('post_job') }}" class="btn btn-primary btn-sm mt-5 inline-flex"><i data-lucide="plus" class="w-4 h-4"></i>Post a job</a>
       </div>
       {% endif %}
     </section>
 
-    <!-- Right column -->
-    <div class="space-y-6">
-      <section class="card p-6" aria-labelledby="recent-title">
-        <div class="flex items-center justify-between mb-4">
-          <h2 id="recent-title" class="font-display font-semibold text-navy text-sm">Recent applicants</h2>
-          {% if recent_applicants %}<a href="{{ url_for('applicants') }}" class="text-xs font-semibold text-indigo hover:text-indigo-dark inline-flex items-center gap-1">View all<i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>{% endif %}
-        </div>
-        {% if recent_applicants %}
-        <ul class="flex flex-col gap-4">
-          {% for c in recent_applicants %}
-          <li class="flex items-center gap-3">
-            <span class="w-9 h-9 rounded-full bg-cream-dim text-navy flex items-center justify-center text-xs font-bold shrink-0">{{ c.avatar_initials }}</span>
-            <div class="min-w-0 flex-1">
-              <p class="text-sm font-semibold text-navy truncate">{{ c.name }}</p>
-              <p class="text-xs text-ink/50 truncate">{{ c.job_title }}</p>
-            </div>
-            {{ stage_chip(c.stage) }}
-          </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <div class="text-center py-6">
-          <i data-lucide="users" class="w-7 h-7 text-grey mx-auto mb-2"></i>
-          <p class="text-sm text-ink/60">No applicants yet. Candidates appear here as soon as they apply to a live job.</p>
-        </div>
-        {% endif %}
-      </section>
-
-      <div class="rounded-2xl p-6 text-cream border border-white/10 relative overflow-hidden" style="background:linear-gradient(135deg, var(--indigo-dark) 0%, var(--navy-elevated) 70%)">
-        <span class="icon-badge icon-badge-mint icon-float w-10 h-10 absolute top-4 right-4" style="background:rgba(43,224,190,0.2)"><i data-lucide="trending-up" class="w-5 h-5"></i></span>
-        <h2 class="font-display font-semibold mb-2">Boost your reach</h2>
-        <p class="text-sm text-cream/60 mb-4 max-w-[85%]">Featured jobs get up to 3x more views from candidates.</p>
-        <a href="{{ url_for('pricing') }}" class="btn bg-cream text-navy hover:bg-white btn-sm">View packages</a>
+    <section class="nx-glass p-5 nx-reveal nx-d1" aria-labelledby="recent-title">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="recent-title" class="nx-h text-[15px] flex items-center gap-2"><i data-lucide="users-round" class="w-4 h-4 text-[#7FA5FF]"></i> Recent Applicants</h2>
+        {% if recent_applicants %}<a href="{{ url_for('applicants') }}" class="nx-link text-xs">View all <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>{% endif %}
       </div>
-    </div>
+      {% if recent_applicants %}
+      <ul class="space-y-2.5">
+        {% for c in recent_applicants %}
+        <li class="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/[0.03]">
+          <span class="nx-avatar !w-9 !h-9">{{ c.avatar_initials }}</span>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold text-white truncate">{{ c.name }}</p>
+            <p class="text-[11px] text-cream/55 truncate">{{ c.job_title }}</p>
+          </div>
+          {{ stage_chip(c.stage) }}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="nx-empty">
+        <i data-lucide="users" class="w-6 h-6 text-cream/30 mx-auto"></i>
+        <p class="text-xs text-cream/55 mt-2">No applicants yet. Candidates appear here as soon as they apply to one of your live jobs.</p>
+      </div>
+      {% endif %}
+    </section>
   </div>
 </div>
 {% endblock %}
