@@ -305,7 +305,7 @@ def seed_demo(password):
         interests=["Web applications", "Data"])
     store.save_resume(sid, "modern", "Software developer with a passion for building reliable web applications "
                                      "and turning data into useful products for customers.")
-    by_title = {j["title"]: j for j in data.JOBS}
+    by_title = {j["title"]: j for j in data.live_jobs()}
     for title, status in (("Frontend Developer", "Applied"), ("Backend Engineer", "Shortlisted"),
                           ("Senior Software Engineer", "Interview")):
         job = by_title.get(title)
@@ -313,6 +313,9 @@ def seed_demo(password):
             store.add_application(sid, job["id"])
             row_app = next(a for a in store.get_applications(sid) if a["job_id"] == job["id"])
             store.set_application_status(sid, row_app["id"], status)
+            # keep the employer's applicant board in step with the seeker's status
+            store.get_db().table("applications").update({"stage": "New" if status == "Applied" else status}) \
+                .eq("id", row_app["id"]).execute()
     for title in ("UX Designer", "Marketing Coordinator"):
         if by_title.get(title):
             store.toggle_saved(sid, by_title[title]["id"])

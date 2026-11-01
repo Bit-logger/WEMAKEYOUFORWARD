@@ -10,6 +10,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 import data
 import db
+import job_store
 import employer_auth
 import seeker_auth
 import seeker_portal
@@ -35,6 +36,16 @@ app.config.update(
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 db.init_app(app)
+
+# First run: copy the sample job board into Supabase so job search has test data.
+if app.config.get("SUPABASE_CONFIGURED"):
+    with app.app_context():
+        try:
+            added = job_store.seed_demo_jobs(data.build_seed_jobs, data.DEMO_REPORTS)
+            if added:
+                app.logger.warning("Seeded %s sample jobs into Supabase.", added)
+        except Exception as exc:  # table missing -> tell the developer what to run
+            app.logger.error("Jobs table not ready (%s). Run supabase/migration_002_jobs.sql in Supabase.", exc)
 app.register_blueprint(employer_auth.bp)
 app.register_blueprint(seeker_auth.bp)
 app.register_blueprint(seeker_portal.api_bp)
@@ -88,9 +99,10 @@ def security_headers(resp):
 # ---------------------------------------------------------------- pages --
 @app.route("/")
 def index():
-    featured_jobs = [j for j in data.JOBS if j["status"] == "Approved" and j["featured"]][:6]
+    live = data.live_jobs()
+    featured_jobs = [j for j in live if j["featured"]][:6]
     categories = {}
-    for j in data.JOBS:
+    for j in live:
         categories.setdefault(j["industry"], 0)
         categories[j["industry"]] += 1
     return render_template("index.html", featured_jobs=featured_jobs, categories=categories,
@@ -99,7 +111,7 @@ def index():
 
 @app.route("/jobs")
 def jobs():
-    live_jobs = [j for j in data.JOBS if j["status"] == "Approved"]
+    live_jobs = data.live_jobs()
     return render_template(
         "jobs.html",
         jobs_json=live_jobs,
@@ -134,7 +146,7 @@ TOP_COMPANIES = [
 def companies():
     items = []
     for c in TOP_COMPANIES:
-        count = sum(1 for j in data.JOBS if j["status"] == "Approved" and j["company"] == c["name"])
+        count = sum(1 for j in data.live_jobs() if j["company"] == c["name"])
         items.append({**c, "open_roles": count})
     return render_template("companies.html", companies=items)
 
@@ -144,15 +156,19 @@ def company_jobs(slug):
     company = next((c for c in TOP_COMPANIES if c["slug"] == slug), None)
     if not company:
         return render_template("404.html"), 404
-    posted = [j for j in data.JOBS if j["status"] == "Approved" and j["company"] == company["name"]]
+    posted = [j for j in data.live_jobs() if j["company"] == company["name"]]
     return render_template("company_jobs.html", company=company, jobs=posted, salary_label=data.salary_label)
 
 
 @app.route("/jobs/<int:job_id>")
 def job_details(job_id):
     job = data.get_job(job_id)
-    if not job:
+    employer = current_employer()
+    # Drafts / pending / rejected jobs are only visible to the employer who owns them.
+    if not job or (job["status"] != "Approved" and not (employer and job_store._owns(employer, job))):
         return render_template("404.html"), 404
+    if not (employer and job_store._owns(employer, job)):
+        job_store.add_view(job_id)
     me = current_seeker()
     is_saved = has_applied = False
     percent, resume_info = 0, None
@@ -164,7 +180,7 @@ def job_details(job_id):
         resume_info = store.get_resume(me["id"])
         if resume_info:
             resume_info["updated_label"] = store.format_date(resume_info["updated_at"])
-    similar = [j for j in data.JOBS if j["industry"] == job["industry"] and j["id"] != job_id][:3]
+    similar = [j for j in data.live_jobs() if j["industry"] == job["industry"] and j["id"] != job_id][:3]
     return render_template("job_details.html", job=job, is_saved=is_saved, has_applied=has_applied,
                            similar=similar, profile_percent=percent, resume_info=resume_info,
                            salary_label=data.salary_label)
@@ -218,7 +234,8 @@ def pricing():
 def checkout():
     package_id = request.args.get("package", "featured")
     package = next((p for p in data.PACKAGES if p["id"] == package_id), data.PACKAGES[1])
-    draft = data.DRAFT_JOBS.get(current_employer()["id"], {})
+    latest = job_store.latest_draft(current_employer())
+    draft = {"job_id": latest["id"], "title": latest["title"]} if latest else {}
     return render_template("checkout.html", package=package, draft=draft)
 
 
@@ -232,13 +249,14 @@ def applicants():
 
 @app.route("/admin")
 def admin():
-    live_jobs = [j for j in data.JOBS if j["status"] == "Approved"]
-    pending_jobs = [j for j in data.JOBS if j["status"] == "Pending"]
-    rejected_jobs = [j for j in data.JOBS if j["status"] == "Rejected"]
-    revenue = data.PLATFORM_STATS["revenue_month"]
-    return render_template("admin.html", stats=data.PLATFORM_STATS, live_jobs=live_jobs,
+    every_job = [j for j in data.all_jobs() if j["status"] != "Draft"]
+    live_jobs = [j for j in every_job if j["status"] == "Approved"]
+    pending_jobs = [j for j in every_job if j["status"] == "Pending"]
+    rejected_jobs = [j for j in every_job if j["status"] == "Rejected"]
+    stats = job_store.platform_stats()
+    return render_template("admin.html", stats=stats, live_jobs=live_jobs,
                             pending_jobs=pending_jobs, rejected_jobs=rejected_jobs,
-                            all_jobs=data.JOBS, reports=data.ADMIN_REPORTS, revenue=revenue)
+                            all_jobs=every_job, reports=job_store.reports(), revenue=stats["revenue_month"])
 
 
 @app.errorhandler(404)
@@ -265,37 +283,53 @@ def api_demo_role():
 def api_post_job():
     payload = request.json or {}
     employer, company = current_employer(), current_company()
-    job = {
-        "id": data.next_id(),
+    def money(key, default):
+        try:
+            return max(0, min(10_000_000, int(float(payload.get(key) or default))))
+        except (TypeError, ValueError):
+            return default
+
+    def pick(key, options):
+        value = payload.get(key)
+        return value if value in options else options[0]
+
+    title = (str(payload.get("title") or "").strip() or "Untitled role")[:120]
+    salary_min, salary_max = money("salary_min", 60000), money("salary_max", 90000)
+    if salary_max < salary_min:
+        salary_min, salary_max = salary_max, salary_min
+    closing = str(payload.get("closing_date") or "")[:10]
+    try:
+        closing = date.fromisoformat(closing).isoformat()
+    except ValueError:
+        closing = (date.today() + timedelta(days=30)).isoformat()
+    experience = pick("experience", data.EXPERIENCE_LEVELS)
+    job_id = job_store.create_job({
         "employer_id": employer["id"],
-        "title": payload.get("title", "Untitled role"),
+        "is_demo": False,
+        "title": title,
         "company": company["name"],
         "company_initials": company["initials"],
         "company_color": company["color"],
-        "location": payload.get("location", data.LOCATIONS[0]),
-        "type": payload.get("type", data.JOB_TYPES[0]),
-        "mode": payload.get("mode", data.WORK_MODES[0]),
-        "experience": payload.get("experience", data.EXPERIENCE_LEVELS[0]),
-        "industry": payload.get("industry", data.INDUSTRIES[0]),
-        "salary_min": int(payload.get("salary_min") or 60000),
-        "salary_max": int(payload.get("salary_max") or 90000),
-        "tags": [t.strip() for t in payload.get("skills", "").split(",") if t.strip()][:6] or ["General"],
-        "posted_days_ago": 0,
-        "closing_date": payload.get("closing_date", (date.today() + timedelta(days=30)).isoformat()),
+        "location": pick("location", data.LOCATIONS),
+        "type": pick("type", data.JOB_TYPES),
+        "mode": pick("mode", data.WORK_MODES),
+        "experience": experience,
+        "industry": pick("industry", data.INDUSTRIES),
+        "salary_min": salary_min,
+        "salary_max": salary_max,
+        "tags": [t.strip()[:40] for t in str(payload.get("skills", "")).split(",") if t.strip()][:6] or ["General"],
+        "closing_date": closing,
         "featured": False,
         "urgent": False,
         "status": "Draft",
         "views": 0,
-        "applications_count": 0,
-        "about_role": payload.get("description", "Description coming soon."),
+        "about_role": (str(payload.get("description") or "").strip() or "Description coming soon.")[:5000],
         "responsibilities": ["Deliver against role objectives", "Work closely with the team"],
-        "requirements": [f"Experience level: {payload.get('experience', 'Not specified')}"],
+        "requirements": [f"Experience level: {experience}"],
         "benefits": ["Flexible working arrangements"],
         "about_company": f"{company['name']} is hiring through NEXORA.",
-    }
-    data.JOBS.append(job)
-    data.DRAFT_JOBS[employer["id"]] = {"job_id": job["id"], "title": job["title"]}
-    return jsonify({"ok": True, "job_id": job["id"]})
+    })
+    return jsonify({"ok": True, "job_id": job_id})
 
 
 @app.post("/api/checkout")
@@ -303,38 +337,48 @@ def api_post_job():
 def api_checkout():
     payload = request.json or {}
     employer = current_employer()
-    job_id = data.DRAFT_JOBS.get(employer["id"], {}).get("job_id")
-    job = data.get_job(job_id) if job_id else None
-    package_id = payload.get("package", "featured")
-    if job and job.get("employer_id") == employer["id"]:
-        job["status"] = "Approved"
-        job["featured"] = package_id in ("featured", "premium")
-        job["urgent"] = package_id == "urgent"
-    return jsonify({"ok": True, "job_id": job_id})
+    job = job_store.latest_draft(employer)
+    package = next((p for p in data.PACKAGES if p["id"] == payload.get("package")), data.PACKAGES[1])
+    if not job:
+        return jsonify({"ok": False, "error": "No draft job to publish."}), 404
+    job_store.update_job(job["id"], status="Approved", package=package["id"],
+                         featured=package["id"] in ("featured", "premium"),
+                         urgent=package["id"] in ("urgent", "premium"))
+    job_store.record_order(employer["id"], job["id"], package)
+    return jsonify({"ok": True, "job_id": job["id"]})
 
 
 @app.post("/api/applicants/<int:candidate_id>/stage")
 @employer_required
 def api_move_stage(candidate_id):
     new_stage = (request.json or {}).get("stage")
-    for c in data.candidates_for_employer(current_employer()):
-        if c["id"] == candidate_id and new_stage in data.STAGES:
-            c["stage"] = new_stage
-            return jsonify({"ok": True, "stage": new_stage})
+    if job_store.move_stage(current_employer(), candidate_id, new_stage):
+        return jsonify({"ok": True, "stage": new_stage})
     return jsonify({"ok": False}), 404
 
 
 @app.post("/api/admin/jobs/<int:job_id>/moderate")
 def api_moderate(job_id):
+    if current_role() != "admin":
+        return jsonify({"ok": False, "error": "Admins only."}), 403
     action = (request.json or {}).get("action")
     job = data.get_job(job_id)
     if not job:
         return jsonify({"ok": False}), 404
     mapping = {"approve": "Approved", "reject": "Rejected", "review": "Review", "suspend": "Suspended"}
     if action in mapping:
-        job["status"] = mapping[action]
-        return jsonify({"ok": True, "status": job["status"]})
+        job_store.update_job(job_id, status=mapping[action])
+        return jsonify({"ok": True, "status": mapping[action]})
     return jsonify({"ok": False}), 400
+
+
+@app.post("/api/admin/reports/<int:report_id>/resolve")
+def api_resolve_report(report_id):
+    if current_role() != "admin":
+        return jsonify({"ok": False, "error": "Admins only."}), 403
+    if job_store.resolve_report(report_id):
+        return jsonify({"ok": True})
+    return jsonify({"ok": False}), 404
 
 
 # ------------------------------------------------------------------ CLI --

@@ -53,9 +53,13 @@
     showToast(`Job marked as ${newStatus.toLowerCase()}.`, { icon: 'shield-check' });
   };
 
-  window.resolveReport = function (id) {
+  window.resolveReport = async function (id) {
     const row = document.querySelector(`[data-report-row="${id}"]`);
     if (!row) return;
+    try {
+      const res = await fetch(`/api/admin/reports/${id}/resolve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      if (!res.ok) { showToast('Could not update the report. Please try again.', { icon: 'alert-circle' }); return; }
+    } catch (e) { showToast('Network error. Please try again.', { icon: 'alert-circle' }); return; }
     const statusEl = row.querySelector(`[data-report-status="${id}"]`);
     statusEl.textContent = 'Resolved';
     statusEl.style.color = '#0E7A64';

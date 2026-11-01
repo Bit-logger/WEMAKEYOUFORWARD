@@ -1,7 +1,8 @@
 """
-NEXORA demo data layer.
-In-memory mock data only — no database. State resets on server restart.
-This is intentionally simple so it can be swapped for a real DB/API later.
+NEXORA reference data + the sample job board used to seed Supabase on first run.
+
+Jobs, employer applicants, job orders and admin reports now live in Supabase (see job_store.py).
+The lists below are fixed options (locations, industries, packages...) and the one-time seed data.
 """
 import itertools
 from datetime import date, timedelta
@@ -69,12 +70,6 @@ _JOB_SEED = [
     ("Python Developer", "Technology", ["Python", "Django", "REST APIs"], 100000, 125000),
 ]
 
-FIRST_NAMES = ["Ava", "Liam", "Chloe", "Noah", "Mia", "Ethan", "Isla", "Jack",
-               "Zoe", "Lucas", "Ruby", "Oliver", "Grace", "Henry", "Amelia", "Leo"]
-LAST_NAMES = ["Nguyen", "Smith", "Patel", "Kelly", "Chen", "Walker", "Ahmed",
-              "Wilson", "Brown", "Singh", "Taylor", "Robinson", "Lee", "Clarke"]
-
-
 def _build_jobs():
     jobs = []
     for i, (title, industry, tags, smin, smax) in enumerate(_JOB_SEED):
@@ -138,84 +133,29 @@ def _build_jobs():
     return jobs
 
 
-JOBS = _build_jobs()
-
-# --- Applicant pipeline (employer-side, per job) -----------------------
-STAGES = ["New", "Shortlisted", "Interview", "Hired"]
+# A few sample jobs start as "Pending" so the admin moderation queue has something to review.
+_PENDING_SEED = (1, 9, 17)
 
 
-def _build_candidates():
-    candidates = []
-    pool_jobs = [j for j in JOBS if j["company"] == "Northlane Digital"] or JOBS[:4]
-    stage_cycle = itertools.cycle(STAGES)
-    for i in range(14):
-        job = pool_jobs[i % len(pool_jobs)]
-        name = f"{FIRST_NAMES[i % len(FIRST_NAMES)]} {LAST_NAMES[i % len(LAST_NAMES)]}"
-        candidates.append({
-            "id": next_id(),
-            "job_id": job["id"],
-            "job_title": job["title"],
-            "name": name,
-            "title": f"{job['experience']} {job['title']}",
-            "experience": job["experience"],
-            "skills": job["tags"],
-            "applied_date": (date.today() - timedelta(days=(i * 2) % 18)).isoformat(),
-            "stage": next(stage_cycle) if i % 3 != 0 else "New",
-            "avatar_initials": "".join([p[0] for p in name.split()[:2]]),
-        })
-    return candidates
+def build_seed_jobs():
+    """Sample job board copied into Supabase once (job_store.seed_demo_jobs). Ids start at 1000."""
+    global _id_counter
+    _id_counter = itertools.count(1000)
+    jobs = _build_jobs()
+    for idx in _PENDING_SEED:
+        if idx < len(jobs):
+            jobs[idx]["status"] = "Pending"
+    return jobs
 
 
-CANDIDATES = _build_candidates()
-
-# --- Job seeker data ---------------------------------------------------------
-# Accounts, profiles, resumes, applications and saved jobs live in SQLite (see seeker_store.py).
-
-
-def add_applicant(seeker_id, application_id, name, headline, skills, job):
-    """Mirror a seeker's application onto the employer's applicant board (stage: New)."""
-    CANDIDATES.append({
-        "id": next_id(),
-        "job_id": job["id"],
-        "job_title": job["title"],
-        "name": name,
-        "title": headline or job["title"],
-        "experience": job["experience"],
-        "skills": skills[:6],
-        "applied_date": date.today().isoformat(),
-        "stage": "New",
-        "avatar_initials": "".join(p[0] for p in name.split()[:2]).upper() or "?",
-        "seeker_id": seeker_id,
-        "application_id": application_id,
-    })
-
-
-def remove_applicant(seeker_id, application_id):
-    CANDIDATES[:] = [c for c in CANDIDATES
-                     if not (c.get("seeker_id") == seeker_id and c.get("application_id") == application_id)]
-
-
-# --- Employer ownership -----------------------------------------------------
-# Employer accounts live in Supabase (see db.py). Jobs are still held in memory,
-# so each job carries an `employer_id` pointing at the owning account.
-# The seeded Northlane Digital jobs belong to the demo employer account.
-DEMO_OWNER = "demo"
-for _job in JOBS:
-    if _job["company"] == "Northlane Digital":
-        _job["employer_id"] = DEMO_OWNER
-
-
-def jobs_for_employer(employer):
-    owners = {employer["id"]}
-    if employer["is_demo"]:
-        owners.add(DEMO_OWNER)
-    return [j for j in JOBS if j.get("employer_id") in owners]
-
-
-def candidates_for_employer(employer):
-    job_ids = {j["id"] for j in jobs_for_employer(employer)}
-    return [c for c in CANDIDATES if c["job_id"] in job_ids]
-
+DEMO_REPORTS = [
+    {"type": "Job listing", "reason": "Misleading salary range",
+     "target": "Retail Supervisor — Bright Retail Co.", "status": "Open"},
+    {"type": "Employer", "reason": "Duplicate company profile",
+     "target": "Southwind Logistics", "status": "Open"},
+    {"type": "Job listing", "reason": "Suspicious contact request",
+     "target": "Data Analyst — Ridgeline Analytics", "status": "Resolved"},
+]
 
 PACKAGES = [
     {"id": "basic", "name": "Basic", "price": 19, "tagline": "Get listed and discovered.",
@@ -228,35 +168,33 @@ PACKAGES = [
      "features": ["Homepage placement", "Featured + Urgent badges", "30 days live", "Dedicated support"]},
 ]
 
-# --- Draft job used by the Post a Job wizard, keyed by employer id ------
-DRAFT_JOBS = {}
+# --- Database-backed data (thin wrappers around job_store) ---
+STAGES = ["New", "Shortlisted", "Interview", "Hired"]
 
-# --- Admin mock platform data ---------------------------------------------
-PLATFORM_STATS = {
-    "total_users": 8420,
-    "employers": 612,
-    "revenue_month": 18420,
-}
 
-ADMIN_REPORTS = [
-    {"id": next_id(), "type": "Job listing", "reason": "Misleading salary range",
-     "target": "Retail Supervisor — Bright Retail Co.", "status": "Open"},
-    {"id": next_id(), "type": "Employer", "reason": "Duplicate company profile",
-     "target": "Southwind Logistics", "status": "Open"},
-    {"id": next_id(), "type": "Job listing", "reason": "Suspicious contact request",
-     "target": "Data Analyst — Ridgeline Analytics", "status": "Resolved"},
-]
+def all_jobs():
+    import job_store
+    return job_store.all_jobs()
 
-# Set a few jobs to Pending for the moderation demo
-for idx in (1, 9, 17):
-    JOBS[idx]["status"] = "Pending"
+
+def live_jobs():
+    import job_store
+    return job_store.live_jobs()
 
 
 def get_job(job_id):
-    for j in JOBS:
-        if j["id"] == job_id:
-            return j
-    return None
+    import job_store
+    return job_store.get_job(job_id)
+
+
+def jobs_for_employer(employer):
+    import job_store
+    return job_store.jobs_for_employer(employer)
+
+
+def candidates_for_employer(employer):
+    import job_store
+    return job_store.candidates_for_employer(employer)
 
 
 def salary_label(job):

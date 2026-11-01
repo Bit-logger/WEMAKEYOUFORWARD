@@ -24,7 +24,7 @@ MAX_EDU, MAX_EXP = 5, 5
 
 # --------------------------------------------------------------- shared --
 def _live_jobs():
-    return [j for j in data.JOBS if j["status"] == "Approved"]
+    return data.live_jobs()
 
 
 def portal_context():
@@ -34,7 +34,7 @@ def portal_context():
     resume = store.get_resume(row["id"])
     percent, sections = store.profile_completion(row, profile)
     applied = store.applied_job_ids(row["id"])
-    ranked = matching.rank_jobs(data.JOBS, profile, resume, applied)
+    ranked = matching.rank_jobs(data.all_jobs(), profile, resume, applied)
     visible, locked = matching.split_by_plan(ranked, row["plan"] == "premium")
     return {
         "row": row, "profile": profile, "resume": resume,
@@ -305,13 +305,8 @@ def api_apply(job_id):
         return jsonify({"ok": False, "error": "This job is no longer open."}), 404
     row = current_seeker()
     note = ((request.get_json(silent=True) or {}).get("cover_note") or "").strip()[:1000]
+    # The application row in Supabase is what the employer sees on their Applicants board.
     created = store.add_application(row["id"], job_id, note)
-    if created:
-        job["applications_count"] += 1
-        app_row = next(a for a in store.get_applications(row["id"]) if a["job_id"] == job_id)
-        profile = store.get_profile(row["id"])
-        data.add_applicant(row["id"], app_row["id"], row["full_name"] or row["email"], profile["headline"],
-                           profile["skills"], job)
     return jsonify({"ok": True, "already_applied": not created})
 
 
@@ -333,8 +328,4 @@ def api_application_remove(application_id):
     app_row = store.get_application(row["id"], application_id)
     if not app_row or not store.remove_application(row["id"], application_id):
         return jsonify({"ok": False, "error": "Application not found."}), 404
-    job = data.get_job(app_row["job_id"])
-    if job and job["applications_count"] > 0:
-        job["applications_count"] -= 1
-    data.remove_applicant(row["id"], application_id)
     return jsonify({"ok": True})
