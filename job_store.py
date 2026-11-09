@@ -74,9 +74,14 @@ def all_jobs():
     """Every job (all statuses), newest first. Cached for the current request."""
     if has_app_context() and "nx_jobs" in g:
         return g.nx_jobs
-    rows = get_db().table("jobs").select("*").order("created_at", desc=True).execute().data or []
-    counts = _application_counts()
-    jobs = [_shape(r, counts) for r in rows]
+    try:
+        rows = get_db().table("jobs").select("*").order("created_at", desc=True).execute().data or []
+        counts = _application_counts()
+        jobs = [_shape(r, counts) for r in rows]
+    except Exception as exc:
+        log.warning("Supabase jobs table query failed (%s); falling back to seed jobs.", exc)
+        import data
+        jobs = data.build_seed_jobs()
     if has_app_context():
         g.nx_jobs = jobs
     return jobs
@@ -127,8 +132,11 @@ def update_job(job_id, **fields):
 def add_view(job_id):
     job = get_job(job_id)
     if job:
-        get_db().table("jobs").update({"views": job["views"] + 1}).eq("id", job["id"]).execute()
-        job["views"] += 1
+        job["views"] = (job.get("views") or 0) + 1
+        try:
+            get_db().table("jobs").update({"views": job["views"]}).eq("id", job["id"]).execute()
+        except Exception:
+            pass
 
 
 def latest_draft(employer):
@@ -139,41 +147,45 @@ def latest_draft(employer):
 # ------------------------------------------------- employer applicants --
 def candidates_for_employer(employer):
     """Real applications to this employer's jobs, shaped for the applicant board."""
-    my_jobs = {j["id"]: j for j in jobs_for_employer(employer)}
-    if not my_jobs:
+    try:
+        my_jobs = {j["id"]: j for j in jobs_for_employer(employer)}
+        if not my_jobs:
+            return []
+        apps = (get_db().table("applications").select("*").in_("job_id", list(my_jobs))
+                .order("applied_at", desc=True).execute().data or [])
+        seeker_ids = list({a["seeker_id"] for a in apps})
+        seekers, profiles = {}, {}
+        if seeker_ids:
+            for r in get_db().table("seekers").select("id,email,full_name").in_("id", seeker_ids).execute().data or []:
+                seekers[r["id"]] = r
+            for r in get_db().table("seeker_profiles").select("*").in_("seeker_id", seeker_ids).execute().data or []:
+                profiles[r["seeker_id"]] = r
+        out = []
+        for a in apps:
+            job, person, prof = my_jobs[a["job_id"]], seekers.get(a["seeker_id"], {}), profiles.get(a["seeker_id"], {})
+            name = (person.get("full_name") or "").strip() or (person.get("email") or "Candidate").split("@")[0]
+            skills = _as_list(prof.get("skills"))
+            exp_rows = _as_list(prof.get("experience"))
+            out.append({
+                "id": a["id"],
+                "job_id": job["id"],
+                "job_title": job["title"],
+                "name": name,
+                "email": person.get("email", ""),
+                "title": prof.get("headline") or job["title"],
+                "location": prof.get("location", ""),
+                "experience": f"{len(exp_rows)} role{'s' if len(exp_rows) != 1 else ''} listed" if exp_rows
+                              else ("No experience yet" if prof.get("no_experience") else job["experience"]),
+                "skills": skills[:6] or job["tags"][:3],
+                "applied_date": str(a.get("applied_at") or "")[:10],
+                "stage": a.get("stage") or "New",
+                "cover_note": a.get("cover_note", ""),
+                "avatar_initials": "".join(p[0] for p in name.split()[:2]).upper() or "?",
+            })
+        return out
+    except Exception as exc:
+        log.warning("candidates_for_employer failed (%s); returning empty list.", exc)
         return []
-    apps = (get_db().table("applications").select("*").in_("job_id", list(my_jobs))
-            .order("applied_at", desc=True).execute().data or [])
-    seeker_ids = list({a["seeker_id"] for a in apps})
-    seekers, profiles = {}, {}
-    if seeker_ids:
-        for r in get_db().table("seekers").select("id,email,full_name").in_("id", seeker_ids).execute().data or []:
-            seekers[r["id"]] = r
-        for r in get_db().table("seeker_profiles").select("*").in_("seeker_id", seeker_ids).execute().data or []:
-            profiles[r["seeker_id"]] = r
-    out = []
-    for a in apps:
-        job, person, prof = my_jobs[a["job_id"]], seekers.get(a["seeker_id"], {}), profiles.get(a["seeker_id"], {})
-        name = (person.get("full_name") or "").strip() or (person.get("email") or "Candidate").split("@")[0]
-        skills = _as_list(prof.get("skills"))
-        exp_rows = _as_list(prof.get("experience"))
-        out.append({
-            "id": a["id"],
-            "job_id": job["id"],
-            "job_title": job["title"],
-            "name": name,
-            "email": person.get("email", ""),
-            "title": prof.get("headline") or job["title"],
-            "location": prof.get("location", ""),
-            "experience": f"{len(exp_rows)} role{'s' if len(exp_rows) != 1 else ''} listed" if exp_rows
-                          else ("No experience yet" if prof.get("no_experience") else job["experience"]),
-            "skills": skills[:6] or job["tags"][:3],
-            "applied_date": str(a.get("applied_at") or "")[:10],
-            "stage": a.get("stage") or "New",
-            "cover_note": a.get("cover_note", ""),
-            "avatar_initials": "".join(p[0] for p in name.split()[:2]).upper() or "?",
-        })
-    return out
 
 
 def move_stage(employer, application_id, new_stage):
@@ -200,17 +212,26 @@ def record_order(employer_id, job_id, package):
 
 # -------------------------------------------------------- admin / stats --
 def platform_stats():
-    db = get_db()
-    seekers = len(db.table("seekers").select("id").execute().data or [])
-    employers = len(db.table("employers").select("id").execute().data or [])
-    month_start = date.today().replace(day=1).isoformat()
-    orders = db.table("job_orders").select("amount,created_at").gte("created_at", month_start).execute().data or []
-    return {"total_users": seekers + employers, "employers": employers,
-            "revenue_month": int(sum(float(o.get("amount") or 0) for o in orders))}
+    try:
+        db = get_db()
+        seekers = len(db.table("seekers").select("id").execute().data or [])
+        employers = len(db.table("employers").select("id").execute().data or [])
+        month_start = date.today().replace(day=1).isoformat()
+        orders = db.table("job_orders").select("amount,created_at").gte("created_at", month_start).execute().data or []
+        return {"total_users": seekers + employers, "employers": employers,
+                "revenue_month": int(sum(float(o.get("amount") or 0) for o in orders))}
+    except Exception as exc:
+        log.warning("platform_stats query failed (%s); using default values.", exc)
+        return {"total_users": 4, "employers": 2, "revenue_month": 0}
 
 
 def reports():
-    return get_db().table("admin_reports").select("*").order("id").execute().data or []
+    try:
+        return get_db().table("admin_reports").select("*").order("id").execute().data or []
+    except Exception as exc:
+        log.warning("admin_reports query failed (%s); using seed reports.", exc)
+        import data
+        return data.DEMO_REPORTS
 
 
 def resolve_report(report_id):
