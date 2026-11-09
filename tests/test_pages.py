@@ -42,7 +42,11 @@ class NexoraPageSmokeTests(unittest.TestCase):
                 self.assertEqual(res.status_code, 302)
                 self.assertIn("/employer/login", res.headers.get("Location", ""))
 
-        protected_seeker = ["/dashboard/seeker", "/seeker/profile", "/seeker/resume", "/seeker/applications", "/seeker/matches", "/seeker/upgrade"]
+        protected_seeker = [
+            "/dashboard/seeker", "/seeker/profile", "/seeker/resume",
+            "/seeker/applications", "/seeker/matches", "/seeker/upgrade",
+            "/seeker/saved", "/seeker/interview-practice", "/seeker/alerts"
+        ]
         for url in protected_seeker:
             with self.subTest(url=url):
                 client = app.app.test_client()
@@ -54,7 +58,11 @@ class NexoraPageSmokeTests(unittest.TestCase):
         with self.client.session_transaction() as sess:
             sess["seeker_id"] = 1
 
-        seeker_pages = ["/dashboard/seeker", "/seeker/profile", "/seeker/resume", "/seeker/applications", "/seeker/matches", "/seeker/upgrade"]
+        seeker_pages = [
+            "/dashboard/seeker", "/seeker/profile", "/seeker/resume",
+            "/seeker/applications", "/seeker/matches", "/seeker/upgrade",
+            "/seeker/saved", "/seeker/interview-practice", "/seeker/alerts"
+        ]
         for url in seeker_pages:
             with self.subTest(url=url):
                 res = self.client.get(url)

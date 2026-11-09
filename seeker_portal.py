@@ -286,6 +286,33 @@ def upgrade_post():
     return redirect(url_for("seeker.matches" if plan == "premium" else "seeker.upgrade"))
 
 
+# --------------------------------------------------------- Saved Roles --
+@bp.get("/saved")
+@seeker_required
+def saved():
+    row = current_seeker()
+    saved_ids = store.saved_job_ids(row["id"])
+    saved_jobs = [j for j in (data.get_job(jid) for jid in saved_ids) if j]
+    ctx = portal_context()
+    return render_template("seeker/saved.html", **ctx, saved_jobs=saved_jobs, salary_label=data.salary_label)
+
+
+# --------------------------------------------------- Interview Practice --
+@bp.get("/interview-practice")
+@seeker_required
+def interview_practice():
+    ctx = portal_context()
+    return render_template("seeker/interview_practice.html", **ctx)
+
+
+# ----------------------------------------------------------- Job Alerts --
+@bp.get("/alerts")
+@seeker_required
+def alerts():
+    ctx = portal_context()
+    return render_template("seeker/alerts.html", **ctx, locations=data.LOCATIONS, industries=data.INDUSTRIES)
+
+
 # ------------------------------------------------------------ JSON APIs --
 @api_bp.post("/api/jobs/<int:job_id>/save")
 @seeker_required

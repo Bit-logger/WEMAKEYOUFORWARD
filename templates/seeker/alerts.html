@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "seeker/_macros.html" import page_head with context %}
+{% block title %}Job Alerts — NEXORA{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-10">
+  {{ page_head('bell-ring', 'Job Alerts', 'Get notified when new jobs matching your target title and location are posted.', 'icon-badge-amber') }}
+
+  <div class="tint tint-amber p-4 md:p-6 space-y-6">
+    <div class="card p-6">
+      <h2 class="font-display font-semibold text-lg text-navy mb-4">Create a New Job Alert</h2>
+      <form class="space-y-4" onsubmit="event.preventDefault(); window.showToast ? showToast('Alert preferences saved!', {icon:'check'}) : alert('Alert saved!');">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-sm font-medium text-navy block mb-1">Keywords or Title</label>
+            <input type="text" placeholder="e.g. Frontend Developer, Data Analyst" class="w-full text-sm border border-grey-line rounded-xl px-3 py-2.5 outline-none focus:border-indigo" value="{{ profile.headline }}">
+          </div>
+          <div>
+            <label class="text-sm font-medium text-navy block mb-1">Preferred Location</label>
+            <select class="w-full text-sm border border-grey-line rounded-xl px-3 py-2.5">
+              {% for loc in locations %}
+              <option value="{{ loc }}" {% if profile.location == loc %}selected{% endif %}>{{ loc }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-navy block mb-1">Industry</label>
+            <select class="w-full text-sm border border-grey-line rounded-xl px-3 py-2.5">
+              {% for ind in industries %}
+              <option value="{{ ind }}">{{ ind }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-navy block mb-1">Notification Frequency</label>
+            <select class="w-full text-sm border border-grey-line rounded-xl px-3 py-2.5">
+              <option value="daily">Daily digest (Recommended)</option>
+              <option value="instant">Instant notifications</option>
+              <option value="weekly">Weekly summary</option>
+            </select>
+          </div>
+        </div>
+        <div class="pt-2 flex justify-end">
+          <button type="submit" class="btn btn-primary btn-sm">Save Alert Preferences</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="card p-6">
+      <h3 class="font-display font-semibold text-navy mb-3">Active Alerts</h3>
+      <div class="flex items-center justify-between p-4 bg-white/70 border border-grey-line rounded-xl">
+        <div class="flex items-center gap-3">
+          <span class="icon-badge icon-badge-mint w-9 h-9"><i data-lucide="bell" class="w-4 h-4"></i></span>
+          <div>
+            <p class="font-medium text-sm text-navy">{{ profile.headline or 'General Tech Roles' }}</p>
+            <p class="text-xs text-ink/50">{{ profile.location or 'All Australia' }} · Daily alert</p>
+          </div>
+        </div>
+        <span class="chip chip-mint text-xs">Active</span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

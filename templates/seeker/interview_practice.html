@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% from "seeker/_macros.html" import page_head with context %}
+{% block title %}Interview Practice — NEXORA{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-10">
+  {{ page_head('chart-no-axes-column-increasing', 'Interview Practice', 'Prepare for Australian job interviews with tailored role questions and frameworks.', 'icon-badge-indigo') }}
+
+  <div class="tint tint-indigo p-4 md:p-6 space-y-6">
+    <div class="bg-white rounded-2xl border border-grey-line p-6">
+      <h2 class="font-display font-bold text-lg text-navy mb-2">Common Australian Interview Questions</h2>
+      <p class="text-sm text-ink/60 mb-6">Master the STAR technique (Situation, Task, Action, Result) for behavioral and competency interviews.</p>
+      
+      <div class="space-y-4">
+        <div class="p-4 rounded-xl bg-grey/5 border border-grey-line">
+          <p class="font-semibold text-navy text-sm">1. "Tell me about a time you solved a complex technical or operational challenge."</p>
+          <p class="text-xs text-ink/50 mt-1">Focus on clear stakeholder communication, step-by-step troubleshooting, and measurable outcomes.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-grey/5 border border-grey-line">
+          <p class="font-semibold text-navy text-sm">2. "How do you prioritize deliverables when managing competing deadlines?"</p>
+          <p class="text-xs text-ink/50 mt-1">Demonstrate organizational agility, async updates, and proactive risk mitigation.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-grey/5 border border-grey-line">
+          <p class="font-semibold text-navy text-sm">3. "Describe a situation where you had to collaborate with a cross-functional team."</p>
+          <p class="text-xs text-ink/50 mt-1">Highlight empathy, conflict resolution, and working toward shared company goals.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-grey-line p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>
+        <h3 class="font-display font-bold text-navy">Need personalized mock questions?</h3>
+        <p class="text-xs text-ink/60 mt-1">Make sure your career profile and skills are up-to-date for targeted interview preparation.</p>
+      </div>
+      <a href="{{ url_for('seeker.profile') }}" class="btn btn-primary btn-sm shrink-0">Review My Profile</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

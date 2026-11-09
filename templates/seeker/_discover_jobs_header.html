@@ -34,9 +34,9 @@
     <a href="/seeker/applications" class="nx-apps-nav-item"><i data-lucide="file-text"></i><span>My Applications</span></a>
     <a href="/seeker/profile" class="nx-apps-nav-item"><i data-lucide="user-round"></i><span>Career Profile</span></a>
     <a href="/seeker/resume" class="nx-apps-nav-item"><i data-lucide="file-text"></i><span>Resume Studio</span></a>
-    <a href="/seeker/matches" class="nx-apps-nav-item"><i data-lucide="chart-no-axes-column-increasing"></i><span>Interview Practice</span></a>
-    <a href="/dashboard/seeker#saved" class="nx-apps-nav-item"><i data-lucide="bookmark"></i><span>Saved Roles</span></a>
-    <a href="/seeker/matches" class="nx-apps-nav-item nx-apps-nav-separated"><i data-lucide="bell-ring"></i><span>Job Alerts</span></a>
+    <a href="{{ url_for('seeker.interview_practice') }}" class="nx-apps-nav-item"><i data-lucide="chart-no-axes-column-increasing"></i><span>Interview Practice</span></a>
+    <a href="{{ url_for('seeker.saved') }}" class="nx-apps-nav-item"><i data-lucide="bookmark"></i><span>Saved Roles</span></a>
+    <a href="{{ url_for('seeker.alerts') }}" class="nx-apps-nav-item nx-apps-nav-separated"><i data-lucide="bell-ring"></i><span>Job Alerts</span></a>
     <a href="/companies" class="nx-apps-nav-item"><i data-lucide="building-2"></i><span>Companies</span></a>
     <a href="/jobs" class="nx-apps-nav-item"><i data-lucide="book-open"></i><span>Career Resources</span></a>
     {% if seeker_user %}
