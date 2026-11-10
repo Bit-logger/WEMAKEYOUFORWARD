@@ -27,11 +27,19 @@
     <a href="/seeker/applications" class="nx-apps-nav-item is-active" aria-current="page"><i data-lucide="file-text"></i><span>My Applications</span></a>
     <a href="/seeker/profile" class="nx-apps-nav-item"><i data-lucide="user-round"></i><span>Career Profile</span></a>
     <a href="/seeker/resume" class="nx-apps-nav-item"><i data-lucide="file-text"></i><span>Resume Studio</span></a>
-    <a href="/seeker/matches" class="nx-apps-nav-item"><i data-lucide="chart-no-axes-column-increasing"></i><span>Interview Practice</span></a>
-    <a href="/seeker/matches" class="nx-apps-nav-item"><i data-lucide="bookmark"></i><span>Saved Roles</span></a>
-    <a href="/seeker/matches" class="nx-apps-nav-item nx-apps-nav-separated"><i data-lucide="bell-ring"></i><span>Job Alerts</span></a>
+    <a href="{{ url_for('seeker.interview_practice') }}" class="nx-apps-nav-item"><i data-lucide="chart-no-axes-column-increasing"></i><span>Interview Practice</span></a>
+    <a href="{{ url_for('seeker.saved') }}" class="nx-apps-nav-item"><i data-lucide="bookmark"></i><span>Saved Roles</span></a>
+    <a href="{{ url_for('seeker.alerts') }}" class="nx-apps-nav-item nx-apps-nav-separated"><i data-lucide="bell-ring"></i><span>Job Alerts</span></a>
     <a href="/companies" class="nx-apps-nav-item"><i data-lucide="building-2"></i><span>Companies</span></a>
     <a href="/jobs" class="nx-apps-nav-item"><i data-lucide="book-open"></i><span>Career Resources</span></a>
+    {% if seeker_user %}
+    <form method="post" action="{{ url_for('seeker.logout') }}" class="mt-2 pt-2 border-t border-white/10">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="nx-apps-nav-item text-rose/80 hover:text-rose w-full text-left bg-transparent border-0 cursor-pointer">
+        <i data-lucide="log-out"></i><span>Sign out</span>
+      </button>
+    </form>
+    {% endif %}
   </nav>
   <div class="nx-apps-premium-card">
     <div class="nx-apps-premium-title"><span class="nx-apps-crown"><i data-lucide="crown"></i></span><strong>Go Premium</strong></div>
