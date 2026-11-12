@@ -395,7 +395,7 @@
 {# ================= PROFILE REMINDER (shows while profile is below 80%) ================= #}
 {% if percent < 80 %}
 {% set missing = sections|rejectattr('done')|list %}
-<div id="pf-nudge" class="nx-nudge" role="dialog" aria-modal="true" aria-labelledby="pf-nudge-title">
+<div id="pf-nudge" class="nx-nudge" role="dialog" aria-modal="true" aria-labelledby="pf-nudge-title" data-profile-url="{{ url_for('seeker.profile') }}">
   <div class="nx-nudge-backdrop"></div>
   <svg id="pf-nudge-arrow" class="nx-nudge-arrow" viewBox="0 0 120 60" aria-hidden="true">
     <defs><filter id="nudge-glow" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="3"/></filter></defs>
@@ -524,7 +524,7 @@
     var nudge = document.getElementById('pf-nudge');
     if (!nudge) return;
     var arrow = document.getElementById('pf-nudge-arrow');
-    var profileUrl = {{ url_for('seeker.profile')|tojson }};
+    var profileUrl = nudge.getAttribute('data-profile-url') || '/seeker/profile';
     var link = document.querySelector('.nx-side a.nx-side-link[href="' + profileUrl + '"]');
     document.body.classList.add('nx-nudge-open');
     if (link) link.classList.add('nx-nudge-target');
