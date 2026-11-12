@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, render_template, session, jsonify, request
+from flask import Flask, render_template, session, jsonify, request, redirect, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import data
@@ -381,6 +381,22 @@ def api_resolve_report(report_id):
     if job_store.resolve_report(report_id):
         return jsonify({"ok": True})
     return jsonify({"ok": False}), 404
+
+
+@app.route("/interview")
+@app.route("/interview-practice")
+def top_interview_redirect():
+    return redirect(url_for("seeker.interview_practice"))
+
+
+@app.route("/resume")
+def top_resume_redirect():
+    return redirect(url_for("seeker.resume"))
+
+
+@app.route("/alerts")
+def top_alerts_redirect():
+    return redirect(url_for("seeker.alerts"))
 
 
 # ------------------------------------------------------------------ CLI --

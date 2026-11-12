@@ -61,7 +61,7 @@
         {% for m in matching_alerts %}
         <li class="p-3.5 rounded-xl border border-grey-line bg-white flex items-center justify-between gap-4">
           <div class="flex items-center gap-3 min-w-0">
-            <span class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0" style="background:{{ m.job.company_color }}">{{ m.job.company_initials }}</span>
+            <span class="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0" {{ ('style="background:' ~ m.job.company_color ~ '"')|safe }}>{{ m.job.company_initials }}</span>
             <div class="min-w-0">
               <a href="{{ url_for('job_details', job_id=m.job.id) }}" class="font-bold text-navy hover:text-indigo text-sm block truncate">{{ m.job.title }}</a>
               <p class="text-xs text-ink/60">{{ m.job.company }} · {{ m.job.location }} · {{ m.reason }}</p>

@@ -266,8 +266,9 @@
 {% endblock %}
 
 {% block scripts %}
+<script id="nx-plan-data" type="application/json">{{ (plan or {})|tojson }}</script>
 <script>
-  let planData = {{ (plan or {})|tojson }};
+  let planData = JSON.parse(document.getElementById('nx-plan-data').textContent || '{}');
   let activeIndex = 0;
 
   function renderActiveDay(idx) {

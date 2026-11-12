@@ -313,6 +313,7 @@ def set_cached_plan(seeker_id, plan):
 
 
 @bp.get("/interview-practice")
+@bp.get("/interview")
 @seeker_required
 def interview_practice():
     ctx = portal_context()

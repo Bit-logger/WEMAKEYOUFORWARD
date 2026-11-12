@@ -264,8 +264,9 @@
           </a>
         {% else %}
           <div class="nx-empty flex-1 flex flex-col items-center justify-center">
-            <i data-lucide="calendar" class="w-6 h-6 text-cream/30"></i>
-            <p class="text-xs text-cream/55 mt-2">No interviews yet. When an employer moves you to the interview stage, it shows up here.</p>
+            <i data-lucide="mic" class="w-6 h-6 text-mint/60"></i>
+            <p class="text-xs text-cream/55 mt-2">No interviews scheduled yet. Prepare ahead with your AI coach!</p>
+            <a href="{{ url_for('seeker.interview_practice') }}" class="btn btn-primary btn-sm mt-3 text-xs inline-flex items-center gap-1.5"><i data-lucide="sparkles" class="w-3.5 h-3.5"></i>Start Interview Practice</a>
           </div>
         {% endif %}
       </div>
