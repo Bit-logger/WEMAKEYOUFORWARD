@@ -13,6 +13,7 @@
 {% set next_todo = sections|rejectattr('done')|first %}
 {% set interviews = applications|selectattr('status', 'equalto', 'Interview')|list %}
 {% set saved_ids = saved|map(attribute='id')|list %}
+{% set applied_ids = applications|map(attribute='job.id')|list %}
 {% set R = 46 %}{% set C = 2 * 3.14159265 * R %}
 
 <div class="px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6 max-w-[1500px]">
@@ -54,6 +55,28 @@
       </div>
     </div>
   </section>
+
+  <!-- ================= JOB ALERTS NOTIFICATION BANNER ================= -->
+  {% if matching_alerts %}
+  <section class="nx-glass p-5 border border-cyan-400/30 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 nx-reveal" style="background:linear-gradient(90deg, rgba(6,182,212,0.12), rgba(37,99,235,0.18))">
+    <div class="flex items-center gap-3.5">
+      <span class="w-11 h-11 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 flex items-center justify-center text-xl shrink-0">🔔</span>
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <p class="font-display font-bold text-white text-sm sm:text-base">Job Alert: {{ matching_alerts|length }} new opening{{ 's' if matching_alerts|length > 1 else '' }} match your preferences</p>
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-cyan-400/20 text-cyan-200 border border-cyan-400/40">New Matches</span>
+        </div>
+        <p class="text-xs text-cream/70 mt-1">
+          Top role: <strong class="text-white">{{ matching_alerts[0].job.title }}</strong> at {{ matching_alerts[0].job.company }} ({{ matching_alerts[0].job.location }}) · <em>{{ matching_alerts[0].reason }}</em>
+        </p>
+      </div>
+    </div>
+    <div class="flex items-center gap-2 shrink-0 w-full md:w-auto">
+      <a href="{{ url_for('seeker.matches') }}" class="btn nx-btn-glow px-4 py-2 text-xs font-bold w-full md:w-auto text-center">View All Matching Jobs →</a>
+      <a href="{{ url_for('seeker.alerts') }}" class="px-3 py-2 rounded-xl border border-white/10 hover:border-cyan-400/40 text-xs text-cream/80 hover:text-white transition-colors">Alert Settings</a>
+    </div>
+  </section>
+  {% endif %}
 
   <!-- ================= ROW: 3 insight cards ================= -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 [&>*]:min-w-0">
@@ -213,10 +236,10 @@
             ('Applications', applications|length, 'send', 'nx-stat-blue', url_for('seeker.applications')),
             ('Shortlisted', status_counts.get('Shortlisted', 0), 'star', 'nx-stat-violet', url_for('seeker.applications', status='Shortlisted')),
             ('Interviews', status_counts.get('Interview', 0), 'calendar-check', 'nx-stat-amber', url_for('seeker.applications', status='Interview')),
-            ('Saved Roles', saved|length, 'bookmark', 'nx-stat-mint', '#saved')] %}
+            ('Saved Roles', saved|length, 'bookmark', 'nx-stat-mint', url_for('seeker.saved'))] %}
         <a href="{{ link }}" class="nx-stat {{ cls }} hover:-translate-y-0.5 transition-transform">
           <i data-lucide="{{ icon }}" class="w-4 h-4"></i>
-          <p class="font-display font-extrabold text-2xl text-white mt-1.5 leading-none" data-counter="{{ val }}">{{ val }}</p>
+          <p class="font-display font-extrabold text-2xl text-white mt-1.5 leading-none" data-counter="{{ val }}" {% if label == 'Saved Roles' %}data-saved-count{% endif %}>{{ val }}</p>
           <p class="text-[11px] text-cream/60 mt-1">{{ label }}</p>
         </a>
         {% endfor %}
@@ -281,7 +304,8 @@
           <button type="button" data-save-btn="{{ j.id }}" onclick="toggleSaveJob({{ j.id }})" class="btn btn-outline btn-sm flex-1 {% if is_saved %}is-saved{% endif %}">
             <i data-lucide="bookmark" class="w-3.5 h-3.5" {% if is_saved %}fill="currentColor"{% endif %}></i><span data-save-label>{{ 'Saved' if is_saved else 'Save' }}</span>
           </button>
-          <button type="button" data-apply="{{ j.id }}" onclick="quickApply({{ j.id }}, this)" class="btn btn-primary btn-sm flex-1">Apply Now</button>
+          {% set is_applied = j.id in applied_ids %}
+          <button type="button" data-apply="{{ j.id }}" onclick="quickApply({{ j.id }}, this)" class="btn btn-primary btn-sm flex-1" {% if is_applied %}disabled{% endif %}>{{ 'Applied' if is_applied else 'Apply Now' }}</button>
         </div>
       </article>
       {% endfor %}
@@ -289,7 +313,7 @@
     {% if locked_count %}
     <a href="{{ url_for('seeker.upgrade') }}" class="mt-4 flex items-center gap-3 p-3.5 rounded-2xl border border-amber/30 bg-amber/[0.07] hover:bg-amber/10">
       <i data-lucide="lock" class="w-4 h-4 text-amber"></i>
-      <span class="text-sm text-cream/80 flex-1"><b class="text-white">{{ locked_count }} more matching job{{ 's' if locked_count != 1 }}</b> {{ 'are' if locked_count != 1 else 'is' }} waiting — upgrade to see them all.</span>
+      <span class="text-sm text-cream/80 flex-1"><b class="text-white">{{ locked_count }} more matching job{{ 's' if locked_count != 1 else '' }}</b> {{ 'are' if locked_count != 1 else 'is' }} waiting — upgrade to see them all.</span>
       <i data-lucide="arrow-right" class="w-4 h-4 text-amber"></i>
     </a>
     {% endif %}
@@ -321,12 +345,12 @@
     <section id="saved" class="nx-glass p-5 nx-reveal scroll-mt-24">
       <div class="flex items-center justify-between mb-4">
         <h2 class="nx-h text-[15px] flex items-center gap-2"><i data-lucide="bookmark" class="w-4 h-4 text-mint"></i> Saved Roles</h2>
-        <a href="{{ url_for('jobs') }}" class="nx-link text-xs">Find more <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
+        <a href="{{ url_for('seeker.saved') }}" class="nx-link text-xs">View all <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
       </div>
       {% if saved %}
       <ul class="space-y-2.5">
         {% for j in saved[:5] %}
-        <li class="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/[0.03] hover:border-white/20">
+        <li data-saved-row="{{ j.id }}" class="flex items-center gap-3 p-3 rounded-xl border border-white/10 bg-white/[0.03] hover:border-white/20">
           <span class="w-9 h-9 rounded-lg text-white font-bold text-[11px] inline-flex items-center justify-center shrink-0 ring-1 ring-white/15" style="background:{{ j.company_color }}">{{ j.company_initials }}</span>
           <div class="min-w-0 flex-1">
             <a href="{{ url_for('job_details', job_id=j.id) }}" class="block text-sm font-semibold text-white truncate hover:text-mint">{{ j.title }}</a>
@@ -417,6 +441,63 @@
     var q = this.querySelector('[name=q]'), sk = this.querySelector('[data-skill-input]');
     if (sk && sk.value.trim() && !q.value.trim()) q.value = sk.value.trim();
   });
+
+  // Quick apply and Save handlers
+  const _origToggle = window.toggleSaveJob;
+  window.toggleSaveJob = async function(jobId) {
+    if (typeof _origToggle === 'function') {
+      await _origToggle(jobId);
+    } else {
+      try {
+        const res = await fetch(`/api/jobs/${jobId}/save`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const data = await res.json();
+        if (data && data.ok) {
+          document.querySelectorAll(`[data-save-btn="${jobId}"]`).forEach(function(el) {
+            el.classList.toggle('is-saved', data.saved);
+            const icon = el.querySelector('i, svg');
+            if (icon) icon.setAttribute('fill', data.saved ? 'currentColor' : 'none');
+            const label = el.querySelector('[data-save-label]');
+            if (label) label.textContent = data.saved ? 'Saved' : 'Save';
+          });
+          document.querySelectorAll('[data-saved-count]').forEach(function(el) { el.textContent = data.saved_count; });
+          if (typeof showToast === 'function') {
+            showToast(data.saved ? 'Job saved to your list.' : 'Removed from saved jobs.', { icon: data.saved ? 'bookmark-check' : 'bookmark-minus' });
+          }
+        }
+      } catch (err) {
+        console.error('Error toggling job save:', err);
+      }
+    }
+    // If unsaved, smoothly fade and remove the row from Saved section
+    const isNowSaved = document.querySelector(`[data-save-btn="${jobId}"]`)?.classList.contains('is-saved');
+    if (!isNowSaved) {
+      const row = document.querySelector(`li[data-saved-row="${jobId}"]`);
+      if (row) {
+        row.style.transition = 'all 0.3s ease';
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(20px)';
+        setTimeout(function() { row.remove(); }, 320);
+      }
+    }
+  };
+
+  if (typeof window.quickApply !== 'function') {
+    window.quickApply = async function(jobId, btn) {
+      if (btn) btn.disabled = true;
+      try {
+        const res = await fetch(`/api/jobs/${jobId}/apply`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+        const data = await res.json();
+        if (btn) btn.textContent = 'Applied';
+        document.querySelectorAll(`[data-apply="${jobId}"]`).forEach(function(b) { b.disabled = true; b.textContent = 'Applied'; });
+        if (typeof showToast === 'function') {
+          showToast(data.already_applied ? 'You already applied to this job.' : 'Application submitted. Track it in My Applications.', { icon: 'check-circle-2' });
+        }
+      } catch(err) {
+        if (btn) btn.disabled = false;
+        console.error('Error applying to job:', err);
+      }
+    };
+  }
 
   // Profile reminder: red arrow points at "Career Profile" in the sidebar (laptop) or at the OK button (phone).
   (function () {

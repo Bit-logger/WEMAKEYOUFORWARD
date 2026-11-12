@@ -193,8 +193,10 @@ def seeker_dashboard():
     apps = seeker_portal._applications_view(ctx["row"]["id"])
     counts = {st: sum(1 for a in apps if a["status"] == st) for st in store.APPLICATION_STATUSES}
     saved = [j for j in (data.get_job(i) for i in store.saved_job_ids(ctx["row"]["id"])) if j]
+    matching_alerts = seeker_portal.matching_alerts_for_seeker(ctx["row"]["id"])
     return render_template("seeker_dashboard.html", **ctx, applications=apps, status_counts=counts,
                            saved=saved, statuses=store.APPLICATION_STATUSES,
+                           matching_alerts=matching_alerts,
                            resume_updated=store.format_date(ctx["resume"]["updated_at"]) if ctx["resume"] else "",
                            salary_label=data.salary_label)
 
