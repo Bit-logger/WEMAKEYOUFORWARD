@@ -213,8 +213,8 @@ def employer_dashboard():
     return render_template(
         "employer_dashboard.html", company=current_company(), my_jobs=my_jobs,
         active_jobs=len(live_jobs),
-        total_views=sum(j["views"] for j in my_jobs),
-        total_apps=sum(j["applications_count"] for j in my_jobs),
+        total_views=sum(j.get("views", 0) or 0 for j in my_jobs),
+        total_apps=sum(j.get("applications_count", 0) or 0 for j in my_jobs),
         shortlisted=shortlisted, recent_applicants=recent_applicants)
 
 

@@ -38,13 +38,13 @@ def portal_context():
     percent, sections = store.profile_completion(row, profile)
     applied = store.applied_job_ids(row["id"])
     ranked = matching.rank_jobs(data.all_jobs(), profile, resume, applied)
-    visible, locked = matching.split_by_plan(ranked, row["plan"] == "premium")
+    visible, locked = matching.split_by_plan(ranked, row.get("plan", "free") == "premium")
     return {
         "row": row, "profile": profile, "resume": resume,
         "percent": percent, "sections": sections,
         "resume_status": store.resume_status(row, profile, resume),
         "matches": visible, "locked_count": locked, "total_matches": len(ranked),
-        "is_premium": row["plan"] == "premium",
+        "is_premium": row.get("plan", "free") == "premium",
     }
 
 
