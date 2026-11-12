@@ -303,11 +303,11 @@
           {% for t in j.tags[:3] %}<span class="px-2 py-0.5 rounded-md text-[10.5px] {{ 'bg-mint/15 text-mint' if t in m.matched else 'bg-white/5 text-cream/75' }}">{{ t }}</span>{% endfor %}
         </div>
         <div class="flex items-center gap-2 pt-3 mt-auto border-t border-white/10">
-          <button type="button" data-save-btn="{{ j.id }}" onclick="toggleSaveJob({{ j.id }})" class="btn btn-outline btn-sm flex-1 {% if is_saved %}is-saved{% endif %}">
+          <button type="button" data-save-btn="{{ j.id }}" class="btn btn-outline btn-sm flex-1 {% if is_saved %}is-saved{% endif %}">
             <i data-lucide="bookmark" class="w-3.5 h-3.5" {% if is_saved %}fill="currentColor"{% endif %}></i><span data-save-label>{{ 'Saved' if is_saved else 'Save' }}</span>
           </button>
           {% set is_applied = j.id in applied_ids %}
-          <button type="button" data-apply="{{ j.id }}" onclick="quickApply({{ j.id }}, this)" class="btn btn-primary btn-sm flex-1" {% if is_applied %}disabled{% endif %}>{{ 'Applied' if is_applied else 'Apply Now' }}</button>
+          <button type="button" data-apply="{{ j.id }}" class="btn btn-primary btn-sm flex-1" {% if is_applied %}disabled{% endif %}>{{ 'Applied' if is_applied else 'Apply Now' }}</button>
         </div>
       </article>
       {% endfor %}
@@ -358,7 +358,7 @@
             <a href="{{ url_for('job_details', job_id=j.id) }}" class="block text-sm font-semibold text-white truncate hover:text-mint">{{ j.title }}</a>
             <p class="text-[11px] text-cream/55 truncate">{{ j.company }} · {{ salary_label(j) }}</p>
           </div>
-          <button type="button" data-save-btn="{{ j.id }}" onclick="toggleSaveJob({{ j.id }})" class="nx-icon-btn is-saved !text-mint" aria-label="Remove from saved"><i data-lucide="bookmark" class="w-4 h-4" fill="currentColor"></i></button>
+          <button type="button" data-save-btn="{{ j.id }}" class="nx-icon-btn is-saved !text-mint" aria-label="Remove from saved"><i data-lucide="bookmark" class="w-4 h-4" fill="currentColor"></i></button>
         </li>
         {% endfor %}
       </ul>
@@ -501,12 +501,31 @@
     };
   }
 
+  // Click delegation for Save and Quick Apply buttons
+  document.addEventListener('click', function (e) {
+    var saveBtn = e.target.closest('[data-save-btn]');
+    if (saveBtn) {
+      e.preventDefault();
+      var id = saveBtn.getAttribute('data-save-btn');
+      if (id && window.toggleSaveJob) window.toggleSaveJob(id);
+      return;
+    }
+    var applyBtn = e.target.closest('[data-apply]');
+    if (applyBtn && !applyBtn.disabled) {
+      e.preventDefault();
+      var jid = applyBtn.getAttribute('data-apply');
+      if (jid && window.quickApply) window.quickApply(jid, applyBtn);
+      return;
+    }
+  });
+
   // Profile reminder: red arrow points at "Career Profile" in the sidebar (laptop) or at the OK button (phone).
   (function () {
     var nudge = document.getElementById('pf-nudge');
     if (!nudge) return;
     var arrow = document.getElementById('pf-nudge-arrow');
-    var link = document.querySelector('.nx-side a.nx-side-link[href="{{ url_for('seeker.profile') }}"]');
+    var profileUrl = {{ url_for('seeker.profile')|tojson }};
+    var link = document.querySelector('.nx-side a.nx-side-link[href="' + profileUrl + '"]');
     document.body.classList.add('nx-nudge-open');
     if (link) link.classList.add('nx-nudge-target');
     function place() {
