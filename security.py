@@ -158,8 +158,13 @@ def install_security(app):
         # Content Security Policy (hardened: no unsafe-eval, permits Stripe & trusted CDNs)
         csp = (
             "default-src 'self'; "
+<<<<<<< HEAD
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://js.stripe.com; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.tailwindcss.com; "
+=======
+            "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://js.stripe.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+>>>>>>> 06bbe3a028af8aad12f91d28c8787a09b92562b3
             "font-src 'self' https://fonts.gstatic.com data:; "
             "img-src 'self' data: https: blob:; "
             "connect-src 'self' https: https://api.stripe.com; "

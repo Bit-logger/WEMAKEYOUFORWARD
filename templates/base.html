@@ -406,23 +406,27 @@ tailwind.config = {
       </ul>
     </div>
     <div>
-      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Company</p>
+      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Legal & Company</p>
       <ul class="space-y-2 text-sm text-cream/60">
         <li><a href="{{ url_for('privacy') }}" class="hover:text-mint transition-colors">Privacy Policy</a></li>
         <li><a href="{{ url_for('terms') }}" class="hover:text-mint transition-colors">Terms of Service</a></li>
+<<<<<<< HEAD
         <li><span class="cursor-default">About</span></li>
         <li><span class="cursor-default">Contact</span></li>
+=======
+        <li><a href="{{ url_for('admin') }}" class="hover:text-mint transition-colors">Staff Portal</a></li>
+>>>>>>> 06bbe3a028af8aad12f91d28c8787a09b92562b3
       </ul>
     </div>
   </div>
-  <div class="border-t border-white/10 py-5 text-center text-xs text-cream/35">© 2026 NEXORA. Client demonstration build — not for production use.</div>
+  <div class="border-t border-white/10 py-5 text-center text-xs text-cream/35">© 2026 NEXORA Pty Ltd. Registered Australian Business. All rights reserved.</div>
 </footer>
 {% endif %}
 {% endblock %}
 
 <!-- ==================== DEMO CONTROLS ==================== -->
 {% block demo_controls %}
-{% if not app_shell %}
+{% if not app_shell and demo_mode %}
 <div id="demo-controls" class="flex items-center gap-2.5">
   <div class="relative" id="demo-switcher">
     <button id="demo-switcher-btn" type="button" class="btn btn-sm text-white flex items-center gap-2" onclick="toggleDemoMenu()">
