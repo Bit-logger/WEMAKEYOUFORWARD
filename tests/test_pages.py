@@ -1,4 +1,4 @@
-"""Automated route and page smoke tests for NEXORA."""
+"""Automated route and page smoke tests for JOBFLEX."""
 import os
 import unittest
 from dotenv import load_dotenv

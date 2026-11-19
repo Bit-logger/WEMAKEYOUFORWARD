@@ -52,7 +52,7 @@ def wants_json():
 MAX_FAILED_LOGINS = 5
 LOCKOUT_SECONDS = 15 * 60
 # Used to spend the same time hashing when an email doesn't exist (prevents timing leaks).
-DUMMY_HASH = generate_password_hash("nexora-dummy-password")
+DUMMY_HASH = generate_password_hash("jobflex-dummy-password")
 # In-memory tracker. Fine for a single worker (see render.yaml); use Redis if you scale out.
 failed_logins = {}
 
@@ -99,7 +99,7 @@ def send_email(to, subject, body):
         current_app.logger.warning("SMTP not configured. Email to %s:\n%s\n%s", to, subject, body)
         return
     msg = EmailMessage()
-    msg["From"] = os.environ.get("MAIL_FROM", "NEXORA <no-reply@nexora.com.au>")
+    msg["From"] = os.environ.get("MAIL_FROM", "JOBFLEX <no-reply@jobflex.com.au>")
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(body)

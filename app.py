@@ -329,7 +329,7 @@ def api_post_job():
         "responsibilities": ["Deliver against role objectives", "Work closely with the team"],
         "requirements": [f"Experience level: {experience}"],
         "benefits": ["Flexible working arrangements"],
-        "about_company": f"{company['name']} is hiring through NEXORA.",
+        "about_company": f"{company['name']} is hiring through JOBFLEX.",
     })
     return jsonify({"ok": True, "job_id": job_id})
 
@@ -412,7 +412,7 @@ def seed_demo_command():
 
 
 # Optional: auto-create the demo employer on boot (handy on hosts with an ephemeral database).
-if os.environ.get("NEXORA_SEED_DEMO") == "1" and os.environ.get("DEMO_EMPLOYER_PASSWORD"):
+if (os.environ.get("JOBFLEX_SEED_DEMO") == "1" or os.environ.get("NEXORA_SEED_DEMO") == "1") and os.environ.get("DEMO_EMPLOYER_PASSWORD"):
     with app.app_context():
         employer_auth.seed_demo(os.environ["DEMO_EMPLOYER_PASSWORD"])
         seeker_auth.seed_demo(os.environ["DEMO_EMPLOYER_PASSWORD"])

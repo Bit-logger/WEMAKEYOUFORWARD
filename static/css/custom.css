@@ -1,5 +1,5 @@
 /* ============================================================
-   NEXORA design tokens — navy-first theme
+   JOBFLEX design tokens — navy-first theme
    ============================================================ */
 :root {
   --navy: #0B1230;
@@ -472,7 +472,7 @@ table.nx-table tr:last-child td { border-bottom: none; }
 
 
 /* =====================================================================
-   NEXORA DARK GLASS THEME  (matches the dashboard reference)
+   JOBFLEX DARK GLASS THEME  (matches the dashboard reference)
    Everything below re-skins the existing utility classes for dark
    surfaces, so pages and JS-generated cards share one look.
    ===================================================================== */

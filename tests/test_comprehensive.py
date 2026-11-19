@@ -1,4 +1,4 @@
-"""Comprehensive End-to-End and Security Test Suite for NEXORA.
+"""Comprehensive End-to-End and Security Test Suite for JOBFLEX.
 
 Validates:
 1. Public Pages & Clean Rendering (No template leaks, no raw fences, no conflict markers)

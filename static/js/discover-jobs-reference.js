@@ -1,10 +1,10 @@
 (function () {
   'use strict';
-  const jobs = Array.isArray(window.NEXORA_JOBS) ? window.NEXORA_JOBS : [];
-  const opts = window.NEXORA_FILTER_OPTIONS || {};
-  const savedIds = new Set((window.NEXORA_SAVED || []).map(Number));
-  const appliedIds = new Set((window.NEXORA_APPLIED || []).map(Number));
-  const preview = Boolean(window.NEXORA_PREVIEW);
+  const jobs = Array.isArray(window.JOBFLEX_JOBS || window.NEXORA_JOBS) ? (window.JOBFLEX_JOBS || window.NEXORA_JOBS) : [];
+  const opts = window.JOBFLEX_FILTER_OPTIONS || window.NEXORA_FILTER_OPTIONS || {};
+  const savedIds = new Set((window.JOBFLEX_SAVED || window.NEXORA_SAVED || []).map(Number));
+  const appliedIds = new Set((window.JOBFLEX_APPLIED || window.NEXORA_APPLIED || []).map(Number));
+  const preview = Boolean(window.JOBFLEX_PREVIEW !== undefined ? window.JOBFLEX_PREVIEW : window.NEXORA_PREVIEW);
   const state = { keyword: '', location: '', type: '', experience: '', modes: new Set(), types: new Set(), industries: new Set(), minSalary: 0, sort: 'relevance' };
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
@@ -75,7 +75,7 @@
     const rating = job.rating ? `<span class="nx-discover-rating"><b>★</b>${escapeHtml(job.rating)}${job.reviews ? ` (${escapeHtml(job.reviews)} reviews)` : ''}</span>` : '';
     const logoClass = companyLogoClass(job.company);
     const logoColor = /^#[0-9a-f]{3,8}$/i.test(String(job.company_color || '')) ? job.company_color : '#147de5';
-    const showQuickApply = window.NEXORA_ROLE !== 'employer';
+    const showQuickApply = (window.JOBFLEX_ROLE || window.NEXORA_ROLE) !== 'employer';
     return `<article class="nx-discover-job-card" data-job-card="${id}">
       <span class="nx-discover-job-logo ${logoClass}" style="${logoClass ? '' : `background:${logoColor};color:#fff`}" aria-label="${escapeHtml(job.company)} logo">${logoContents(job)}</span>
       <div class="nx-discover-job-info">

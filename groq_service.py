@@ -1,4 +1,4 @@
-"""Groq AI Cloud Service for NEXORA Resume Studio and Interview Preparation.
+"""Groq AI Cloud Service for JOBFLEX Resume Studio and Interview Preparation.
 
 Uses Groq's high-speed inference (models: openai/gpt-oss-120b, qwen/qwen3.8-27b)
 to deliver real-time ATS resume analysis, 92%+ ATS resume optimization,

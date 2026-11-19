@@ -116,7 +116,7 @@ def register():
                         # Supabase email-confirmation may mean no session is returned yet.
                         if getattr(result, "session", None):
                             _start_session(seeker_id)
-                            flash(f"Welcome to NEXORA, {full_name.split()[0]}! Complete your profile to unlock job matches.", "success")
+                            flash(f"Welcome to JOBFLEX, {full_name.split()[0]}! Complete your profile to unlock job matches.", "success")
                             return redirect(url_for("seeker_dashboard"))
                         flash("Registration successful. Check your email to confirm your account, then log in.", "success")
                         return redirect(url_for("seeker.login"))
@@ -156,7 +156,7 @@ def login():
                         _start_session(row["id"])
                         return redirect(next_url or url_for("seeker_dashboard"))
                     if auth_user and not row:
-                        errors["form"] = "This Supabase account is not registered as a NEXORA job seeker. Please register as a job seeker first."
+                        errors["form"] = "This Supabase account is not registered as a JOBFLEX job seeker. Please register as a job seeker first."
                     else:
                         errors["form"] = "Incorrect email or password."
                 except Exception:
@@ -279,12 +279,12 @@ def google_callback():
         _start_session(seeker_id)
         return redirect(next_url or url_for("seeker_dashboard"))
     except Exception:
-        current_app.logger.exception("Could not map Supabase OAuth user to a NEXORA seeker")
-        return fail("Google authentication succeeded, but NEXORA could not load your job-seeker profile. Contact support.")
+        current_app.logger.exception("Could not map Supabase OAuth user to a JOBFLEX seeker")
+        return fail("Google authentication succeeded, but JOBFLEX could not load your job-seeker profile. Contact support.")
 
 
 # ----------------------------------------------------------- demo seed --
-DEMO_EMAIL = "jordan@nexora-demo.com.au"
+DEMO_EMAIL = "jordan@jobflex-demo.com.au"
 
 
 def seed_demo(password):

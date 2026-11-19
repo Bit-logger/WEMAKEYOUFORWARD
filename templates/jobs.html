@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Discover Jobs — NEXORA{% endblock %}
+{% block title %}Discover Jobs — JOBFLEX{% endblock %}
 {% block head %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/applications-reference.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/discover-jobs-reference.css') }}">
@@ -8,7 +8,7 @@
 {% block content %}{% include "seeker/_discover_jobs_content.html" %}{% endblock %}
 {% block site_footer %}{% endblock %}
 {% block scripts %}
-<script id="nexora-bootstrap-data" type="application/json">
+<script id="jobflex-bootstrap-data" type="application/json">
 {
   "jobs": {{ jobs_json | tojson }},
   "saved": {{ saved_ids | tojson }},
@@ -25,13 +25,13 @@
 </script>
 <script>
 (function() {
-  const data = JSON.parse(document.getElementById('nexora-bootstrap-data').textContent || '{}');
-  window.NEXORA_JOBS = data.jobs || [];
-  window.NEXORA_SAVED = data.saved || [];
-  window.NEXORA_APPLIED = data.applied || [];
-  window.NEXORA_ROLE = data.role || 'guest';
-  window.NEXORA_PREVIEW = false;
-  window.NEXORA_FILTER_OPTIONS = data.filters || {};
+  const data = JSON.parse(document.getElementById('jobflex-bootstrap-data')?.textContent || document.getElementById('nexora-bootstrap-data')?.textContent || '{}');
+  window.JOBFLEX_JOBS = window.NEXORA_JOBS = data.jobs || [];
+  window.JOBFLEX_SAVED = window.NEXORA_SAVED = data.saved || [];
+  window.JOBFLEX_APPLIED = window.NEXORA_APPLIED = data.applied || [];
+  window.JOBFLEX_ROLE = window.NEXORA_ROLE = data.role || 'guest';
+  window.JOBFLEX_PREVIEW = window.NEXORA_PREVIEW = false;
+  window.JOBFLEX_FILTER_OPTIONS = window.NEXORA_FILTER_OPTIONS = data.filters || {};
 })();
 </script>
 <script src="{{ url_for('static', filename='js/discover-jobs-reference.js') }}"></script>

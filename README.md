@@ -1,6 +1,6 @@
-# NEXORA — Client Demo
+# JOBFLEX — Client Demo
 
-A Flask/Jinja and vanilla-JavaScript NEXORA employment marketplace. Existing frontend templates and assets are preserved. Account/profile persistence uses Supabase; prototype job listings and some marketplace analytics remain in-memory demo data.
+A Flask/Jinja and vanilla-JavaScript JOBFLEX employment marketplace. Existing frontend templates and assets are preserved. Account/profile persistence uses Supabase; prototype job listings and some marketplace analytics remain in-memory demo data.
 
 ## Run it
 
@@ -65,7 +65,7 @@ How it works
 - **Upgrade Plan** is a demo switch (no payment is taken). Set `NEXORA_DEMO_UPGRADE=0` to disable it
   until real payments exist.
 
-`flask --app app seed-demo` now creates both demo accounts (employer + `jordan@nexora-demo.com.au`).
+`flask --app app seed-demo` now creates both demo accounts (employer + `jordan@jobflex-demo.com.au`).
 
 Google sign-in: add **both** redirect URIs in Google Cloud:
 `https://<your-domain>/employer/google/callback` and `https://<your-domain>/seeker/google/callback`.
@@ -110,7 +110,7 @@ nexora/
 ├── data.py                 Mock data (jobs, candidates, seeker/employer/admin state)
 ├── templates/               Jinja templates (one per screen) + base.html layout
 └── static/
-    ├── css/custom.css       NEXORA design tokens & shared component styles
+    ├── css/custom.css       JOBFLEX design tokens & shared component styles
     └── js/                  app.js (shared) + per-screen interaction scripts
 ```
 
@@ -148,7 +148,7 @@ The server-side Supabase client uses `SUPABASE_SERVICE_ROLE_KEY` (or a compatibl
 ## Supabase Auth role behavior
 
 - Job seekers can register and log in with Supabase Auth email/password. If email confirmation is enabled, confirm the email before logging in.
-- Employer self-registration is intentionally disabled. Visiting `/employer/register` redirects to employer login with a message to contact the NEXORA administrator.
+- Employer self-registration is intentionally disabled. Visiting `/employer/register` redirects to employer login with a message to contact the JOBFLEX administrator.
 - To enable an employer, create/invite the user in Supabase Dashboard -> Authentication -> Users, then insert a matching email into `public.employers` using the SQL notes at the end of `supabase/schema.sql`. The login is accepted only if both Supabase Auth succeeds and the email has an employer row.
 - Password-reset requests are sent through Supabase Auth. Configure `SUPABASE_PASSWORD_RESET_REDIRECT_URL` to a URL allowed in Supabase Authentication URL Configuration and implement/configure the corresponding recovery page for production.
 - Set `SUPABASE_URL`, `SUPABASE_ANON_KEY` (or publishable key supported by your installed Supabase client), and the server-only `SUPABASE_SERVICE_ROLE_KEY` in `.env`. Never expose the service-role/secret key to the browser.

@@ -1,4 +1,4 @@
-"""Additional baseline security controls for NEXORA Flask."""
+"""Additional baseline security controls for JOBFLEX Flask."""
 from collections import defaultdict, deque
 from functools import wraps
 import os

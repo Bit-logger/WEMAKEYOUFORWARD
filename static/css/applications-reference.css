@@ -1,4 +1,4 @@
-/* NEXORA — My Applications reference redesign. Scoped to this screen only. */
+/* JOBFLEX — My Applications reference redesign. Scoped to this screen only. */
 :root { --nxapp-bg:#020f2b; --nxapp-panel:#071a3b; --nxapp-panel2:#09224b; --nxapp-border:#123766; --nxapp-border2:#1a4175; --nxapp-text:#f4f7ff; --nxapp-muted:#9aa9ca; --nxapp-cyan:#1bc9ef; --nxapp-blue:#138af2; --nxapp-purple:#8f35ed; --nxapp-green:#0cd7b0; --nxapp-red:#ff607c; }
 body:has(.nx-apps-page) { background:var(--nxapp-bg)!important; color:var(--nxapp-text); font-family:Inter,Arial,sans-serif; }
 body:has(.nx-apps-page) #main-content { margin:0; padding:0; max-width:none; }

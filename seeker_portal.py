@@ -262,7 +262,7 @@ def matches():
 
 # -------------------------------------------------------- Upgrade Plan --
 def _demo_upgrades_enabled():
-    return os.environ.get("NEXORA_DEMO_UPGRADE", "1") != "0"
+    return (os.environ.get("JOBFLEX_DEMO_UPGRADE") or os.environ.get("NEXORA_DEMO_UPGRADE", "1")) != "0"
 
 
 @bp.get("/upgrade")

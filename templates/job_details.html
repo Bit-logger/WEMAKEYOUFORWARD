@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ job.title }} at {{ job.company }} — NEXORA{% endblock %}
+{% block title %}{{ job.title }} at {{ job.company }} — JOBFLEX{% endblock %}
 {% block content %}
 
 <div class="max-w-7xl mx-auto px-5 md:px-8 py-6 md:py-10">
@@ -128,7 +128,7 @@
         <i data-lucide="file-text" class="w-5 h-5 text-navy"></i>
         <div class="text-sm">
           {% if resume_info %}
-          <p class="font-medium text-navy">{{ seeker_user.full_name }}: NEXORA resume</p>
+          <p class="font-medium text-navy">{{ seeker_user.full_name }}: JOBFLEX resume</p>
           <p class="text-xs text-ink/50">Last updated {{ resume_info.updated_label }}. It will be sent with this application.</p>
           {% else %}
           <p class="font-medium text-navy">No resume yet</p>
