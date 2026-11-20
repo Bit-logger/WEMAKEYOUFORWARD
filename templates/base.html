@@ -479,24 +479,18 @@
           <ul class="space-y-2 text-sm text-cream/60">
             <li><a href="{{ url_for('privacy') }}" class="hover:text-mint transition-colors">Privacy Policy</a></li>
             <li><a href="{{ url_for('terms') }}" class="hover:text-mint transition-colors">Terms of Service</a></li>
-            <<<<<<< HEAD <li><span class="cursor-default">About</span></li>
-              <li><span class="cursor-default">Contact</span></li>
-              =======
-              <li><a href="{{ url_for('admin') }}" class="hover:text-mint transition-colors">Staff Portal</a></li>
-              >>>>>>> 06bbe3a028af8aad12f91d28c8787a09b92562b3
+            <li><a href="{{ url_for('admin') }}" class="hover:text-mint transition-colors">Staff Portal</a></li>
           </ul>
         </div>
       </div>
-      <div class="border-t border-white/10 py-5 text-center text-xs text-cream/35">© 2026 NEXORA. Client demonstration
-        build — not for production use.</div>
+      <div class="border-t border-white/10 py-5 text-center text-xs text-cream/35">© 2026 JOBFLEX PTY LTD (ACN 704 224 877). Client demonstration build — not for production use.</div>
     </footer>
     {% endif %}
     {% endblock %}
 
     <!-- ==================== DEMO CONTROLS ==================== -->
     {% block demo_controls %}
-    {% if not app_shell %}
-    <div id="demo-controls" class="flex items-center gap-2.5">
+    <div id="demo-controls" class="flex items-center gap-2.5 z-50">
       <div class="relative" id="demo-switcher">
         <button id="demo-switcher-btn" type="button"
           class="btn btn-sm text-white flex items-center gap-2 shadow-lg backdrop-blur-md" onclick="toggleDemoMenu()">
