@@ -1,0 +1,238 @@
+/* JOBFLEX — Discover Jobs & My Applications, re-themed to match the rest of the app.
+   Uses the shared shell from base.html (sidebar + top bar) and the tokens in custom.css
+   (--surface, --line, --text, --blue, --mint ...). Self-contained: replaces the two *-reference.css files. */
+
+.nx-discover-page, .nx-apps-page { color: var(--text); }
+.nx-discover-main, .nx-apps-main { max-width: 1500px; padding: 1.5rem 1rem 2rem; }
+@media (min-width: 768px) { .nx-discover-main, .nx-apps-main { padding: 1.75rem 1.75rem 2.25rem; } }
+
+/* ---------- hero (same glass look as the dashboard) ---------- */
+.nx-discover-hero, .nx-apps-hero {
+  position: relative; overflow: hidden; padding: 1.6rem 1.75rem; margin-bottom: 1.25rem; border-radius: 22px;
+  background: radial-gradient(90% 140% at 100% 0%, rgba(47,107,255,.28), transparent 60%),
+              radial-gradient(60% 120% at 0% 100%, rgba(43,224,190,.12), transparent 60%), #0A1236;
+  border: 1px solid var(--line); box-shadow: 0 24px 48px -28px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.nx-discover-banner, .nx-apps-sydney-banner { display: none; }
+.nx-discover-breadcrumb, .nx-apps-breadcrumb { display: flex; align-items: center; gap: .4rem; font-size: 12px; color: var(--text-3); margin-bottom: .5rem; }
+.nx-discover-breadcrumb a, .nx-apps-breadcrumb a { color: var(--text-2); } .nx-discover-breadcrumb a:hover, .nx-apps-breadcrumb a:hover { color: var(--mint); }
+.nx-discover-breadcrumb svg, .nx-apps-breadcrumb svg { width: 13px; height: 13px; }
+.nx-discover-hero h1, .nx-apps-hero h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; letter-spacing: -.02em; color: #fff; margin: 0; font-size: clamp(1.9rem, 3.2vw, 2.6rem); line-height: 1.1; }
+.nx-discover-hero h1 span, .nx-apps-hero h1 span { background: linear-gradient(90deg, #7FA5FF, var(--mint)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.nx-discover-hero p, .nx-apps-hero p { margin: .6rem 0 0; color: var(--text-2); font-size: .9rem; max-width: 36rem; }
+
+/* ---------- search panel ---------- */
+.nx-discover-search-panel {
+  display: grid; grid-template-columns: minmax(200px,1.3fr) minmax(150px,1fr) minmax(130px,.8fr) minmax(140px,.9fr) auto; gap: .4rem;
+  padding: .4rem; border-radius: 18px; background: rgba(17,27,62,.85); border: 1px solid var(--line-2);
+  box-shadow: 0 18px 40px -24px rgba(0,0,0,.7);
+}
+.nx-discover-field { display: flex; align-items: center; gap: .65rem; min-width: 0; padding: .55rem .85rem; border-radius: 13px; background: rgba(6,11,28,.55); border: 1px solid transparent; transition: border-color .2s, box-shadow .2s; }
+.nx-discover-field:focus-within { border-color: rgba(43,224,190,.6); box-shadow: 0 0 0 4px rgba(43,224,190,.12); }
+.nx-discover-field > svg:first-child { width: 18px; height: 18px; color: #7FA5FF; flex: none; }
+.nx-discover-field-copy { display: flex; flex-direction: column; gap: .15rem; min-width: 0; flex: 1; }
+.nx-discover-field-copy small { font-size: 10.5px; font-weight: 600; color: var(--text-3); }
+.nx-discover-field input, .nx-discover-field select { width: 100%; min-width: 0; background: transparent; border: 0; outline: 0; color: #fff; font: 500 .85rem Inter, sans-serif; padding: 0; appearance: none; -webkit-appearance: none; }
+.nx-discover-field input::placeholder { color: rgba(226,232,255,.4); }
+.nx-discover-field select option { background: #0F1838; color: #fff; }
+.nx-discover-field input::-webkit-search-cancel-button { filter: invert(1); opacity: .6; cursor: pointer; }
+.nx-field-chevron { width: 15px; height: 15px; color: var(--text-3); flex: none; pointer-events: none; }
+.nx-discover-search-button { display: inline-flex; align-items: center; justify-content: center; gap: .55rem; padding: 0 1.4rem; min-height: 54px; border: 0; border-radius: 13px; cursor: pointer; color: #fff; font-weight: 700; font-size: .88rem; white-space: nowrap;
+  background: linear-gradient(135deg, #2F6BFF 0%, #6C5CF5 100%); box-shadow: 0 10px 24px -10px rgba(76,100,255,.9), inset 0 1px 0 rgba(255,255,255,.18); transition: transform .15s, box-shadow .15s; }
+.nx-discover-search-button:hover { transform: translateY(-1px); box-shadow: 0 0 0 4px rgba(76,100,255,.18), 0 14px 30px -10px rgba(76,100,255,1); }
+.nx-discover-search-button svg { width: 16px; height: 16px; }
+
+/* ---------- pills & chips ---------- */
+.nx-discover-quick-filters { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 0; }
+.nx-discover-filter-pill, .nx-discover-popular-chip, .nx-active-chip { display: inline-flex; align-items: center; gap: .45rem; cursor: pointer; white-space: nowrap; color: var(--text-2); background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 999px; transition: all .18s ease; }
+.nx-discover-filter-pill { padding: .5rem .95rem; font-size: .78rem; font-weight: 600; }
+.nx-discover-filter-pill svg { width: 15px; height: 15px; }
+.nx-discover-filter-pill:hover, .nx-discover-popular-chip:hover { color: #fff; border-color: var(--line-2); background: rgba(255,255,255,.08); }
+.nx-discover-filter-pill.is-active, .nx-discover-popular-chip.is-active { color: #fff; background: linear-gradient(135deg, #2F6BFF, #1E4FE0); border-color: transparent; box-shadow: 0 8px 20px -10px rgba(47,107,255,.85); }
+.nx-discover-more-button { margin-left: auto; }
+.nx-discover-popular-row { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin: .9rem 0; }
+.nx-discover-popular-row > strong { font-size: .75rem; color: var(--text-3); font-weight: 600; margin-right: .2rem; }
+.nx-discover-popular-chip { padding: .32rem .8rem; font-size: .74rem; }
+.nx-active-filters { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; margin: 0 0 1rem; }
+.nx-active-filters[hidden] { display: none; }
+.nx-active-chip { padding: .3rem .7rem; font-size: .74rem; color: var(--mint); background: rgba(43,224,190,.1); border-color: rgba(43,224,190,.35); }
+.nx-active-chip svg { width: 12px; height: 12px; }
+.nx-active-clear { font-size: .74rem; color: #9DB8FF; background: none; border: 0; cursor: pointer; padding: .3rem .4rem; }
+.nx-active-clear:hover { color: #fff; }
+mark.nx-hl { background: rgba(43,224,190,.22); color: #fff; border-radius: 4px; padding: 0 2px; }
+
+/* ---------- more filters ---------- */
+.nx-discover-more-panel { padding: 1.1rem 1.2rem; margin-bottom: 1rem; border-radius: 18px; background: linear-gradient(180deg, rgba(17,27,62,.78), rgba(11,18,44,.78)); border: 1px solid var(--line); }
+.nx-discover-more-panel[hidden] { display: none !important; }
+.nx-discover-more-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: .8rem; font-size: .85rem; color: #fff; }
+.nx-discover-more-heading button { background: none; border: 0; color: var(--mint); font-size: .75rem; cursor: pointer; }
+.nx-discover-industry-filters { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+.nx-discover-industry-filters label { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: var(--text-2); cursor: pointer; }
+.nx-discover-industry-filters input, .nx-discover-salary-filter input { accent-color: #2F6BFF; }
+.nx-discover-salary-filter { display: grid; grid-template-columns: 130px minmax(150px,1fr) 80px; align-items: center; gap: .8rem; margin-top: 1rem; font-size: .78rem; color: var(--text-2); }
+.nx-discover-salary-filter strong { color: #fff; }
+
+/* ---------- results ---------- */
+.nx-discover-layout { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 1.25rem; align-items: start; }
+.nx-discover-results { min-width: 0; }
+.nx-discover-results-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .75rem; }
+.nx-discover-results-heading h2 { margin: 0; font: 700 1.05rem 'Plus Jakarta Sans', sans-serif; color: #fff; }
+.nx-discover-sort { position: relative; display: flex; align-items: center; gap: .6rem; font-size: .75rem; color: var(--text-3); }
+.nx-discover-sort select { appearance: none; -webkit-appearance: none; height: 38px; padding: 0 2rem 0 .8rem; border-radius: 12px; background: rgba(17,27,62,.85); border: 1px solid var(--line); color: #fff; font-size: .78rem; outline: 0; cursor: pointer; }
+.nx-discover-sort select option { background: #0F1838; }
+.nx-discover-sort svg { position: absolute; right: .65rem; width: 14px; height: 14px; pointer-events: none; color: var(--text-3); }
+.nx-discover-job-list { display: flex; flex-direction: column; gap: .7rem; }
+.nx-discover-job-card, .nx-app-row, .nx-apps-stat-card, .nx-apps-panel, .nx-discover-side-panel {
+  background: linear-gradient(180deg, rgba(17,27,62,.78), rgba(11,18,44,.78)); border: 1px solid var(--line); border-radius: 18px;
+  box-shadow: 0 24px 48px -30px rgba(0,0,0,.75), inset 0 1px 0 rgba(255,255,255,.04);
+}
+.nx-discover-job-card { display: grid; grid-template-columns: 52px minmax(180px,1.2fr) minmax(150px,.9fr) auto; gap: 1rem; align-items: center; padding: 1rem; transition: transform .18s, border-color .18s, box-shadow .18s; }
+.nx-discover-job-card:hover, .nx-app-row:hover { transform: translateY(-2px); border-color: var(--line-2); box-shadow: 0 30px 56px -28px rgba(0,0,0,.85), 0 0 0 1px rgba(47,107,255,.18); }
+.nx-discover-job-logo, .nx-app-company-mark, .nx-upcoming-logo { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; font: 800 .95rem 'Plus Jakarta Sans', sans-serif; color: #fff; overflow: hidden; }
+.nx-app-company-mark { background: var(--company-color, #5D4FE0); }
+.nx-upcoming-logo { width: 38px; height: 38px; border-radius: 11px; background: linear-gradient(135deg, #2F6BFF, #6C5CF5); font-size: .72rem; }
+.nx-discover-job-title-row { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
+.nx-discover-job-title { font: 700 .98rem 'Plus Jakarta Sans', sans-serif; color: #fff; }
+.nx-discover-job-title:hover, .nx-app-job-title:hover { color: var(--mint); }
+.nx-discover-company { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-top: .2rem; font-size: .8rem; color: var(--text-2); }
+.nx-discover-rating { font-size: .72rem; color: var(--text-3); } .nx-discover-rating b { color: var(--amber); margin-right: 2px; }
+.nx-discover-featured { display: inline-flex; align-items: center; gap: .25rem; padding: .15rem .55rem; border-radius: 999px; font-size: 10px; font-weight: 700; color: var(--mint); background: rgba(43,224,190,.12); border: 1px solid rgba(43,224,190,.3); }
+.nx-discover-featured svg { width: 10px; height: 10px; }
+.nx-discover-urgent { color: #FF8FA3; background: rgba(255,107,135,.12); border-color: rgba(255,107,135,.3); }
+.nx-discover-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .6rem; }
+.nx-discover-tag { padding: .2rem .6rem; border-radius: 999px; font-size: 10.5px; font-weight: 600; color: #9DB8FF; background: rgba(47,107,255,.12); border: 1px solid rgba(47,107,255,.3); }
+.nx-discover-job-meta { display: grid; gap: .45rem; font-size: .78rem; color: var(--text-2); }
+.nx-discover-job-meta span { display: flex; align-items: center; gap: .45rem; min-width: 0; }
+.nx-discover-job-meta svg { width: 14px; height: 14px; color: var(--text-3); flex: none; }
+.nx-discover-job-meta .nx-discover-salary strong { color: #fff; font-size: .85rem; }
+.nx-discover-job-actions { display: flex; gap: .5rem; justify-content: flex-end; }
+.nx-discover-save-button, .nx-discover-apply-button { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; height: 40px; padding: 0 .95rem; border-radius: 12px; font-size: .78rem; font-weight: 700; cursor: pointer; white-space: nowrap; transition: all .15s; }
+.nx-discover-save-button { color: var(--text); background: rgba(255,255,255,.03); border: 1.5px solid var(--line-2); }
+.nx-discover-save-button:hover, .nx-discover-save-button.is-saved { color: var(--mint); border-color: rgba(43,224,190,.6); background: rgba(43,224,190,.08); }
+.nx-discover-apply-button { color: #fff; border: 0; background: linear-gradient(135deg, #2F6BFF 0%, #6C5CF5 100%); box-shadow: 0 10px 24px -10px rgba(76,100,255,.9); }
+.nx-discover-apply-button:hover { transform: translateY(-1px); }
+.nx-discover-apply-button:disabled { opacity: .6; cursor: default; transform: none; }
+.nx-discover-save-button svg, .nx-discover-apply-button svg { width: 15px; height: 15px; }
+.nx-discover-empty, .nx-apps-no-results, .nx-apps-empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: .4rem; padding: 2.5rem 1rem; border: 1px dashed var(--line-2); border-radius: 18px; background: rgba(17,27,62,.5); color: var(--text-2); }
+.nx-discover-empty[hidden], .nx-apps-no-results[hidden] { display: none !important; }
+.nx-discover-empty > svg, .nx-apps-no-results > svg, .nx-apps-empty-state > svg { width: 30px; height: 30px; color: #7FA5FF; }
+.nx-discover-empty strong, .nx-apps-no-results strong, .nx-apps-empty-state h2 { color: #fff; font-weight: 700; margin: 0; }
+.nx-discover-empty button, .nx-apps-empty-button { margin-top: .6rem; padding: .55rem 1rem; border-radius: 12px; font-size: .78rem; font-weight: 700; color: #fff; border: 0; cursor: pointer; background: linear-gradient(135deg, #2F6BFF, #6C5CF5); display: inline-flex; align-items: center; gap: .4rem; }
+.nx-apps-empty-button svg { width: 14px; height: 14px; }
+
+/* ---------- side panels ---------- */
+.nx-discover-insights, .nx-apps-insights { display: grid; gap: .9rem; min-width: 0; }
+.nx-discover-side-panel, .nx-apps-panel { overflow: hidden; }
+.nx-discover-side-heading, .nx-apps-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: .6rem; padding: .85rem 1rem; border-bottom: 1px solid var(--line); }
+.nx-discover-side-heading > svg { width: 18px; height: 18px; color: #9DB8FF; }
+.nx-discover-side-heading h2, .nx-apps-panel-heading h2 { flex: 1; margin: 0; font: 700 .88rem 'Plus Jakarta Sans', sans-serif; color: #fff; }
+.nx-discover-side-heading a, .nx-apps-panel-heading > a { display: inline-flex; align-items: center; gap: .25rem; font-size: .72rem; color: var(--mint); }
+.nx-discover-side-heading a svg, .nx-apps-panel-heading > a svg { width: 13px; height: 13px; }
+.nx-discover-saved-search { display: grid; grid-template-columns: 28px minmax(0,1fr) 16px 14px; align-items: center; gap: .6rem; padding: .7rem 1rem; border-bottom: 1px solid var(--line); cursor: pointer; }
+.nx-discover-saved-search:last-child { border-bottom: 0; } .nx-discover-saved-search:hover { background: rgba(255,255,255,.04); }
+.nx-discover-saved-search strong { display: block; font-size: .8rem; color: #fff; } .nx-discover-saved-search small { font-size: .7rem; color: var(--text-3); }
+.nx-side-search-icon svg { width: 18px; height: 18px; color: #7FA5FF; } .nx-side-bell { width: 15px; height: 15px; color: var(--mint); } .nx-side-more { width: 14px; height: 14px; color: var(--text-3); }
+.nx-discover-alert-panel { padding: 1rem; border-radius: 18px; background: linear-gradient(135deg, #2A1760 0%, #160F3A 100%); border: 1px solid rgba(139,125,250,.35); }
+.nx-discover-alert-heading { display: flex; gap: .7rem; margin-bottom: .8rem; } .nx-discover-alert-heading > svg { width: 22px; height: 22px; color: #FFC86B; flex: none; }
+.nx-discover-alert-heading h2 { margin: 0 0 .2rem; font: 700 .9rem 'Plus Jakarta Sans', sans-serif; color: #fff; } .nx-discover-alert-heading p { margin: 0; font-size: .75rem; color: var(--text-2); }
+.nx-discover-alert-panel > button { width: 100%; display: flex; align-items: center; justify-content: center; gap: .5rem; padding: .6rem; border-radius: 12px; border: 0; cursor: pointer; color: #fff; font-size: .78rem; font-weight: 700; background: linear-gradient(135deg, #2F6BFF, #6C5CF5); }
+.nx-discover-alert-panel > button svg { width: 15px; height: 15px; }
+.nx-discover-categories-list { padding: .4rem .8rem .7rem; display: grid; }
+.nx-discover-category { display: grid; grid-template-columns: 18px minmax(0,1fr) auto; align-items: center; gap: .6rem; padding: .5rem .2rem; background: none; border: 0; text-align: left; font-size: .78rem; color: var(--text-2); cursor: pointer; }
+.nx-discover-category:hover { color: #fff; } .nx-discover-category strong { font-size: .72rem; color: var(--text-3); font-weight: 600; }
+.nx-category-icon { display: grid; place-items: center; color: #7FA5FF; } .nx-category-icon svg { width: 15px; height: 15px; }
+.nx-category-1,.nx-category-5 { color: var(--mint); } .nx-category-2,.nx-category-3 { color: #A78BFA; } .nx-category-4 { color: #60A5FA; } .nx-category-6 { color: var(--amber); }
+.nx-discover-toast { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 120; max-width: min(400px, calc(100vw - 2rem)); padding: .75rem 1rem; border-radius: 14px; font-size: .8rem; color: #fff; background: #0F1838; border: 1px solid var(--line-2); box-shadow: 0 24px 50px -16px rgba(0,0,0,.7); opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .18s, transform .18s; }
+.nx-discover-toast.is-visible { opacity: 1; transform: none; }
+
+/* ---------- My Applications ---------- */
+.nx-apps-stat-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: .8rem; margin-bottom: 1.25rem; }
+.nx-apps-stat-card { position: relative; display: flex; align-items: center; gap: .85rem; padding: 1rem; min-width: 0; }
+.nx-apps-stat-icon { display: grid; place-items: center; width: 46px; height: 46px; flex: none; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #2F6BFF, #1E4FE0); box-shadow: 0 10px 22px -10px rgba(47,107,255,.85); }
+.nx-apps-stat-icon svg { width: 22px; height: 22px; }
+.nx-stat-review .nx-apps-stat-icon { background: linear-gradient(135deg, #FFB74A, #FF9F2E); color: #3A2300; }
+.nx-stat-interviews .nx-apps-stat-icon { background: linear-gradient(135deg, #8B7DFA, #6C5CF5); }
+.nx-stat-offers .nx-apps-stat-icon { background: linear-gradient(135deg, #2BE0BE, #18B9D6); color: #04122A; }
+.nx-stat-rejected .nx-apps-stat-icon { background: linear-gradient(135deg, #FF6B87, #E0436A); }
+.nx-apps-stat-copy { display: flex; flex-direction: column; min-width: 0; }
+.nx-apps-stat-copy strong { font: 800 1.45rem/1.1 'Plus Jakarta Sans', sans-serif; color: #fff; }
+.nx-apps-stat-copy span { font-size: .78rem; color: var(--text); } .nx-apps-stat-copy small { font-size: .68rem; color: var(--text-3); }
+.nx-apps-ring { display: none; }
+.nx-apps-dashboard-grid { display: grid; grid-template-columns: minmax(0,1fr) 330px; gap: 1.25rem; align-items: start; }
+.nx-apps-list-column { min-width: 0; }
+.nx-apps-toolbar { display: flex; align-items: center; gap: .75rem; margin-bottom: .9rem; }
+.nx-apps-tabs { flex: 1; display: flex; gap: .4rem; overflow-x: auto; min-width: 0; scrollbar-width: thin; padding-bottom: 2px; }
+.nx-apps-tab { display: inline-flex; align-items: center; white-space: nowrap; padding: .5rem .95rem; border-radius: 999px; font-size: .78rem; font-weight: 600; color: var(--text-2); background: rgba(255,255,255,.04); border: 1px solid var(--line); cursor: pointer; transition: all .18s; }
+.nx-apps-tab:hover { color: #fff; border-color: var(--line-2); }
+.nx-apps-tab.is-active { color: #fff; border-color: transparent; background: linear-gradient(135deg, #2F6BFF, #1E4FE0); box-shadow: 0 8px 20px -10px rgba(47,107,255,.85); }
+.nx-apps-search { display: flex; align-items: center; gap: .55rem; width: 240px; flex: none; padding: 0 .85rem; height: 40px; border-radius: 12px; background: rgba(17,27,62,.85); border: 1px solid var(--line); color: var(--text-3); }
+.nx-apps-search:focus-within { border-color: rgba(43,224,190,.6); box-shadow: 0 0 0 4px rgba(43,224,190,.12); }
+.nx-apps-search svg { width: 16px; height: 16px; } .nx-apps-search input { width: 100%; background: transparent; border: 0; outline: 0; color: #fff; font-size: .8rem; }
+.nx-apps-rows { display: grid; gap: .7rem; }
+.nx-app-row { display: grid; grid-template-columns: 52px minmax(130px,1.1fr) minmax(110px,.8fr) minmax(190px,1.1fr) 24px; gap: 1rem; align-items: center; padding: .9rem 1rem; transition: transform .18s, border-color .18s, box-shadow .18s; }
+.nx-app-row[hidden] { display: none !important; }
+.nx-app-job-info { min-width: 0; display: flex; flex-direction: column; gap: .2rem; }
+.nx-app-job-title { font: 700 .92rem 'Plus Jakarta Sans', sans-serif; color: #fff; } .nx-app-job-role { margin: 0; font-size: .8rem; color: var(--text-2); }
+.nx-app-job-meta { display: flex; align-items: center; gap: .35rem; font-size: .7rem; color: var(--text-3); white-space: nowrap; overflow: hidden; }
+.nx-app-job-meta svg { width: 12px; height: 12px; flex: none; } .nx-app-job-meta b { color: var(--text-3); }
+.nx-app-status-col { display: flex; flex-direction: column; gap: .4rem; align-items: flex-start; }
+.nx-app-status { display: inline-flex; align-items: center; gap: .35rem; padding: .28rem .7rem; border-radius: 999px; font-size: 10.5px; font-weight: 700; white-space: nowrap; color: #9DB8FF; background: rgba(47,107,255,.14); border: 1px solid rgba(47,107,255,.35); }
+.nx-app-status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.nx-status-review { color: var(--amber); background: rgba(255,183,74,.12); border-color: rgba(255,183,74,.35); }
+.nx-status-interviews { color: #B8A9FF; background: rgba(108,92,245,.16); border-color: rgba(139,125,250,.4); }
+.nx-status-offers { color: var(--mint); background: rgba(43,224,190,.12); border-color: rgba(43,224,190,.35); }
+.nx-status-rejected { color: #FF8FA3; background: rgba(255,107,135,.12); border-color: rgba(255,107,135,.35); }
+.nx-app-applied-date { font-size: .7rem; color: var(--text-3); line-height: 1.4; }
+.nx-app-row-actions { display: flex; align-items: center; gap: .4rem; min-width: 0; }
+.nx-app-action-card { flex: 1; min-width: 0; display: flex; align-items: center; gap: .6rem; padding: .5rem .7rem; border-radius: 12px; background: rgba(47,107,255,.1); border: 1px solid rgba(47,107,255,.3); color: #fff; transition: background .18s, border-color .18s; }
+.nx-app-action-card:hover { background: rgba(47,107,255,.2); border-color: rgba(47,107,255,.6); }
+.nx-app-action-icon svg { width: 18px; height: 18px; color: #9DB8FF; } .nx-app-action-card > span:nth-child(2) { display: flex; flex-direction: column; min-width: 0; }
+.nx-app-action-card strong { font-size: .74rem; } .nx-app-action-card small { font-size: .66rem; color: var(--text-3); }
+.nx-app-action-chevron { margin-left: auto; width: 14px; height: 14px; color: var(--text-3); }
+.nx-app-menu-wrap { position: relative; display: flex; align-items: center; }
+.nx-app-menu-btn { display: grid; place-items: center; width: 28px; height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--text-3); cursor: pointer; }
+.nx-app-menu-btn:hover, .nx-app-menu-btn[aria-expanded="true"] { background: rgba(255,255,255,.08); color: #fff; } .nx-app-menu-btn svg { width: 17px; height: 17px; }
+.nx-app-menu { display: none; position: absolute; z-index: 30; top: 38px; right: 0; width: 200px; padding: .4rem; background: #0F1838; border: 1px solid var(--line-2); border-radius: 14px; box-shadow: 0 24px 50px -16px rgba(0,0,0,.7); }
+.nx-app-menu.is-open { display: block; }
+.nx-app-menu strong { display: block; padding: .35rem .6rem; font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
+.nx-app-menu button { display: block; width: 100%; text-align: left; padding: .5rem .6rem; border: 0; border-radius: 9px; background: transparent; color: var(--text-2); font-size: .78rem; cursor: pointer; }
+.nx-app-menu button:hover { background: rgba(255,255,255,.06); color: #fff; }
+.nx-app-menu .nx-app-remove { margin-top: .25rem; border-top: 1px solid var(--line); border-radius: 0 0 9px 9px; color: #FF8FA3; } .nx-app-menu .nx-app-remove svg { display: inline; width: 13px; height: 13px; margin-right: .35rem; vertical-align: -2px; }
+.nx-apps-panel-heading select { max-width: 130px; height: 32px; border-radius: 10px; border: 1px solid var(--line); background: rgba(6,11,28,.6); color: #fff; font-size: .7rem; padding: 0 .4rem; }
+.nx-apps-chart { display: grid; grid-template-columns: minmax(0,1fr) 118px; gap: .8rem; align-items: center; padding: 1rem; }
+.nx-chart-plot { display: flex; justify-content: space-around; height: 112px; border-bottom: 1px solid var(--line); }
+.nx-chart-month { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: .35rem; width: 30%; font-size: .68rem; color: var(--text-3); }
+.nx-chart-bars { display: flex; align-items: flex-end; justify-content: center; gap: 4px; width: 100%; height: 88px; }
+.nx-chart-bars i { display: block; width: 9px; border-radius: 4px 4px 0 0; }
+.bar-applied { background: linear-gradient(#60A5FA, #2F6BFF); } .bar-interview { background: linear-gradient(#B8A9FF, #6C5CF5); } .bar-offer { background: linear-gradient(#5EF0D5, #18B9D6); }
+.nx-chart-legend { display: grid; gap: .55rem; } .nx-chart-legend span { display: grid; grid-template-columns: 10px 1fr auto; gap: .4rem; align-items: center; font-size: .68rem; color: var(--text-2); white-space: nowrap; }
+.nx-chart-legend span > i { width: 8px; height: 8px; border-radius: 50%; } .nx-chart-legend b { color: #fff; }
+.legend-applied { background: #2F6BFF; } .legend-interviews { background: #8B7DFA; } .legend-offers { background: var(--mint); } .legend-rejected { background: var(--rose); }
+.nx-upcoming-item { display: grid; grid-template-columns: 38px minmax(0,1fr) auto 12px; align-items: center; gap: .6rem; padding: .7rem 1rem; border-bottom: 1px solid var(--line); }
+.nx-upcoming-item:last-child { border-bottom: 0; } .nx-upcoming-item > div:nth-child(2) { display: flex; flex-direction: column; min-width: 0; } .nx-upcoming-item strong { font-size: .78rem; color: #fff; } .nx-upcoming-item > div:nth-child(2) span { font-size: .7rem; color: var(--text-3); }
+.nx-upcoming-date { display: flex; gap: .35rem; font-size: .66rem; color: var(--text-2); } .nx-upcoming-date svg, .nx-upcoming-arrow { width: 13px; height: 13px; color: var(--text-3); } .nx-upcoming-empty { margin: 0; padding: 1rem; font-size: .78rem; color: var(--text-3); }
+.nx-apps-tips-panel { padding: 1rem; border-radius: 18px; background: linear-gradient(135deg, #2A1760 0%, #160F3A 100%); border: 1px solid rgba(139,125,250,.35); }
+.nx-apps-tips-heading { display: flex; align-items: center; gap: .5rem; margin-bottom: .8rem; } .nx-apps-tips-heading h2 { flex: 1; margin: 0; font: 700 .88rem 'Plus Jakarta Sans', sans-serif; color: #fff; } .nx-apps-tips-heading > svg { width: 15px; height: 15px; color: var(--text-3); }
+.nx-apps-tips-panel ul { list-style: none; padding: 0; margin: 0 0 .9rem; display: grid; gap: .5rem; }
+.nx-apps-tips-panel li { position: relative; padding-left: 1.5rem; font-size: .76rem; color: var(--text-2); } .nx-apps-tips-panel li::before { content: "✓"; position: absolute; left: 0; color: var(--mint); font-weight: 800; }
+.nx-apps-tips-button { display: flex; align-items: center; justify-content: center; gap: .45rem; padding: .6rem; border-radius: 12px; font-size: .78rem; font-weight: 700; color: #fff; background: linear-gradient(135deg, #2F6BFF, #6C5CF5); } .nx-apps-tips-button svg { width: 14px; height: 14px; }
+
+/* ---------- responsive ---------- */
+@media (max-width: 1280px) {
+  .nx-discover-layout, .nx-apps-dashboard-grid { grid-template-columns: minmax(0,1fr); }
+  .nx-discover-insights, .nx-apps-insights { grid-template-columns: repeat(2, minmax(0,1fr)); align-items: start; }
+  .nx-apps-stat-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+  .nx-discover-search-panel { grid-template-columns: repeat(2, minmax(0,1fr)); } .nx-discover-search-button { grid-column: 1 / -1; }
+}
+@media (max-width: 960px) {
+  .nx-discover-job-card { grid-template-columns: 48px minmax(0,1fr); }
+  .nx-discover-job-meta, .nx-discover-job-actions { grid-column: 1 / -1; } .nx-discover-job-meta { grid-template-columns: repeat(2, minmax(0,1fr)); } .nx-discover-job-actions > * { flex: 1; }
+  .nx-app-row { grid-template-columns: 48px minmax(0,1fr) auto; } .nx-app-status-col { grid-column: 2 / 4; grid-row: 2; flex-direction: row; align-items: center; gap: .8rem; } .nx-app-row-actions { grid-column: 1 / -1; }
+  .nx-apps-toolbar { flex-direction: column; align-items: stretch; } .nx-apps-search { width: 100%; }
+}
+@media (max-width: 640px) {
+  .nx-discover-insights, .nx-apps-insights { grid-template-columns: minmax(0,1fr); }
+  .nx-discover-search-panel { grid-template-columns: minmax(0,1fr); } .nx-apps-stat-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .nx-discover-salary-filter { grid-template-columns: 1fr; } .nx-discover-more-button { margin-left: 0; }
+  .nx-discover-hero, .nx-apps-hero { padding: 1.2rem; }
+}

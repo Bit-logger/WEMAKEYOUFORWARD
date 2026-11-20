@@ -181,6 +181,19 @@ def login():
                            google_enabled=ac.google_configured())
 
 
+@bp.post("/skip")
+def skip_login():
+    """TEMPORARY: skip login and enter the job-seeker dashboard as the demo seeker (remove before launch)."""
+    try:
+        sid = seed_demo(secrets.token_urlsafe(12) + "7")
+    except Exception as exc:  # Supabase not configured / tables missing
+        current_app.logger.warning("Seeker skip-login failed: %s", exc)
+        flash("Skip is unavailable right now. Check your Supabase configuration.", "error")
+        return redirect(url_for("seeker.login"))
+    _start_session(sid)
+    return redirect(url_for("seeker_dashboard"))
+
+
 @bp.post("/logout")
 def logout():
     session.clear()

@@ -47,6 +47,8 @@
       <label class="nx-discover-salary-filter"><span>Minimum salary</span><input type="range" min="0" max="150000" step="10000" value="0" id="discover-min-salary"><strong id="discover-min-salary-label">A$0+</strong></label>
     </section>
 
+    <div class="nx-active-filters" id="active-filters" hidden aria-label="Active filters"></div>
+
     <div class="nx-discover-layout">
       <section class="nx-discover-results" aria-label="Job search results">
         <div class="nx-discover-results-heading"><h2><strong id="results-count">{{ jobs_json|length }}</strong> jobs found</h2><label class="nx-discover-sort"><span>Sort by:</span><select id="discover-sort"><option value="relevance">Most relevant</option><option value="newest">Newest</option><option value="salary">Highest salary</option></select><i data-lucide="chevron-down"></i></label></div>
@@ -62,10 +64,11 @@
           <div class="nx-discover-saved-search" role="button" tabindex="0" data-saved-search="Software Engineer"><span class="nx-side-search-icon"><i data-lucide="settings"></i></span><span><strong>Software Engineer</strong><small>Remote · Full-time</small></span><i data-lucide="bell" class="nx-side-bell"></i><i data-lucide="more-vertical" class="nx-side-more"></i></div>
         </section>
 
-        <section class="nx-discover-alert-panel">
+        {% if demo_role|default('guest', true) != 'employer' %}<section class="nx-discover-alert-panel">
           <div class="nx-discover-alert-heading"><i data-lucide="bell-ring"></i><div><h2>Job Alerts</h2><p>Get notified when new jobs match your preferences.</p></div></div>
           <button type="button" id="discover-create-alert"><i data-lucide="bell"></i>Create Job Alert</button>
         </section>
+        {% endif %}
 
         <section class="nx-discover-side-panel nx-discover-categories-panel">
           <div class="nx-discover-side-heading"><h2>Explore by Category</h2><a href="#categories" id="discover-view-categories">View all <i data-lucide="arrow-right"></i></a></div>

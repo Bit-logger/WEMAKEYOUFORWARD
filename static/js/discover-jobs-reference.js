@@ -40,14 +40,46 @@
     window.clearTimeout(showNotice.timer); showNotice.timer = window.setTimeout(() => toast.classList.remove('is-visible'), 3000);
   }
 
+  /* ---- search helpers: every typed word must match (title / company / skills / industry / place) ---- */
+  const norm = value => String(value ?? '').toLowerCase().replace(/[^a-z0-9+#.\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+  const tokens = text => norm(text).split(' ').filter(Boolean);
+  const SYNONYMS = { dev: 'developer', developer: 'engineer', swe: 'software engineer', js: 'javascript', ml: 'machine learning', ai: 'machine learning', ux: 'design', ui: 'design', hr: 'people', infosec: 'security', cyber: 'security' };
+  function haystack(job) {
+    return {
+      title: norm(job.title), company: norm(job.company),
+      tags: norm(Array.isArray(job.tags) ? job.tags.join(' ') : ''),
+      other: norm([job.industry, job.location, job.type, job.mode, job.experience].join(' '))
+    };
+  }
+  function tokenScore(h, tok) {
+    const alt = SYNONYMS[tok] ? norm(SYNONYMS[tok]) : '';
+    let best = 0;
+    [tok, alt].filter(Boolean).forEach((t, i) => {
+      const w = i ? 0.6 : 1;
+      if (h.title.split(' ').includes(t)) best = Math.max(best, 6 * w);
+      else if (h.title.includes(t)) best = Math.max(best, 4 * w);
+      if (h.tags.includes(t)) best = Math.max(best, 4 * w);
+      if (h.company.includes(t)) best = Math.max(best, 3 * w);
+      if (h.other.includes(t)) best = Math.max(best, 2 * w);
+    });
+    return best;
+  }
+  function relevance(job) {
+    const toks = tokens(state.keyword);
+    if (!toks.length) return 0;
+    const h = haystack(job);
+    let total = 0;
+    for (const tok of toks) { const sc = tokenScore(h, tok); if (!sc) return -1; total += sc; }
+    if (h.title.includes(toks.join(' '))) total += 5;   // exact phrase in the title
+    return total;
+  }
+
   function matches(job) {
-    const title = String(job.title || '').toLowerCase();
-    const company = String(job.company || '').toLowerCase();
-    const tags = Array.isArray(job.tags) ? job.tags.join(' ').toLowerCase() : '';
-    const industry = String(job.industry || '');
-    const keyword = state.keyword.trim().toLowerCase();
-    if (keyword && !`${title} ${company} ${tags} ${industry.toLowerCase()}`.includes(keyword)) return false;
-    if (state.location.trim() && !String(job.location || '').toLowerCase().includes(state.location.trim().toLowerCase())) return false;
+    if (tokens(state.keyword).length && relevance(job) < 0) return false;
+    if (state.location.trim()) {
+      const loc = norm(job.location) + ' ' + norm(job.mode);
+      if (!tokens(state.location).every(t => loc.includes(t) || (t === 'australia'))) return false;
+    }
     if (state.type && job.type !== state.type) return false;
     if (state.experience && job.experience !== state.experience) return false;
     if (state.modes.size && !state.modes.has(job.mode)) return false;
@@ -61,8 +93,17 @@
     const items = [...list];
     if (state.sort === 'newest') items.sort((a, b) => Number(a.posted_days_ago || 0) - Number(b.posted_days_ago || 0));
     else if (state.sort === 'salary') items.sort((a, b) => Number(b.salary_max || 0) - Number(a.salary_max || 0));
+    else if (state.keyword.trim()) items.sort((a, b) => relevance(b) - relevance(a) || Number(Boolean(b.featured)) - Number(Boolean(a.featured)));
     else items.sort((a, b) => Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || Number(Boolean(b.urgent)) - Number(Boolean(a.urgent)) || Number(a.posted_days_ago || 0) - Number(b.posted_days_ago || 0));
     return items;
+  }
+
+  function hl(text) {
+    const safe = escapeHtml(text);
+    const toks = tokens(state.keyword).filter(t => t.length > 1);
+    if (!toks.length) return safe;
+    const re = new RegExp('(' + toks.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'ig');
+    return safe.replace(re, '<mark class="nx-hl">$1</mark>');
   }
 
   function card(job) {
@@ -75,12 +116,14 @@
     const rating = job.rating ? `<span class="nx-discover-rating"><b>★</b>${escapeHtml(job.rating)}${job.reviews ? ` (${escapeHtml(job.reviews)} reviews)` : ''}</span>` : '';
     const logoClass = companyLogoClass(job.company);
     const logoColor = /^#[0-9a-f]{3,8}$/i.test(String(job.company_color || '')) ? job.company_color : '#147de5';
-    const showQuickApply = (window.JOBFLEX_ROLE || window.NEXORA_ROLE) !== 'employer';
+    const isEmployer = (window.JOBFLEX_ROLE || window.NEXORA_ROLE) === 'employer';
+    const showQuickApply = !isEmployer;
+    const viewBtn = isEmployer ? `<a class="nx-discover-apply-button" href="/jobs/${id}">View job <i data-lucide="arrow-right"></i></a>` : '';
     return `<article class="nx-discover-job-card" data-job-card="${id}">
       <span class="nx-discover-job-logo ${logoClass}" style="${logoClass ? '' : `background:${logoColor};color:#fff`}" aria-label="${escapeHtml(job.company)} logo">${logoContents(job)}</span>
       <div class="nx-discover-job-info">
-        <div class="nx-discover-job-title-row"><a class="nx-discover-job-title" href="/jobs/${id}">${escapeHtml(job.title)}</a>${featured}${urgent}</div>
-        <div class="nx-discover-company">${escapeHtml(job.company)}${rating}</div>
+        <div class="nx-discover-job-title-row"><a class="nx-discover-job-title" href="/jobs/${id}">${hl(job.title)}</a>${featured}${urgent}</div>
+        <div class="nx-discover-company">${hl(job.company)}${rating}</div>
         <div class="nx-discover-tags">${tags}</div>
       </div>
       <div class="nx-discover-job-meta">
@@ -90,7 +133,7 @@
         <span><i data-lucide="clock-3"></i>${escapeHtml(postedLabel(job.posted_days_ago))}</span>
       </div>
       <div class="nx-discover-job-actions">
-        <button type="button" class="nx-discover-save-button ${isSaved ? 'is-saved' : ''}" data-save-btn="${id}" onclick="nxDiscoverSave(${id}, this)"><i data-lucide="bookmark" ${isSaved ? 'fill="currentColor"' : ''}></i><span data-save-label>${isSaved ? 'Saved' : 'Save'}</span></button>
+        ${isEmployer ? viewBtn : ''}${isEmployer ? '' : `<button type="button" class="nx-discover-save-button ${isSaved ? 'is-saved' : ''}" data-save-btn="${id}" onclick="nxDiscoverSave(${id}, this)"><i data-lucide="bookmark" ${isSaved ? 'fill="currentColor"' : ''}></i><span data-save-label>${isSaved ? 'Saved' : 'Save'}</span></button>`}
         ${showQuickApply ? (isApplied ? '<button type="button" class="nx-discover-apply-button" disabled>Applied</button>' : `<button type="button" class="nx-discover-apply-button" data-apply="${id}" onclick="nxDiscoverApply(${id}, this)">Apply Now <i data-lucide="arrow-right"></i></button>`) : ''}
       </div>
     </article>`;
@@ -117,7 +160,40 @@
     list.innerHTML = results.map(card).join('');
     empty.hidden = results.length > 0;
     syncActiveChips();
+    renderActiveFilters(results.length);
+    syncUrl();
     if (window.lucide) window.lucide.createIcons();
+  }
+
+  function activeFilterList() {
+    const out = [];
+    if (state.keyword.trim()) out.push({ label: `“${state.keyword.trim()}”`, clear: () => { state.keyword = ''; $('#filter-keyword').value = ''; const g = $('#nx-discover-global-query'); if (g) g.value = ''; } });
+    if (state.location.trim()) out.push({ label: state.location.trim(), clear: () => { state.location = ''; $('#filter-location').value = ''; } });
+    if (state.type) out.push({ label: state.type, clear: () => { state.type = ''; $('#discover-filter-type').value = ''; } });
+    if (state.experience) out.push({ label: state.experience, clear: () => { state.experience = ''; $('#discover-filter-experience').value = ''; } });
+    state.modes.forEach(v => out.push({ label: v, clear: () => state.modes.delete(v) }));
+    state.types.forEach(v => out.push({ label: v, clear: () => state.types.delete(v) }));
+    state.industries.forEach(v => out.push({ label: v, clear: () => state.industries.delete(v) }));
+    if (state.minSalary) out.push({ label: `A$${fmt(state.minSalary)}+`, clear: () => { state.minSalary = 0; $('#discover-min-salary').value = '0'; $('#discover-min-salary-label').textContent = 'A$0+'; } });
+    return out;
+  }
+
+  function renderActiveFilters() {
+    const box = $('#active-filters'); if (!box) return;
+    const list = activeFilterList();
+    box.hidden = !list.length;
+    box.innerHTML = list.map((f, i) => `<button type="button" class="nx-active-chip" data-chip="${i}">${escapeHtml(f.label)}<i data-lucide="x"></i></button>`).join('') + (list.length ? '<button type="button" class="nx-active-clear" id="active-clear-all">Clear all</button>' : '');
+    $$('[data-chip]', box).forEach(b => b.addEventListener('click', () => { list[Number(b.dataset.chip)].clear(); render(); }));
+    $('#active-clear-all')?.addEventListener('click', clearFilters);
+  }
+
+  function syncUrl() {
+    try {
+      const url = new URL(window.location.href);
+      state.keyword.trim() ? url.searchParams.set('q', state.keyword.trim()) : url.searchParams.delete('q');
+      state.location.trim() ? url.searchParams.set('location', state.location.trim()) : url.searchParams.delete('location');
+      window.history.replaceState(null, '', url);
+    } catch (_) { /* non-critical */ }
   }
 
   function collectFields() {
@@ -132,6 +208,7 @@
     state.keyword = ''; state.location = ''; state.type = ''; state.experience = '';
     state.modes.clear(); state.types.clear(); state.industries.clear(); state.minSalary = 0; state.sort = 'relevance';
     $('#filter-keyword').value = ''; $('#filter-location').value = '';
+    const g = $('#nx-discover-global-query'); if (g) g.value = '';
     $('#discover-filter-type').value = ''; $('#discover-filter-experience').value = '';
     $('#discover-sort').value = 'relevance'; $('#discover-min-salary').value = '0'; $('#discover-min-salary-label').textContent = 'A$0+';
     $('#discover-more-panel').hidden = true; $('#discover-more-toggle').setAttribute('aria-expanded', 'false');
@@ -178,6 +255,12 @@
     ['filter-keyword','filter-location','discover-filter-type','discover-filter-experience'].forEach(id => {
       const el = document.getElementById(id); el?.addEventListener('change', () => { collectFields(); render(); });
     });
+    let typingTimer;
+    ['filter-keyword','filter-location'].forEach(id => {
+      document.getElementById(id)?.addEventListener('input', () => { window.clearTimeout(typingTimer); typingTimer = window.setTimeout(() => { collectFields(); render(); }, 180); });
+    });
+    $('#filter-keyword')?.addEventListener('keydown', e => { if (e.key === 'Escape') { e.target.value = ''; collectFields(); render(); } });
+    globalQuery?.addEventListener('input', () => { window.clearTimeout(typingTimer); typingTimer = window.setTimeout(() => { $('#filter-keyword').value = globalQuery.value; collectFields(); render(); }, 180); });
     $('#discover-sort').addEventListener('change', () => { collectFields(); render(); });
     $$('[data-work-mode]').forEach(button => button.addEventListener('click', () => { const value = button.dataset.workMode; state.modes.has(value) ? state.modes.delete(value) : state.modes.add(value); render(); }));
     $$('[data-job-type]').forEach(button => button.addEventListener('click', () => { const value = button.dataset.jobType; state.types.has(value) ? state.types.delete(value) : state.types.add(value); render(); }));

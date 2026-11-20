@@ -1,51 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#060B1C">
-  <title>{% block title %}NEXORA — Find work that moves you forward{% endblock %}</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#060B1C">
+<link rel="icon" type="image/png" sizes="64x64" href="{{ url_for('static', filename='images/favicon.png') }}">
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+<link rel="apple-touch-icon" sizes="192x192" href="{{ url_for('static', filename='images/apple-touch-icon.png') }}">
+<title>{% block title %}JOBFLEX — Find work that moves you forward{% endblock %}</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
-    rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            navy: '#0B1230',
-            'navy-soft': '#141B3F',
-            'navy-elevated': '#1B234D',
-            ink: '#12142B',
-            cream: '#F8F6F1',
-            'cream-dim': '#EFEBE2',
-            indigo: { DEFAULT: '#6C5CF5', dark: '#5342D6' },
-            mint: { DEFAULT: '#2BE0BE', soft: '#E2F7F2' },
-            amber: '#FFB74A',
-            rose: '#FF6B87',
-            sky: { DEFAULT: '#3B82F6' },
-            grey: { DEFAULT: '#8B8F9E', line: '#E4E1D9' }
-          },
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            display: ['Plus Jakarta Sans', 'sans-serif']
-          },
-          borderRadius: { '2xl': '18px', '3xl': '22px' }
-        }
-      }
-    };
-  </script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        navy: '#0B1230',
+        'navy-soft': '#141B3F',
+        'navy-elevated': '#1B234D',
+        ink: '#12142B',
+        cream: '#F8F6F1',
+        'cream-dim': '#EFEBE2',
+        indigo: { DEFAULT: '#6C5CF5', dark: '#5342D6' },
+        mint: { DEFAULT: '#2BE0BE', soft: '#E2F7F2' },
+        amber: '#FFB74A',
+        rose: '#FF6B87',
+        sky: { DEFAULT: '#3B82F6' },
+        grey: { DEFAULT: '#8B8F9E', line: '#E4E1D9' }
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'sans-serif']
+      },
+      borderRadius: { '2xl': '18px', '3xl': '22px' }
+    }
+  }
+};
+</script>
 
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
-  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/jobflex-extras.css') }}">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
 
-  {% block head %}{% endblock %}
+{% block head %}{% endblock %}
 </head>
 
 {% set current_role = demo_role|default('guest', true) %}
@@ -54,28 +55,39 @@
 
 <body class="{% block body_class %}nx-dark{% if app_shell %} nx-has-shell{% endif %}{% endblock %}">
 
-  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+<!-- Opening splash: logo animation for 5 seconds (once per browser session), then the app opens -->
+<div id="jf-splash" role="status" aria-label="Loading JOBFLEX">
+  <div class="jf-splash-logo"><img src="{{ url_for('static', filename='images/jobflex-logo.png') }}" alt="JOBFLEX"></div>
+  <div class="jf-splash-bar"><i></i></div>
+  <div class="jf-splash-tag">Find • Hire • Grow</div>
+</div>
+<script>
+(function () {
+  var el = document.getElementById('jf-splash');
+  var seen = false;
+  try { seen = sessionStorage.getItem('jf-splash-seen') === '1'; } catch (e) {}
+  if (seen) { el.className = 'is-gone'; return; }
+  try { sessionStorage.setItem('jf-splash-seen', '1'); } catch (e) {}
+  document.body.classList.add('jf-splash-lock');
+  setTimeout(function () { el.className = 'is-gone'; document.body.classList.remove('jf-splash-lock'); }, 5000);
+})();
+</script>
 
-  {% macro brand(size='md') %}
-  <a href="{{ url_for('index') }}" class="flex items-center gap-2.5 shrink-0 group select-none"
-    aria-label="JOBFLEX home">
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+{% macro brand(size='md') %}
+  <a href="{{ url_for('index') }}" class="flex items-center gap-2.5 shrink-0 group select-none" aria-label="JOBFLEX home">
     {% if size == 'foot' %}
-    <img src="{{ url_for('static', filename='images/jobflex-logo.png') }}" alt="JOBFLEX — Find • Hire • Grow"
-      class="h-11 w-auto max-w-[195px] object-contain transition-transform duration-200 group-hover:scale-[1.02]"
-      loading="lazy">
+      <img src="{{ url_for('static', filename='images/jobflex-logo.png') }}" alt="JOBFLEX — Find • Hire • Grow" class="h-11 w-auto max-w-[195px] object-contain transition-transform duration-200 group-hover:scale-[1.02]" loading="lazy">
     {% elif size == 'side' %}
-    <img src="{{ url_for('static', filename='images/jobflex-logo-horizontal.png') }}" alt="JOBFLEX"
-      class="h-9 w-auto max-w-[165px] object-contain transition-transform duration-200 group-hover:scale-[1.03]"
-      loading="eager">
+      <img src="{{ url_for('static', filename='images/jobflex-logo-horizontal.png') }}" alt="JOBFLEX" class="h-9 w-auto max-w-[165px] object-contain transition-transform duration-200 group-hover:scale-[1.03]" loading="eager">
     {% else %}
-    <img src="{{ url_for('static', filename='images/jobflex-logo-horizontal.png') }}" alt="JOBFLEX"
-      class="h-9 w-auto max-w-[160px] object-contain transition-transform duration-200 group-hover:scale-[1.03]"
-      loading="eager">
+      <img src="{{ url_for('static', filename='images/jobflex-logo-horizontal.png') }}" alt="JOBFLEX" class="h-9 w-auto max-w-[160px] object-contain transition-transform duration-200 group-hover:scale-[1.03]" loading="eager">
     {% endif %}
   </a>
-  {% endmacro %}
+{% endmacro %}
 
-  {% macro side_link(href, icon, label, active=False, onclick=None, badge=None) %}
+{% macro side_link(href, icon, label, active=False, onclick=None, badge=None) %}
   <a href="{{ href }}" {% if onclick %}{{ ('onclick="' ~ onclick ~ '; return false;"')|safe }}{% endif %}
      class="nx-side-link{% if active %} is-active{% endif %}"{% if active %} aria-current="page"{% endif %}>
     <i data-lucide="{{ icon }}" class="w-[18px] h-[18px] shrink-0"></i>
@@ -95,505 +107,440 @@
 <!-- ---------------- LEFT SIDEBAR ---------------- -->
 <aside id="mobile-nav-drawer" class="nx-side" aria-label="Main navigation">
   <div class="flex items-center justify-between px-2 pt-1 pb-5">
-    {{ brand(' side') }} <button type="button" onclick="closeMobileNav()"
-    class="lg:hidden w-9 h-9 rounded-xl inline-flex items-center justify-center text-cream/70 hover:bg-white/5"
-    aria-label="Close menu">
-    <i data-lucide="x" class="w-5 h-5"></i>
+    {{ brand('side') }}
+    <button type="button" onclick="closeMobileNav()" class="lg:hidden w-9 h-9 rounded-xl inline-flex items-center justify-center text-cream/70 hover:bg-white/5" aria-label="Close menu">
+      <i data-lucide="x" class="w-5 h-5"></i>
     </button>
-    </div>
+  </div>
 
-    {% if current_role == 'seeker' %}
-    <nav class="space-y-1">
-      {{ side_link(url_for('seeker_dashboard'), 'layout-dashboard', 'Overview', ep == 'seeker_dashboard') }}
-      {{ side_link(url_for('jobs'), 'compass', 'Discover Jobs', ep in ('jobs', 'job_details')) }}
-      {{ side_link(url_for('seeker.applications'), 'file-check-2', 'My Applications', ep == 'seeker.applications') }}
-      {{ side_link(url_for('seeker.profile'), 'user-round', 'Career Profile', ep == 'seeker.profile') }}
-      {{ side_link(url_for('seeker.resume'), 'file-text', 'Resume Studio', ep == 'seeker.resume') }}
-      {{ side_link(url_for('seeker.interview_practice'), 'mic', 'Interview Practice', ep in
-      ('seeker.interview_practice', 'seeker.interview')) }}
-      {{ side_link(url_for('seeker_dashboard') ~ '#saved', 'bookmark', 'Saved Roles', False, None, saved_count if
-      saved_count else None) }}
-    </nav>
-    <div class="nx-side-divider"></div>
-    <nav class="space-y-1">
-      {{ side_link(url_for('seeker.matches'), 'sparkles', 'Job Matches', ep == 'seeker.matches') }}
-      {{ side_link(url_for('seeker.alerts'), 'bell-ring', 'Job Alerts', ep == 'seeker.alerts') }}
-      {{ side_link(url_for('companies'), 'building-2', 'Companies', ep in ('companies', 'company_jobs')) }}
-      {{ side_link(url_for('seeker.interview_practice'), 'book-open', 'Career Resources', ep in
-      ('seeker.interview_practice', 'seeker.interview')) }}
-    </nav>
+  {% if current_role == 'seeker' %}
+  <nav class="space-y-1">
+    {{ side_link(url_for('seeker_dashboard'), 'layout-dashboard', 'Overview', ep == 'seeker_dashboard') }}
+    {{ side_link(url_for('jobs'), 'compass', 'Discover Jobs', ep in ('jobs', 'job_details')) }}
+    {{ side_link(url_for('seeker.applications'), 'file-check-2', 'My Applications', ep == 'seeker.applications') }}
+    {{ side_link(url_for('seeker.profile'), 'user-round', 'Career Profile', ep == 'seeker.profile') }}
+    {{ side_link(url_for('seeker.resume'), 'file-text', 'Resume Studio', ep == 'seeker.resume') }}
+    {{ side_link(url_for('seeker.interview_practice'), 'mic', 'Interview Practice', ep in ('seeker.interview_practice', 'seeker.interview')) }}
+    {{ side_link(url_for('seeker_dashboard') ~ '#saved', 'bookmark', 'Saved Roles', False, None, saved_count if saved_count else None) }}
+  </nav>
+  <div class="nx-side-divider"></div>
+  <nav class="space-y-1">
+    {{ side_link(url_for('seeker.matches'), 'sparkles', 'Job Matches', ep == 'seeker.matches') }}
+    {{ side_link(url_for('seeker.alerts'), 'bell-ring', 'Job Alerts', ep == 'seeker.alerts') }}
+    {{ side_link(url_for('companies'), 'building-2', 'Companies', ep in ('companies', 'company_jobs')) }}
+    {{ side_link(url_for('seeker.interview_practice'), 'book-open', 'Career Resources', ep in ('seeker.interview_practice', 'seeker.interview')) }}
+  </nav>
 
-    {% if not (seeker_user and seeker_user.is_premium) %}
-    <a href="{{ url_for('seeker.upgrade') }}" class="nx-premium-card mt-5">
-      <span class="nx-premium-crown"><i data-lucide="crown" class="w-4 h-4"></i></span>
-      <span class="min-w-0 flex-1">
-        <span class="block font-display font-bold text-sm text-white">Go Premium</span>
-        <span class="block text-[11px] text-cream/60 leading-snug">Unlock more opportunities and personalised
-          insights.</span>
-      </span>
-      <i data-lucide="chevron-right" class="w-4 h-4 text-cream/40 shrink-0"></i>
-    </a>
-    {% else %}
-    <div class="nx-premium-card mt-5">
-      <span class="nx-premium-crown"><i data-lucide="crown" class="w-4 h-4"></i></span>
-      <span class="min-w-0 flex-1">
-        <span class="block font-display font-bold text-sm text-white">Premium member</span>
-        <span class="block text-[11px] text-cream/60 leading-snug">All matches and insights unlocked.</span>
-      </span>
-    </div>
-    {% endif %}
+  {% if not (seeker_user and seeker_user.is_premium) %}
+  <a href="{{ url_for('seeker.upgrade') }}" class="nx-premium-card mt-5">
+    <span class="nx-premium-crown"><i data-lucide="crown" class="w-4 h-4"></i></span>
+    <span class="min-w-0 flex-1">
+      <span class="block font-display font-bold text-sm text-white">Go Premium</span>
+      <span class="block text-[11px] text-cream/60 leading-snug">Unlock more opportunities and personalised insights.</span>
+    </span>
+    <i data-lucide="chevron-right" class="w-4 h-4 text-cream/40 shrink-0"></i>
+  </a>
+  {% else %}
+  <div class="nx-premium-card mt-5">
+    <span class="nx-premium-crown"><i data-lucide="crown" class="w-4 h-4"></i></span>
+    <span class="min-w-0 flex-1">
+      <span class="block font-display font-bold text-sm text-white">Premium member</span>
+      <span class="block text-[11px] text-cream/60 leading-snug">All matches and insights unlocked.</span>
+    </span>
+  </div>
+  {% endif %}
 
-    <!-- Choose your plan carousel -->
-    <div class="nx-plan mt-4" id="plan-ad-section" data-plan-carousel>
-      <div class="flex items-center gap-2 relative z-10">
-        <span class="text-base" aria-hidden="true">👑</span>
-        <div>
-          <p class="font-display font-bold text-[13px] text-white leading-tight">Choose Your Plan</p>
-          <p class="text-[10.5px] text-cream/55 leading-tight">Unlock better matches &amp; premium features</p>
-        </div>
-      </div>
-      <div class="relative mt-3">
-        <button type="button" data-plan-prev class="nx-plan-arrow -left-2" aria-label="Previous plan"><i
-            data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
-        <button type="button" data-plan-next class="nx-plan-arrow -right-2" aria-label="Next plan"><i
-            data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button>
-        <div class="nx-plan-inner">
-          <div class="nx-plan-slide" data-plan-slide>
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <span class="nx-plan-tag text-mint bg-mint/15">🌱 Free Plan</span>
-                <p class="font-display font-bold text-sm text-white mt-1.5">Explore Opportunities</p>
-              </div>
-              <span class="nx-plan-art" aria-hidden="true">🧭</span>
-            </div>
-            <ul class="nx-plan-list">
-              <li>Top job recommendations</li>
-              <li>Basic resume builder</li>
-              <li>Unlimited applications</li>
-            </ul>
-          </div>
-          <div class="nx-plan-slide is-active" data-plan-slide>
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <span class="nx-plan-tag text-[#9DB8FF] bg-sky/20">⭐ Pro Plan</span>
-                <p class="font-display font-bold text-sm text-white mt-1.5">Boost Your Career</p>
-              </div>
-              <span class="nx-plan-art nx-rocket" aria-hidden="true">🚀</span>
-            </div>
-            <ul class="nx-plan-list">
-              <li>Unlimited applications</li>
-              <li>AI resume analysis</li>
-              <li>Higher match accuracy</li>
-            </ul>
-          </div>
-          <div class="nx-plan-slide" data-plan-slide>
-            <div class="flex items-start justify-between gap-2">
-              <div>
-                <span class="nx-plan-tag text-amber bg-amber/15">👑 Premium</span>
-                <p class="font-display font-bold text-sm text-white mt-1.5">Fast-Track Hiring</p>
-              </div>
-              <span class="nx-plan-art" aria-hidden="true">💎</span>
-            </div>
-            <ul class="nx-plan-list">
-              <li>All job matches unlocked</li>
-              <li>Priority recruiter routing</li>
-              <li>Top applicant badge</li>
-            </ul>
-          </div>
-          <a href="{{ url_for('seeker.upgrade') }}" class="btn btn-sm w-full justify-center mt-3 nx-btn-glow">View Plans
-            <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
-        </div>
-      </div>
-      <div class="flex items-center justify-center gap-1.5 mt-3" data-plan-dots>
-        <button type="button" class="nx-plan-dot" aria-label="Free plan"></button>
-        <button type="button" class="nx-plan-dot is-active" aria-label="Pro plan"></button>
-        <button type="button" class="nx-plan-dot" aria-label="Premium plan"></button>
+  <!-- Choose your plan carousel -->
+  <div class="nx-plan mt-4" id="plan-ad-section" data-plan-carousel>
+    <div class="flex items-center gap-2 relative z-10">
+      <span class="text-base" aria-hidden="true">👑</span>
+      <div>
+        <p class="font-display font-bold text-[13px] text-white leading-tight">Choose Your Plan</p>
+        <p class="text-[10.5px] text-cream/55 leading-tight">Unlock better matches &amp; premium features</p>
       </div>
     </div>
-
-    {% else %}{# ---------------- employer ---------------- #}
-    <nav class="space-y-1">
-      {{ side_link(url_for('employer_dashboard'), 'layout-dashboard', 'Overview', ep == 'employer_dashboard') }}
-      {{ side_link(url_for('post_job'), 'square-plus', 'Post a Job', ep in ('post_job', 'checkout')) }}
-      {{ side_link(url_for('employer_dashboard') ~ '#my-jobs', 'briefcase', 'My Job Listings') }}
-      {{ side_link(url_for('applicants'), 'users-round', 'Applicants', ep == 'applicants') }}
-      {{ side_link('#', 'user-search', 'Find Candidates', False, "comingSoon('Candidate search')") }}
-      {{ side_link(url_for('employer.setup'), 'building', 'Company Profile', ep == 'employer.setup') }}
-    </nav>
-    <div class="nx-side-divider"></div>
-    <nav class="space-y-1">
-      {{ side_link(url_for('jobs'), 'compass', 'Job Market', ep in ('jobs', 'job_details')) }}
-      {{ side_link(url_for('companies'), 'building-2', 'Companies', ep in ('companies', 'company_jobs')) }}
-      {{ side_link(url_for('pricing'), 'gem', 'Pricing & Packages', ep == 'pricing') }}
-      {{ side_link('#', 'receipt', 'Billing', False, "comingSoon('Billing')") }}
-    </nav>
-
-    <a href="{{ url_for('pricing') }}" class="nx-premium-card mt-5">
-      <span class="nx-premium-crown"><i data-lucide="rocket" class="w-4 h-4"></i></span>
-      <span class="min-w-0 flex-1">
-        <span class="block font-display font-bold text-sm text-white">Boost a listing</span>
-        <span class="block text-[11px] text-cream/60 leading-snug">Featured jobs get seen first by matching
-          candidates.</span>
-      </span>
-      <i data-lucide="chevron-right" class="w-4 h-4 text-cream/40 shrink-0"></i>
-    </a>
-    <div class="nx-plan mt-4">
-      <div class="flex items-start justify-between gap-2 relative z-10">
-        <div>
-          <span class="nx-plan-tag text-mint bg-mint/15">⚡ Hiring tip</span>
-          <p class="font-display font-bold text-sm text-white mt-1.5">Move fast on great people</p>
-          <p class="text-[11px] text-cream/60 mt-1 leading-snug">Candidates you shortlist within 48 hours are far more
-            likely to accept.</p>
+    <div class="relative mt-3">
+      <button type="button" data-plan-prev class="nx-plan-arrow -left-2" aria-label="Previous plan"><i data-lucide="chevron-left" class="w-3.5 h-3.5"></i></button>
+      <button type="button" data-plan-next class="nx-plan-arrow -right-2" aria-label="Next plan"><i data-lucide="chevron-right" class="w-3.5 h-3.5"></i></button>
+      <div class="nx-plan-inner">
+        <div class="nx-plan-slide" data-plan-slide>
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="nx-plan-tag text-mint bg-mint/15">🌱 Free Plan</span>
+              <p class="font-display font-bold text-sm text-white mt-1.5">Explore Opportunities</p>
+            </div>
+            <span class="nx-plan-art" aria-hidden="true">🧭</span>
+          </div>
+          <ul class="nx-plan-list"><li>Top job recommendations</li><li>Basic resume builder</li><li>Unlimited applications</li></ul>
         </div>
-        <span class="nx-plan-art nx-rocket" aria-hidden="true">🎯</span>
+        <div class="nx-plan-slide is-active" data-plan-slide>
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="nx-plan-tag text-[#9DB8FF] bg-sky/20">⭐ Pro Plan</span>
+              <p class="font-display font-bold text-sm text-white mt-1.5">Boost Your Career</p>
+            </div>
+            <span class="nx-plan-art nx-rocket" aria-hidden="true">🚀</span>
+          </div>
+          <ul class="nx-plan-list"><li>Unlimited applications</li><li>AI resume analysis</li><li>Higher match accuracy</li></ul>
+        </div>
+        <div class="nx-plan-slide" data-plan-slide>
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <span class="nx-plan-tag text-amber bg-amber/15">👑 Premium</span>
+              <p class="font-display font-bold text-sm text-white mt-1.5">Fast-Track Hiring</p>
+            </div>
+            <span class="nx-plan-art" aria-hidden="true">💎</span>
+          </div>
+          <ul class="nx-plan-list"><li>All job matches unlocked</li><li>Priority recruiter routing</li><li>Top applicant badge</li></ul>
+        </div>
+        <a href="{{ url_for('seeker.upgrade') }}" class="btn btn-sm w-full justify-center mt-3 nx-btn-glow">View Plans <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
       </div>
-      <a href="{{ url_for('applicants') }}" class="btn btn-sm w-full justify-center mt-3 nx-btn-glow">Review applicants
-        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
     </div>
-    {% endif %}
+    <div class="flex items-center justify-center gap-1.5 mt-3" data-plan-dots>
+      <button type="button" class="nx-plan-dot" aria-label="Free plan"></button>
+      <button type="button" class="nx-plan-dot is-active" aria-label="Pro plan"></button>
+      <button type="button" class="nx-plan-dot" aria-label="Premium plan"></button>
+    </div>
+  </div>
 
-    <div class="h-20 lg:h-6"></div>
-    </aside>
+  {% else %}{# ---------------- employer ---------------- #}
+  <nav class="space-y-1">
+    {{ side_link(url_for('employer_dashboard'), 'layout-dashboard', 'Overview', ep == 'employer_dashboard') }}
+    {{ side_link(url_for('post_job'), 'square-plus', 'Post a Job', ep in ('post_job', 'checkout')) }}
+    {{ side_link(url_for('employer_dashboard') ~ '#my-jobs', 'briefcase', 'My Job Listings') }}
+    {{ side_link(url_for('applicants'), 'users-round', 'Applicants', ep == 'applicants') }}
+    {{ side_link('#', 'user-search', 'Find Candidates', False, "comingSoon('Candidate search')") }}
+    {{ side_link(url_for('employer.setup'), 'building', 'Company Profile', ep == 'employer.setup') }}
+  </nav>
+  <div class="nx-side-divider"></div>
+  <nav class="space-y-1">
+    {{ side_link(url_for('jobs'), 'compass', 'Job Market', ep in ('jobs', 'job_details')) }}
+    {{ side_link(url_for('companies'), 'building-2', 'Companies', ep in ('companies', 'company_jobs')) }}
+    {{ side_link(url_for('pricing'), 'gem', 'Pricing & Packages', ep == 'pricing') }}
+    {{ side_link('#', 'receipt', 'Billing', False, "comingSoon('Billing')") }}
+  </nav>
 
-    <!-- ---------------- TOP BAR ---------------- -->
-    <header id="nx-topbar" class="nx-topbar">
-      <button id="mobile-nav-btn" type="button" class="nx-icon-btn inline-flex lg:hidden" aria-label="Open menu">
-        <i data-lucide="menu" class="w-5 h-5"></i>
-      </button>
-      <div class="lg:hidden">{{ brand('top') }}</div>
-
-      <form action="{{ url_for('jobs') }}" method="get" class="nx-top-search hidden md:flex" role="search">
-        <i data-lucide="search" class="w-4 h-4 text-cream/40 shrink-0"></i>
-        <input type="search" name="q" placeholder="Search jobs, companies, or skills…" aria-label="Search jobs"
-          class="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-cream/40">
-        <kbd
-          class="hidden xl:inline-flex text-[10px] text-cream/40 border border-white/10 rounded-md px-1.5 py-0.5">Enter</kbd>
-      </form>
-
-      <div class="flex items-center gap-2 sm:gap-2.5 ml-auto">
-        <button type="button" class="nx-icon-btn inline-flex"
-          onclick="showToast('You\'re all caught up — no new notifications.', {icon: 'bell'})"
-          aria-label="Notifications">
-          <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
-        </button>
-        <button type="button" class="nx-icon-btn hidden sm:inline-flex" onclick="comingSoon('Messages')"
-          aria-label="Messages">
-          <i data-lucide="message-square-text" class="w-[18px] h-[18px]"></i>
-        </button>
-
-        <div class="relative" id="user-menu">
-          {% if current_role == 'seeker' %}
-          {% set who_name = seeker_user.full_name if seeker_user else 'Job seeker' %}
-          {% set who_initials = seeker_user.initials if seeker_user else 'JS' %}
-          {% set who_role = 'Premium member' if seeker_user and seeker_user.is_premium else 'Job Seeker' %}
-          {% set who_email = seeker_user.email if seeker_user else '' %}
-          {% else %}
-          {% set who_name = employer_company.name if employer_company else (employer_user.email if employer_user else
-          'Employer') %}
-          {% set who_initials = employer_company.initials if employer_company else ((employer_user.email[:1]|upper) if
-          employer_user else 'E') %}
-          {% set who_role = 'Employer' %}
-          {% set who_email = employer_user.email if employer_user else '' %}
-          {% endif %}
-          <button id="user-menu-btn" type="button" onclick="toggleUserMenu()" aria-haspopup="true" aria-expanded="false"
-            class="nx-user-chip">
-            <span class="nx-avatar">{{ who_initials }}</span>
-            <span class="hidden md:block text-left min-w-0">
-              <span class="block text-[13px] font-semibold text-white leading-tight truncate max-w-[150px]">{{ who_name
-                }}</span>
-              <span class="block text-[11px] text-cream/50 leading-tight">{{ who_role }}</span>
-            </span>
-            <i data-lucide="chevron-down" class="w-4 h-4 text-cream/40 hidden md:block"></i>
-          </button>
-
-          <div id="user-menu-panel" class="hidden nx-menu" role="menu">
-            <div class="px-3 py-2.5 border-b border-white/10 mb-1">
-              <p class="text-sm font-semibold text-white truncate">{{ who_name }}</p>
-              <p class="text-xs text-cream/50 truncate">{{ who_email }}</p>
-            </div>
-            {% if current_role == 'seeker' %}
-            <a role="menuitem" href="{{ url_for('seeker_dashboard') }}"><i data-lucide="layout-dashboard"
-                class="w-4 h-4"></i>Overview</a>
-            <a role="menuitem" href="{{ url_for('seeker.profile') }}"><i data-lucide="user-round"
-                class="w-4 h-4"></i>Career Profile</a>
-            <a role="menuitem" href="{{ url_for('seeker.applications') }}"><i data-lucide="file-check-2"
-                class="w-4 h-4"></i>My Applications</a>
-            <a role="menuitem" href="{{ url_for('seeker.resume') }}"><i data-lucide="file-text"
-                class="w-4 h-4"></i>Resume Studio</a>
-            <a role="menuitem" href="{{ url_for('seeker_dashboard') }}#saved"><i data-lucide="bookmark"
-                class="w-4 h-4"></i>Saved Roles <span class="ml-auto text-xs text-cream/50" data-saved-count>{{
-                saved_count }}</span></a>
-            <a role="menuitem" href="{{ url_for('seeker.upgrade') }}"><i data-lucide="crown" class="w-4 h-4"></i>Plans
-              &amp; Upgrade</a>
-            <form method="post" action="{{ url_for('seeker.logout') }}" class="border-t border-white/10 mt-1 pt-1">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" role="menuitem" class="!text-rose"><i data-lucide="log-out" class="w-4 h-4"></i>Log
-                out</button>
-            </form>
-            {% else %}
-            <a role="menuitem" href="{{ url_for('employer_dashboard') }}"><i data-lucide="layout-dashboard"
-                class="w-4 h-4"></i>Overview</a>
-            <a role="menuitem" href="{{ url_for('employer.setup') }}"><i data-lucide="building"
-                class="w-4 h-4"></i>Company profile</a>
-            <a role="menuitem" href="{{ url_for('post_job') }}"><i data-lucide="square-plus" class="w-4 h-4"></i>Post a
-              job</a>
-            <a role="menuitem" href="{{ url_for('pricing') }}"><i data-lucide="gem" class="w-4 h-4"></i>Pricing &amp;
-              packages</a>
-            <button type="button" role="menuitem" onclick="comingSoon('Account settings')"><i data-lucide="settings"
-                class="w-4 h-4"></i>Account settings</button>
-            <button type="button" role="menuitem" onclick="comingSoon('Invoice history')"><i data-lucide="receipt"
-                class="w-4 h-4"></i>Invoice history</button>
-            <button type="button" role="menuitem" onclick="comingSoon('Contact us')"><i data-lucide="life-buoy"
-                class="w-4 h-4"></i>Contact us</button>
-            <form method="post" action="{{ url_for('employer.logout') }}" class="border-t border-white/10 mt-1 pt-1">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" role="menuitem" class="!text-rose"><i data-lucide="log-out" class="w-4 h-4"></i>Log
-                out</button>
-            </form>
-            {% endif %}
-          </div>
-        </div>
+  <a href="{{ url_for('pricing') }}" class="nx-premium-card mt-5">
+    <span class="nx-premium-crown"><i data-lucide="rocket" class="w-4 h-4"></i></span>
+    <span class="min-w-0 flex-1">
+      <span class="block font-display font-bold text-sm text-white">Boost a listing</span>
+      <span class="block text-[11px] text-cream/60 leading-snug">Featured jobs get seen first by matching candidates.</span>
+    </span>
+    <i data-lucide="chevron-right" class="w-4 h-4 text-cream/40 shrink-0"></i>
+  </a>
+  <div class="nx-plan mt-4">
+    <div class="flex items-start justify-between gap-2 relative z-10">
+      <div>
+        <span class="nx-plan-tag text-mint bg-mint/15">⚡ Hiring tip</span>
+        <p class="font-display font-bold text-sm text-white mt-1.5">Move fast on great people</p>
+        <p class="text-[11px] text-cream/60 mt-1 leading-snug">Candidates you shortlist within 48 hours are far more likely to accept.</p>
       </div>
-    </header>
+      <span class="nx-plan-art nx-rocket" aria-hidden="true">🎯</span>
+    </div>
+    <a href="{{ url_for('applicants') }}" class="btn btn-sm w-full justify-center mt-3 nx-btn-glow">Review applicants <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></a>
+  </div>
+  {% endif %}
 
-    {% else %}
+  <div class="h-20 lg:h-6"></div>
+</aside>
 
-    <!-- ---------------- PUBLIC TOP NAV (visitors & admin) ---------------- -->
-    <header class="nx-pubnav sticky top-0 z-50">
-      <div class="max-w-7xl mx-auto px-4 md:px-8">
-        <div class="flex items-center justify-between h-16 gap-4">
-          {{ brand('pub') }}
+<!-- ---------------- TOP BAR ---------------- -->
+<header id="nx-topbar" class="nx-topbar">
+  <button id="mobile-nav-btn" type="button" class="nx-icon-btn inline-flex lg:hidden" aria-label="Open menu">
+    <i data-lucide="menu" class="w-5 h-5"></i>
+  </button>
+  <div class="lg:hidden">{{ brand('top') }}</div>
 
-          <nav class="hidden lg:flex items-center gap-1 text-sm font-medium" aria-label="Main navigation">
-            <a href="{{ url_for('jobs') }}"
-              class="nx-pub-link {% if ep in ('jobs','job_details') %}is-active{% endif %}">Find Jobs</a>
-            <a href="{{ url_for('companies') }}"
-              class="nx-pub-link {% if ep in ('companies','company_jobs') %}is-active{% endif %}">Explore Top
-              Companies</a>
-            <div class="nx-dd">
-              <button type="button" class="nx-pub-link inline-flex items-center gap-1" aria-haspopup="true">For
-                Employers <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
-              <div class="nx-dd-menu">
-                <a href="{{ url_for('employer.login') }}"><i data-lucide="log-in" class="w-4 h-4"></i>Employer Login</a>
-                <a href="{{ url_for('employer.register') }}"><i data-lucide="building-2" class="w-4 h-4"></i>Employer
-                  Register</a>
-                <a href="{{ url_for('pricing') }}"><i data-lucide="gem" class="w-4 h-4"></i>Pricing</a>
-              </div>
-            </div>
-            {% if current_role == 'admin' %}
-            <a href="{{ url_for('admin') }}" class="nx-pub-link {% if ep == 'admin' %}is-active{% endif %}">Admin</a>
-            {% endif %}
-          </nav>
+  <form action="{{ url_for('jobs') }}" method="get" class="nx-top-search hidden md:flex" role="search">
+    <i data-lucide="search" class="w-4 h-4 text-cream/40 shrink-0"></i>
+    <input type="search" name="q" placeholder="Search jobs, companies, or skills…" aria-label="Search jobs" class="flex-1 bg-transparent outline-none text-sm text-white placeholder:text-cream/40">
+    <kbd class="hidden xl:inline-flex text-[10px] text-cream/40 border border-white/10 rounded-md px-1.5 py-0.5">Enter</kbd>
+  </form>
 
-          <div class="flex items-center gap-2">
-            <span class="hidden sm:flex items-center gap-2"><a href="{{ url_for('seeker.login') }}"
-                class="btn btn-ghost on-dark btn-sm">Login</a>
-              <a href="{{ url_for('seeker.register') }}" class="btn btn-sm nx-btn-glow">Register</a></span>
-            <button id="mobile-nav-btn" type="button" class="nx-icon-btn inline-flex lg:hidden" aria-label="Open menu">
-              <i data-lucide="menu" class="w-5 h-5"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
+  <div class="flex items-center gap-2 sm:gap-2.5 ml-auto">
+    <button type="button" class="nx-icon-btn inline-flex" onclick="showToast('You\'re all caught up — no new notifications.', {icon: 'bell'})" aria-label="Notifications">
+      <i data-lucide="bell" class="w-[18px] h-[18px]"></i>
+    </button>
+    <button type="button" class="nx-icon-btn hidden sm:inline-flex" onclick="comingSoon('Messages')" aria-label="Messages">
+      <i data-lucide="message-square-text" class="w-[18px] h-[18px]"></i>
+    </button>
 
-    <div id="mobile-nav-overlay" class="nx-overlay" onclick="closeMobileNav()"></div>
-    <aside id="mobile-nav-drawer" class="nx-drawer nx-drawer-dark" aria-label="Mobile navigation">
-      <div class="flex items-center justify-between p-5 border-b border-white/10">
-        {{ brand('drawer') }}
-        <button type="button" onclick="closeMobileNav()" class="nx-icon-btn inline-flex" aria-label="Close menu"><i
-            data-lucide="x" class="w-5 h-5"></i></button>
-      </div>
-      <nav class="p-3 space-y-1">
-        {{ side_link(url_for('index'), 'home', 'Home', ep == 'index') }}
-        {{ side_link(url_for('jobs'), 'compass', 'Find Jobs', ep in ('jobs','job_details')) }}
-        {{ side_link(url_for('companies'), 'building-2', 'Explore Top Companies', ep in ('companies','company_jobs')) }}
-        {{ side_link(url_for('pricing'), 'gem', 'Pricing', ep == 'pricing') }}
-        {% if current_role == 'admin' %}{{ side_link(url_for('admin'), 'shield-check', 'Admin', ep == 'admin') }}{%
-        endif %}
-        <div class="nx-side-divider"></div>
-        <p class="px-3 pt-1 pb-1 text-[11px] uppercase tracking-wider text-cream/35 font-semibold">Job seekers</p>
-        {{ side_link(url_for('seeker.login'), 'log-in', 'Job seeker login') }}
-        {{ side_link(url_for('seeker.register'), 'user-plus', 'Create free account') }}
-        <p class="px-3 pt-3 pb-1 text-[11px] uppercase tracking-wider text-cream/35 font-semibold">Employers</p>
-        {{ side_link(url_for('employer.login'), 'briefcase', 'Employer login') }}
-        {{ side_link(url_for('employer.register'), 'building', 'Employer register') }}
-      </nav>
-    </aside>
-
-    {% endif %}
-    {% endblock %}
-
-    <!-- ==================== PAGE CONTENT ==================== -->
-    <main id="main-content" class="nx-main">
-      {% block content %}{% endblock %}
-    </main>
-
-    <!-- ==================== FOOTER ==================== -->
-    {% block site_footer %}
-    {% if app_shell %}
-    <footer class="nx-shell-footer">
-      <span>© 2026 JOBFLEX PTY LTD · Australian careers marketplace</span>
-      <span class="flex items-center gap-4">
-        <a href="{{ url_for('jobs') }}" class="hover:text-mint">Jobs</a>
-        <a href="{{ url_for('companies') }}" class="hover:text-mint">Companies</a>
-        <a href="{{ url_for('pricing') }}" class="hover:text-mint">Pricing</a>
-      </span>
-    </footer>
-    {% else %}
-    <footer class="nx-footer mt-20">
-      <div class="max-w-7xl mx-auto px-5 md:px-8 py-12 grid grid-cols-2 md:grid-cols-5 gap-8">
-        <div class="col-span-2">
-          <div class="mb-3">{{ brand('foot') }}</div>
-          <p class="text-sm text-cream/50 max-w-xs">Find work that moves you forward. An Australian employment
-            marketplace connecting job seekers and employers.</p>
-          <div class="flex items-center gap-2 mt-4">
-            <span class="icon-badge icon-badge-indigo w-8 h-8" aria-label="LinkedIn"><i data-lucide="linkedin"
-                class="w-4 h-4"></i></span>
-            <span class="icon-badge icon-badge-mint w-8 h-8" aria-label="Instagram"><i data-lucide="instagram"
-                class="w-4 h-4"></i></span>
-            <span class="icon-badge icon-badge-rose w-8 h-8" aria-label="Facebook"><i data-lucide="facebook"
-                class="w-4 h-4"></i></span>
-          </div>
-        </div>
-        <div>
-          <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Job seekers</p>
-          <ul class="space-y-2 text-sm text-cream/60">
-            <li><a href="{{ url_for('jobs') }}" class="hover:text-mint transition-colors">Find Jobs</a></li>
-            <li><a href="{{ url_for('companies') }}" class="hover:text-mint transition-colors">Browse Companies</a></li>
-            <li><a href="{{ url_for('seeker.register') }}" class="hover:text-mint transition-colors">Create account</a>
-            </li>
-          </ul>
-        </div>
-        <div>
-          <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Employers</p>
-          <ul class="space-y-2 text-sm text-cream/60">
-            <li><a href="{{ url_for('post_job') }}" class="hover:text-mint transition-colors">Post a Job</a></li>
-            <li><a href="{{ url_for('pricing') }}" class="hover:text-mint transition-colors">Pricing</a></li>
-            <li><a href="{{ url_for('employer.register') }}" class="hover:text-mint transition-colors">Employer
-                register</a></li>
-          </ul>
-        </div>
-        <div>
-          <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Legal & Company</p>
-          <ul class="space-y-2 text-sm text-cream/60">
-            <li><a href="{{ url_for('privacy') }}" class="hover:text-mint transition-colors">Privacy Policy</a></li>
-            <li><a href="{{ url_for('terms') }}" class="hover:text-mint transition-colors">Terms of Service</a></li>
-            <li><a href="{{ url_for('admin') }}" class="hover:text-mint transition-colors">Staff Portal</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="border-t border-white/10 py-5 text-center text-xs text-cream/35">© 2026 JOBFLEX PTY LTD (ACN 704 224 877). Client demonstration build — not for production use.</div>
-    </footer>
-    {% endif %}
-    {% endblock %}
-
-    <!-- ==================== DEMO CONTROLS ==================== -->
-    {% block demo_controls %}
-    <div id="demo-controls" class="flex items-center gap-2.5 z-50">
-      <div class="relative" id="demo-switcher">
-        <button id="demo-switcher-btn" type="button"
-          class="btn btn-sm text-white flex items-center gap-2 shadow-lg backdrop-blur-md" onclick="toggleDemoMenu()">
-          <i data-lucide="sparkles" class="w-3.5 h-3.5 icon-spin-slow text-mint"></i>
-          Select mode:
-          <span id="demo-role-label" class="font-semibold capitalize text-mint">{{ 'Visitor' if current_role == 'guest'
-            else current_role }}</span>
-          <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
-        </button>
-        <div id="demo-menu" class="hidden absolute bottom-12 left-0 w-52 nx-menu p-1.5 shadow-2xl">
-          <button type="button" onclick="setDemoRole('guest')"><span class="icon-badge icon-badge-amber w-7 h-7"><i
-                data-lucide="eye" class="w-3.5 h-3.5"></i></span>Visitor (Log out)</button>
-          <button type="button" onclick="setDemoRole('seeker')"><span class="icon-badge icon-badge-indigo w-7 h-7"><i
-                data-lucide="user" class="w-3.5 h-3.5"></i></span>Job Seeker (Skip)</button>
-          <button type="button" onclick="setDemoRole('employer')"><span class="icon-badge icon-badge-mint w-7 h-7"><i
-                data-lucide="briefcase" class="w-3.5 h-3.5"></i></span>Employer (Skip)</button>
-        </div>
-      </div>
-      {% if current_role == 'guest' %}
-      <button id="tour-trigger-btn" type="button" class="btn btn-sm flex items-center gap-2 shadow-lg backdrop-blur-md"
-        onclick="startWebsiteTour()">
-        <i data-lucide="compass" class="w-3.5 h-3.5 icon-spin-slow"></i>
-        Website Tour
-      </button>
+    <div class="relative" id="user-menu">
+      {% if current_role == 'seeker' %}
+        {% set who_name = seeker_user.full_name if seeker_user else 'Job seeker' %}
+        {% set who_initials = seeker_user.initials if seeker_user else 'JS' %}
+        {% set who_role = 'Premium member' if seeker_user and seeker_user.is_premium else 'Job Seeker' %}
+        {% set who_email = seeker_user.email if seeker_user else '' %}
+      {% else %}
+        {% set who_name = employer_company.name if employer_company else (employer_user.email if employer_user else 'Employer') %}
+        {% set who_initials = employer_company.initials if employer_company else ((employer_user.email[:1]|upper) if employer_user else 'E') %}
+        {% set who_role = 'Employer' %}
+        {% set who_email = employer_user.email if employer_user else '' %}
       {% endif %}
+      <button id="user-menu-btn" type="button" onclick="toggleUserMenu()" aria-haspopup="true" aria-expanded="false" class="nx-user-chip">
+        <span class="nx-avatar">{{ who_initials }}</span>
+        <span class="hidden md:block text-left min-w-0">
+          <span class="block text-[13px] font-semibold text-white leading-tight truncate max-w-[150px]">{{ who_name }}</span>
+          <span class="block text-[11px] text-cream/50 leading-tight">{{ who_role }}</span>
+        </span>
+        <i data-lucide="chevron-down" class="w-4 h-4 text-cream/40 hidden md:block"></i>
+      </button>
+
+      <div id="user-menu-panel" class="hidden nx-menu" role="menu">
+        <div class="px-3 py-2.5 border-b border-white/10 mb-1">
+          <p class="text-sm font-semibold text-white truncate">{{ who_name }}</p>
+          <p class="text-xs text-cream/50 truncate">{{ who_email }}</p>
+        </div>
+        {% if current_role == 'seeker' %}
+          <a role="menuitem" href="{{ url_for('seeker_dashboard') }}"><i data-lucide="layout-dashboard" class="w-4 h-4"></i>Overview</a>
+          <a role="menuitem" href="{{ url_for('seeker.profile') }}"><i data-lucide="user-round" class="w-4 h-4"></i>Career Profile</a>
+          <a role="menuitem" href="{{ url_for('seeker.applications') }}"><i data-lucide="file-check-2" class="w-4 h-4"></i>My Applications</a>
+          <a role="menuitem" href="{{ url_for('seeker.resume') }}"><i data-lucide="file-text" class="w-4 h-4"></i>Resume Studio</a>
+          <a role="menuitem" href="{{ url_for('seeker_dashboard') }}#saved"><i data-lucide="bookmark" class="w-4 h-4"></i>Saved Roles <span class="ml-auto text-xs text-cream/50" data-saved-count>{{ saved_count }}</span></a>
+          <a role="menuitem" href="{{ url_for('seeker.upgrade') }}"><i data-lucide="crown" class="w-4 h-4"></i>Plans &amp; Upgrade</a>
+          <form method="post" action="{{ url_for('seeker.logout') }}" class="border-t border-white/10 mt-1 pt-1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" role="menuitem" class="!text-rose"><i data-lucide="log-out" class="w-4 h-4"></i>Log out</button>
+          </form>
+        {% else %}
+          <a role="menuitem" href="{{ url_for('employer_dashboard') }}"><i data-lucide="layout-dashboard" class="w-4 h-4"></i>Overview</a>
+          <a role="menuitem" href="{{ url_for('employer.setup') }}"><i data-lucide="building" class="w-4 h-4"></i>Company profile</a>
+          <a role="menuitem" href="{{ url_for('post_job') }}"><i data-lucide="square-plus" class="w-4 h-4"></i>Post a job</a>
+          <a role="menuitem" href="{{ url_for('pricing') }}"><i data-lucide="gem" class="w-4 h-4"></i>Pricing &amp; packages</a>
+          <button type="button" role="menuitem" onclick="comingSoon('Account settings')"><i data-lucide="settings" class="w-4 h-4"></i>Account settings</button>
+          <button type="button" role="menuitem" onclick="comingSoon('Invoice history')"><i data-lucide="receipt" class="w-4 h-4"></i>Invoice history</button>
+          <button type="button" role="menuitem" onclick="comingSoon('Contact us')"><i data-lucide="life-buoy" class="w-4 h-4"></i>Contact us</button>
+          <form method="post" action="{{ url_for('employer.logout') }}" class="border-t border-white/10 mt-1 pt-1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" role="menuitem" class="!text-rose"><i data-lucide="log-out" class="w-4 h-4"></i>Log out</button>
+          </form>
+        {% endif %}
+      </div>
     </div>
-    {% endblock %}
+  </div>
+</header>
 
-    <!-- ==================== JAVASCRIPT ==================== -->
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/tour.js') }}"></script>
+{% else %}
 
-    <script>
-      /* Sidebar "Choose your plan" carousel: auto-swipes every 4s, pauses on hover. */
-      (function () {
-        document.querySelectorAll('[data-plan-carousel]').forEach(function (root) {
-          var slides = root.querySelectorAll('[data-plan-slide]');
-          var dots = root.querySelectorAll('[data-plan-dots] button');
-          if (!slides.length) return;
-          var idx = 1, timer = null;
-          function show(i) {
-            idx = (i + slides.length) % slides.length;
-            slides.forEach(function (s, n) { s.classList.toggle('is-active', n === idx); });
-            dots.forEach(function (d, n) { d.classList.toggle('is-active', n === idx); });
-          }
-          function stop() { if (timer) { clearInterval(timer); timer = null; } }
-          function start() { stop(); timer = setInterval(function () { show(idx + 1); }, 4000); }
-          root.querySelector('[data-plan-prev]').addEventListener('click', function () { show(idx - 1); start(); });
-          root.querySelector('[data-plan-next]').addEventListener('click', function () { show(idx + 1); start(); });
-          dots.forEach(function (d, n) { d.addEventListener('click', function () { show(n); start(); }); });
-          root.addEventListener('mouseenter', stop);
-          root.addEventListener('mouseleave', start);
-          show(idx); start();
-        });
-      })();
+<!-- ---------------- PUBLIC TOP NAV (visitors & admin) ---------------- -->
+<header class="nx-pubnav sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 md:px-8">
+    <div class="flex items-center justify-between h-16 gap-4">
+      {{ brand('pub') }}
 
-      /* Reveal-on-scroll for elements marked .nx-reveal */
-      (function () {
-        var els = document.querySelectorAll('.nx-reveal');
-        if (!('IntersectionObserver' in window)) { els.forEach(function (e) { e.classList.add('is-in'); }); return; }
-        var io = new IntersectionObserver(function (entries) {
-          entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } });
-        }, { threshold: 0.08 });
-        els.forEach(function (e) { io.observe(e); });
-      })();
-    </script>
+      <nav class="hidden lg:flex items-center gap-1 text-sm font-medium" aria-label="Main navigation">
+        <a href="{{ url_for('jobs') }}" class="nx-pub-link {% if ep in ('jobs','job_details') %}is-active{% endif %}">Find Jobs</a>
+        <a href="{{ url_for('companies') }}" class="nx-pub-link {% if ep in ('companies','company_jobs') %}is-active{% endif %}">Explore Top Companies</a>
+        <div class="nx-dd">
+          <button type="button" class="nx-pub-link inline-flex items-center gap-1" aria-haspopup="true">For Employers <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button>
+          <div class="nx-dd-menu">
+            <a href="{{ url_for('employer.login') }}"><i data-lucide="log-in" class="w-4 h-4"></i>Employer Login</a>
+            <a href="{{ url_for('employer.register') }}"><i data-lucide="building-2" class="w-4 h-4"></i>Employer Register</a>
+            <a href="{{ url_for('pricing') }}"><i data-lucide="gem" class="w-4 h-4"></i>Pricing</a>
+          </div>
+        </div>
+        {% if current_role == 'admin' %}
+        <a href="{{ url_for('admin') }}" class="nx-pub-link {% if ep == 'admin' %}is-active{% endif %}">Admin</a>
+        {% endif %}
+      </nav>
 
-    {% block scripts %}{% endblock %}
+      <div class="flex items-center gap-2">
+        <span class="hidden sm:flex items-center gap-2"><a href="{{ url_for('seeker.login') }}" class="btn btn-ghost on-dark btn-sm">Login</a>
+        <a href="{{ url_for('seeker.register') }}" class="btn btn-sm nx-btn-glow">Register</a></span>
+        <button id="mobile-nav-btn" type="button" class="nx-icon-btn inline-flex lg:hidden" aria-label="Open menu">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
 
-    <!-- ==================== FLASH MESSAGES ==================== -->
-    {% block flash_toasts %}
-    {% with flashed = get_flashed_messages(with_categories=true) %}
-    {% if flashed %}
+<div id="mobile-nav-overlay" class="nx-overlay" onclick="closeMobileNav()"></div>
+<aside id="mobile-nav-drawer" class="nx-drawer nx-drawer-dark" aria-label="Mobile navigation">
+  <div class="flex items-center justify-between p-5 border-b border-white/10">
+    {{ brand('drawer') }}
+    <button type="button" onclick="closeMobileNav()" class="nx-icon-btn inline-flex" aria-label="Close menu"><i data-lucide="x" class="w-5 h-5"></i></button>
+  </div>
+  <nav class="p-3 space-y-1">
+    {{ side_link(url_for('index'), 'home', 'Home', ep == 'index') }}
+    {{ side_link(url_for('jobs'), 'compass', 'Find Jobs', ep in ('jobs','job_details')) }}
+    {{ side_link(url_for('companies'), 'building-2', 'Explore Top Companies', ep in ('companies','company_jobs')) }}
+    {{ side_link(url_for('pricing'), 'gem', 'Pricing', ep == 'pricing') }}
+    {% if current_role == 'admin' %}{{ side_link(url_for('admin'), 'shield-check', 'Admin', ep == 'admin') }}{% endif %}
+    <div class="nx-side-divider"></div>
+    <p class="px-3 pt-1 pb-1 text-[11px] uppercase tracking-wider text-cream/35 font-semibold">Job seekers</p>
+    {{ side_link(url_for('seeker.login'), 'log-in', 'Job seeker login') }}
+    {{ side_link(url_for('seeker.register'), 'user-plus', 'Create free account') }}
+    <p class="px-3 pt-3 pb-1 text-[11px] uppercase tracking-wider text-cream/35 font-semibold">Employers</p>
+    {{ side_link(url_for('employer.login'), 'briefcase', 'Employer login') }}
+    {{ side_link(url_for('employer.register'), 'building', 'Employer register') }}
+  </nav>
+</aside>
+
+{% endif %}
+{% endblock %}
+
+<!-- ==================== PAGE CONTENT ==================== -->
+<main id="main-content" class="nx-main">
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ==================== FOOTER ==================== -->
+{% block site_footer %}
+{% if app_shell %}
+<footer class="nx-shell-footer">
+  <span>© 2026 JOBFLEX PTY LTD · Australian careers marketplace</span>
+  <span class="flex items-center gap-4">
+    <a href="{{ url_for('jobs') }}" class="hover:text-mint">Jobs</a>
+    <a href="{{ url_for('companies') }}" class="hover:text-mint">Companies</a>
+    <a href="{{ url_for('pricing') }}" class="hover:text-mint">Pricing</a>
+  </span>
+</footer>
+{% else %}
+<footer class="nx-footer mt-20">
+  <div class="max-w-7xl mx-auto px-5 md:px-8 py-12 grid grid-cols-2 md:grid-cols-5 gap-8">
+    <div class="col-span-2">
+      <div class="mb-3">{{ brand('foot') }}</div>
+      <p class="text-sm text-cream/50 max-w-xs">Find work that moves you forward. An Australian employment marketplace connecting job seekers and employers.</p>
+      <div class="flex items-center gap-2 mt-4">
+        <span class="icon-badge icon-badge-indigo w-8 h-8" aria-label="LinkedIn"><i data-lucide="linkedin" class="w-4 h-4"></i></span>
+        <span class="icon-badge icon-badge-mint w-8 h-8" aria-label="Instagram"><i data-lucide="instagram" class="w-4 h-4"></i></span>
+        <span class="icon-badge icon-badge-rose w-8 h-8" aria-label="Facebook"><i data-lucide="facebook" class="w-4 h-4"></i></span>
+      </div>
+    </div>
+    <div>
+      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Job seekers</p>
+      <ul class="space-y-2 text-sm text-cream/60">
+        <li><a href="{{ url_for('jobs') }}" class="hover:text-mint transition-colors">Find Jobs</a></li>
+        <li><a href="{{ url_for('companies') }}" class="hover:text-mint transition-colors">Browse Companies</a></li>
+        <li><a href="{{ url_for('seeker.register') }}" class="hover:text-mint transition-colors">Create account</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Employers</p>
+      <ul class="space-y-2 text-sm text-cream/60">
+        <li><a href="{{ url_for('post_job') }}" class="hover:text-mint transition-colors">Post a Job</a></li>
+        <li><a href="{{ url_for('pricing') }}" class="hover:text-mint transition-colors">Pricing</a></li>
+        <li><a href="{{ url_for('employer.register') }}" class="hover:text-mint transition-colors">Employer register</a></li>
+      </ul>
+    </div>
+    <div>
+      <p class="text-xs font-semibold text-cream/35 mb-3 uppercase tracking-wide">Company</p>
+      <ul class="space-y-2 text-sm text-cream/60">
+        <li><span class="cursor-default">About</span></li>
+        <li><span class="cursor-default">Contact</span></li>
+      </ul>
+    </div>
+  </div>
+  <div class="border-t border-white/10 py-5 text-center text-xs text-cream/35">© 2026 JOBFLEX PTY LTD (ACN 704 224 877). Client demonstration build — not for production use.</div>
+</footer>
+{% endif %}
+{% endblock %}
+
+<!-- ==================== DEMO CONTROLS ==================== -->
+{% block demo_controls %}
+<div id="demo-controls" class="flex items-center gap-2.5 z-50">
+  <div class="relative" id="demo-switcher">
+    <button id="demo-switcher-btn" type="button" class="btn btn-sm text-white flex items-center gap-2 shadow-lg backdrop-blur-md" onclick="toggleDemoMenu()">
+      <i data-lucide="sparkles" class="w-3.5 h-3.5 icon-spin-slow text-mint"></i>
+      Select mode:
+      <span id="demo-role-label" class="font-semibold capitalize text-mint">{{ 'Visitor' if current_role == 'guest' else current_role }}</span>
+      <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
+    </button>
+    <div id="demo-menu" class="hidden absolute bottom-12 left-0 w-52 nx-menu p-1.5 shadow-2xl">
+      <button type="button" onclick="setDemoRole('guest')"><span class="icon-badge icon-badge-amber w-7 h-7"><i data-lucide="eye" class="w-3.5 h-3.5"></i></span>Visitor (Log out)</button>
+      <button type="button" onclick="setDemoRole('seeker')"><span class="icon-badge icon-badge-indigo w-7 h-7"><i data-lucide="user" class="w-3.5 h-3.5"></i></span>Job Seeker (Skip)</button>
+      <button type="button" onclick="setDemoRole('employer')"><span class="icon-badge icon-badge-mint w-7 h-7"><i data-lucide="briefcase" class="w-3.5 h-3.5"></i></span>Employer (Skip)</button>
+    </div>
+  </div>
+  {% if current_role == 'guest' %}
+  <button id="tour-trigger-btn" type="button" class="btn btn-sm flex items-center gap-2" onclick="startWebsiteTour()">
+    <i data-lucide="compass" class="w-3.5 h-3.5 icon-spin-slow"></i>
+    Website Tour
+  </button>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tour.js') }}"></script>
+{% if app_shell %}
+<div id="jf-bot" data-role="{{ current_role }}"></div>
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+{% endif %}
+
+<script>
+/* Sidebar "Choose your plan" carousel: auto-swipes every 4s, pauses on hover. */
+(function () {
+  document.querySelectorAll('[data-plan-carousel]').forEach(function (root) {
+    var slides = root.querySelectorAll('[data-plan-slide]');
+    var dots = root.querySelectorAll('[data-plan-dots] button');
+    if (!slides.length) return;
+    var idx = 1, timer = null;
+    function show(i) {
+      idx = (i + slides.length) % slides.length;
+      slides.forEach(function (s, n) { s.classList.toggle('is-active', n === idx); });
+      dots.forEach(function (d, n) { d.classList.toggle('is-active', n === idx); });
+    }
+    function stop() { if (timer) { clearInterval(timer); timer = null; } }
+    function start() { stop(); timer = setInterval(function () { show(idx + 1); }, 4000); }
+    root.querySelector('[data-plan-prev]').addEventListener('click', function () { show(idx - 1); start(); });
+    root.querySelector('[data-plan-next]').addEventListener('click', function () { show(idx + 1); start(); });
+    dots.forEach(function (d, n) { d.addEventListener('click', function () { show(n); start(); }); });
+    root.addEventListener('mouseenter', stop);
+    root.addEventListener('mouseleave', start);
+    show(idx); start();
+  });
+})();
+
+/* Reveal-on-scroll for elements marked .nx-reveal */
+(function () {
+  var els = document.querySelectorAll('.nx-reveal');
+  if (!('IntersectionObserver' in window)) { els.forEach(function (e) { e.classList.add('is-in'); }); return; }
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('is-in'); io.unobserve(en.target); } });
+  }, { threshold: 0.08 });
+  els.forEach(function (e) { io.observe(e); });
+})();
+</script>
+
+{% block scripts %}{% endblock %}
+
+<!-- ==================== FLASH MESSAGES ==================== -->
+{% block flash_toasts %}
+{% with flashed = get_flashed_messages(with_categories=true) %}
+  {% if flashed %}
     <div id="flash-messages-data" data-messages='{{ flashed|tojson|forceescape }}' hidden></div>
-    {% endif %}
-    {% endwith %}
-    <script>
-      (function () {
-        function displayFlashMessages() {
-          var element = document.getElementById('flash-messages-data');
-          if (!element) return;
-          var messages;
-          try { messages = JSON.parse(element.dataset.messages || '[]'); }
-          catch (error) { console.error('Unable to read flash messages:', error); return; }
-          messages.forEach(function (item) {
-            var category = item[0], message = item[1];
-            var icon = category === 'error' ? 'alert-circle' : (category === 'info' ? 'info' : 'check-circle-2');
-            if (typeof window.showToast === 'function') window.showToast(message, { icon: icon });
-          });
-        }
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', displayFlashMessages);
-        else displayFlashMessages();
-      })();
-    </script>
-    {% endblock %}
+  {% endif %}
+{% endwith %}
+<script>
+(function () {
+  function displayFlashMessages() {
+    var element = document.getElementById('flash-messages-data');
+    if (!element) return;
+    var messages;
+    try { messages = JSON.parse(element.dataset.messages || '[]'); }
+    catch (error) { console.error('Unable to read flash messages:', error); return; }
+    messages.forEach(function (item) {
+      var category = item[0], message = item[1];
+      var icon = category === 'error' ? 'alert-circle' : (category === 'info' ? 'info' : 'check-circle-2');
+      if (typeof window.showToast === 'function') window.showToast(message, { icon: icon });
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', displayFlashMessages);
+  else displayFlashMessages();
+})();
+</script>
+{% endblock %}
 
-    <!-- ==================== ICON INITIALISATION ==================== -->
-    <script>
-      document.addEventListener('DOMContentLoaded', function () {
-        if (window.lucide) window.lucide.createIcons();
-      });
-    </script>
+<!-- ==================== ICON INITIALISATION ==================== -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.lucide) window.lucide.createIcons();
+});
+</script>
 
 </body>
-
 </html>

@@ -234,6 +234,19 @@ def login():
                            google_enabled=ac.google_configured())
 
 
+@bp.post("/skip")
+def skip_login():
+    """TEMPORARY: skip login and enter the employer dashboard as the demo employer (remove before launch)."""
+    try:
+        eid = seed_demo(secrets.token_urlsafe(12) + "7")
+    except Exception as exc:  # Supabase not configured / tables missing
+        current_app.logger.warning("Employer skip-login failed: %s", exc)
+        flash("Skip is unavailable right now. Check your Supabase configuration.", "error")
+        return redirect(url_for("employer.login"))
+    _start_session(eid)
+    return redirect(url_for("employer_dashboard"))
+
+
 @bp.post("/logout")
 def logout():
     session.clear()
@@ -293,15 +306,15 @@ def setup():
         values = {**f, "phone": form.get("phone", ""), "abn": form.get("abn", "")}
     else:
         values = {
-            "name": existing.get("name", "") if existing else "",
-            "country": existing.get("country", "AU") if existing else "AU",
-            "registered_name": existing.get("registered_name", "") if existing else "",
-            "is_registered": bool(existing.get("is_registered", True)) if existing else True,
-            "abn": v.format_abn(existing.get("abn", "")) if existing and existing.get("abn") else "",
-            "contact_first": existing.get("contact_first", "") if existing else "",
-            "contact_last": existing.get("contact_last", "") if existing else "",
-            "phone_country": existing.get("phone_country", "AU") if existing else "AU",
-            "phone": existing.get("phone", "") if existing else "",
+            "name": existing["name"] if existing else "",
+            "country": existing["country"] if existing else "AU",
+            "registered_name": existing["registered_name"] if existing else "",
+            "is_registered": bool(existing["is_registered"]) if existing else True,
+            "abn": v.format_abn(existing["abn"]) if existing and existing["abn"] else "",
+            "contact_first": existing["contact_first"] if existing else "",
+            "contact_last": existing["contact_last"] if existing else "",
+            "phone_country": existing["phone_country"] if existing else "AU",
+            "phone": existing["phone"] if existing else "",
         }
     return render_template("employer/setup.html", errors=errors, values=values, editing=editing,
                            next_url=next_url, countries=v.COUNTRIES)
