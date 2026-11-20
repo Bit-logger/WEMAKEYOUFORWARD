@@ -1,16 +1,12 @@
 {% extends "base.html" %}
 {% block title %}My Applications — JOBFLEX{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/applications-reference.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages-theme.css') }}">
 {% endblock %}
-{% block site_header %}
-{% include "seeker/_applications_header.html" %}
-{% endblock %}
+{# Uses the standard JOBFLEX shell (sidebar + top bar) from base.html. #}
 {% block content %}
 {% include "seeker/_applications_content.html" %}
 {% endblock %}
-{% block site_footer %}{% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/applications-reference.js') }}"></script>
-<script>document.addEventListener('DOMContentLoaded', function () { if (window.lucide) window.lucide.createIcons(); });</script>
 {% endblock %}

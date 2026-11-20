@@ -20,6 +20,13 @@
 <div class="nx-divider">or</div>
 {{ google_button(url_for(cfg.bp ~ '.google_start', next=next_url), google_enabled) }}
 
+{# TEMPORARY: skip login (opens the demo account). Remove this form before launch. #}
+<form method="post" action="{{ url_for(cfg.bp ~ '.skip_login') }}" class="mt-3" data-skip-login>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit" class="btn btn-outline on-dark btn-block" id="skip-login-btn">Skip for now <i data-lucide="skip-forward" class="w-4 h-4"></i></button>
+  <p class="text-center text-[11px] text-cream/40 mt-1.5">Temporary — explore the {{ 'job seeker' if cfg.bp == 'seeker' else 'employer' }} dashboard with a demo account.</p>
+</form>
+
 <p class="auth-foot">Don't have an account? <a class="auth-link" href="{{ url_for(cfg.bp ~ '.register') }}">Create an account</a></p>
 <p class="auth-foot !mt-2 text-[12px]">{{ cfg.other_prompt }} <a class="auth-link" href="{{ url_for(cfg.other_bp ~ '.login') }}">{{ cfg.other_login_label }}</a></p>
 {% endblock %}

@@ -14,6 +14,7 @@ import job_store
 import employer_auth
 import seeker_auth
 import seeker_portal
+import chatbot
 import seeker_store as store
 from employer_auth import current_company, current_employer, employer_required
 from seeker_auth import current_seeker, seeker_required
@@ -49,6 +50,7 @@ if app.config.get("SUPABASE_CONFIGURED"):
 app.register_blueprint(employer_auth.bp)
 app.register_blueprint(seeker_auth.bp)
 app.register_blueprint(seeker_portal.api_bp)
+app.register_blueprint(chatbot.bp)
 
 
 def current_role():

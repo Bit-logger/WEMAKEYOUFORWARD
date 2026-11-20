@@ -1,12 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Discover Jobs — JOBFLEX{% endblock %}
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/applications-reference.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/discover-jobs-reference.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages-theme.css') }}">
 {% endblock %}
-{% block site_header %}{% include "seeker/_discover_jobs_header.html" %}{% endblock %}
+{# Uses the standard JOBFLEX shell (sidebar + top bar) from base.html for job seekers AND employers. #}
 {% block content %}{% include "seeker/_discover_jobs_content.html" %}{% endblock %}
-{% block site_footer %}{% endblock %}
 {% block scripts %}
 <script id="jobflex-bootstrap-data" type="application/json">
 {
@@ -25,7 +23,7 @@
 </script>
 <script>
 (function() {
-  const data = JSON.parse(document.getElementById('jobflex-bootstrap-data')?.textContent || document.getElementById('nexora-bootstrap-data')?.textContent || '{}');
+  const data = JSON.parse(document.getElementById('jobflex-bootstrap-data')?.textContent || '{}');
   window.JOBFLEX_JOBS = window.NEXORA_JOBS = data.jobs || [];
   window.JOBFLEX_SAVED = window.NEXORA_SAVED = data.saved || [];
   window.JOBFLEX_APPLIED = window.NEXORA_APPLIED = data.applied || [];
@@ -35,5 +33,4 @@
 })();
 </script>
 <script src="{{ url_for('static', filename='js/discover-jobs-reference.js') }}"></script>
-<script>document.addEventListener('DOMContentLoaded', function () { if (window.lucide) window.lucide.createIcons(); });</script>
 {% endblock %}

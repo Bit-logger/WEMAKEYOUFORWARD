@@ -219,6 +219,19 @@ def login():
                            google_enabled=ac.google_configured())
 
 
+@bp.post("/skip")
+def skip_login():
+    """TEMPORARY: skip login and enter the employer dashboard as the demo employer (remove before launch)."""
+    try:
+        eid = seed_demo(secrets.token_urlsafe(12) + "7")
+    except Exception as exc:  # Supabase not configured / tables missing
+        current_app.logger.warning("Employer skip-login failed: %s", exc)
+        flash("Skip is unavailable right now. Check your Supabase configuration.", "error")
+        return redirect(url_for("employer.login"))
+    _start_session(eid)
+    return redirect(url_for("employer_dashboard"))
+
+
 @bp.post("/logout")
 def logout():
     session.clear()

@@ -43,6 +43,7 @@ tailwind.config = {
 </script>
 
 <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/jobflex-extras.css') }}">
 <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.js"></script>
 
 {% block head %}{% endblock %}
@@ -53,6 +54,24 @@ tailwind.config = {
 {% set ep = request.endpoint or '' %}
 
 <body class="{% block body_class %}nx-dark{% if app_shell %} nx-has-shell{% endif %}{% endblock %}">
+
+<!-- Opening splash: logo animation for 5 seconds (once per browser session), then the app opens -->
+<div id="jf-splash" role="status" aria-label="Loading JOBFLEX">
+  <div class="jf-splash-logo"><img src="{{ url_for('static', filename='images/jobflex-logo.png') }}" alt="JOBFLEX"></div>
+  <div class="jf-splash-bar"><i></i></div>
+  <div class="jf-splash-tag">Find • Hire • Grow</div>
+</div>
+<script>
+(function () {
+  var el = document.getElementById('jf-splash');
+  var seen = false;
+  try { seen = sessionStorage.getItem('jf-splash-seen') === '1'; } catch (e) {}
+  if (seen) { el.className = 'is-gone'; return; }
+  try { sessionStorage.setItem('jf-splash-seen', '1'); } catch (e) {}
+  document.body.classList.add('jf-splash-lock');
+  setTimeout(function () { el.className = 'is-gone'; document.body.classList.remove('jf-splash-lock'); }, 5000);
+})();
+</script>
 
 <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
@@ -448,6 +467,10 @@ tailwind.config = {
 <!-- ==================== JAVASCRIPT ==================== -->
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tour.js') }}"></script>
+{% if app_shell %}
+<div id="jf-bot" data-role="{{ current_role }}"></div>
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+{% endif %}
 
 <script>
 /* Sidebar "Choose your plan" carousel: auto-swipes every 4s, pauses on hover. */
