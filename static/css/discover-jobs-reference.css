@@ -1,4 +1,4 @@
-/* NEXORA Discover Jobs reference UI. Shared top bar/sidebar styles are in applications-reference.css. */
+/* JOBFLEX Discover Jobs reference UI. Shared top bar/sidebar styles are in applications-reference.css. */
 :root { --nxd-bg:#04132e; --nxd-panel:#061a3a; --nxd-panel-2:#082249; --nxd-line:#143969; --nxd-text:#edf4ff; --nxd-muted:#afc1df; --nxd-cyan:#22d4ec; --nxd-blue:#068bff; --nxd-purple:#7c2dff; }
 body:has(.nx-discover-page) { margin:0; background:var(--nxd-bg)!important; color:var(--nxd-text); font-family:Inter,Arial,sans-serif; }
 body:has(.nx-discover-page) #main-content { margin:0!important; padding:0!important; max-width:none!important; width:auto!important; }

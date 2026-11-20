@@ -8,7 +8,6 @@ import json
 import os
 import secrets
 import smtplib
-import threading
 import time
 import urllib.error
 import urllib.parse
@@ -53,73 +52,32 @@ def wants_json():
 MAX_FAILED_LOGINS = 5
 LOCKOUT_SECONDS = 15 * 60
 # Used to spend the same time hashing when an email doesn't exist (prevents timing leaks).
-DUMMY_HASH = generate_password_hash("nexora-dummy-password")
+DUMMY_HASH = generate_password_hash("jobflex-dummy-password")
+# In-memory tracker. Fine for a single worker (see render.yaml); use Redis if you scale out.
 failed_logins = {}
-_lockout_lock = threading.Lock()
-
-
-def _redis():
-    try:
-        import security
-        return security._get_redis()
-    except Exception:
-        return None
 
 
 def lock_key(scope, email):
-    # Use real client IP
-    ip = request.access_route[0] if request.access_route else (request.remote_addr or "127.0.0.1")
-    return f"{scope}|{ip}|{(email or '').strip().lower()}"
+    return f"{scope}|{request.remote_addr}|{email}"
 
 
 def is_locked(key):
-    r = _redis()
-    if r:
-        try:
-            val = r.get(f"lockout:{key}")
-            if val and int(val) >= MAX_FAILED_LOGINS:
-                return True
-        except Exception:
-            pass
     now = time.time()
-    with _lockout_lock:
-        attempts = [t for t in failed_logins.get(key, []) if now - t < LOCKOUT_SECONDS]
-        failed_logins[key] = attempts
-        return len(attempts) >= MAX_FAILED_LOGINS
+    attempts = [t for t in failed_logins.get(key, []) if now - t < LOCKOUT_SECONDS]
+    failed_logins[key] = attempts
+    return len(attempts) >= MAX_FAILED_LOGINS
 
 
 def record_failure(key):
-    r = _redis()
-    if r:
-        try:
-            rkey = f"lockout:{key}"
-            pipe = r.pipeline()
-            pipe.incr(rkey)
-            pipe.expire(rkey, LOCKOUT_SECONDS)
-            pipe.execute()
-        except Exception:
-            pass
-    now = time.time()
-    with _lockout_lock:
-        failed_logins.setdefault(key, []).append(now)
-        if len(failed_logins) > 5000:  # keep memory bounded
-            for k in list(failed_logins.keys()):
-                attempts = [t for t in failed_logins[k] if now - t < LOCKOUT_SECONDS]
-                if attempts:
-                    failed_logins[k] = attempts
-                else:
-                    failed_logins.pop(k, None)
+    failed_logins.setdefault(key, []).append(time.time())
+    if len(failed_logins) > 5000:  # keep memory bounded
+        now = time.time()
+        for k in [k for k, ts in failed_logins.items() if not any(now - t < LOCKOUT_SECONDS for t in ts)]:
+            failed_logins.pop(k, None)
 
 
 def clear_failures(key):
-    r = _redis()
-    if r:
-        try:
-            r.delete(f"lockout:{key}")
-        except Exception:
-            pass
-    with _lockout_lock:
-        failed_logins.pop(key, None)
+    failed_logins.pop(key, None)
 
 
 # ----------------------------------------------------------- reset tokens --
@@ -141,7 +99,7 @@ def send_email(to, subject, body):
         current_app.logger.warning("SMTP not configured. Email to %s:\n%s\n%s", to, subject, body)
         return
     msg = EmailMessage()
-    msg["From"] = os.environ.get("MAIL_FROM", "NEXORA <no-reply@nexora.com.au>")
+    msg["From"] = os.environ.get("MAIL_FROM", "JOBFLEX <no-reply@jobflex.com.au>")
     msg["To"] = to
     msg["Subject"] = subject
     msg.set_content(body)

@@ -1,5 +1,5 @@
 """
-NEXORA reference data + the sample job board used to seed Supabase on first run.
+JOBFLEX reference data + the sample job board used to seed Supabase on first run.
 
 Jobs, employer applicants, job orders and admin reports now live in Supabase (see job_store.py).
 The lists below are fixed options (locations, industries, packages...) and the one-time seed data.
@@ -149,11 +149,11 @@ def build_seed_jobs():
 
 
 DEMO_REPORTS = [
-    {"id": 1, "type": "Job listing", "reason": "Misleading salary range",
+    {"type": "Job listing", "reason": "Misleading salary range",
      "target": "Retail Supervisor — Bright Retail Co.", "status": "Open"},
-    {"id": 2, "type": "Employer", "reason": "Duplicate company profile",
+    {"type": "Employer", "reason": "Duplicate company profile",
      "target": "Southwind Logistics", "status": "Open"},
-    {"id": 3, "type": "Job listing", "reason": "Suspicious contact request",
+    {"type": "Job listing", "reason": "Suspicious contact request",
      "target": "Data Analyst — Ridgeline Analytics", "status": "Resolved"},
 ]
 
@@ -164,7 +164,7 @@ PACKAGES = [
      "features": ["Priority placement", "30 days live", "Featured badge", "Full analytics"]},
     {"id": "urgent", "name": "Urgent", "price": 69, "tagline": "Signal you're hiring fast.",
      "features": ["Urgent badge", "Top of category", "30 days live", "Full analytics"]},
-    {"id": "premium", "name": "Premium", "price": 129, "tagline": "Maximum reach across NEXORA.",
+    {"id": "premium", "name": "Premium", "price": 129, "tagline": "Maximum reach across JOBFLEX.",
      "features": ["Homepage placement", "Featured + Urgent badges", "30 days live", "Dedicated support"]},
 ]
 

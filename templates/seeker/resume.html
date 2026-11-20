@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "seeker/_macros.html" import page_head with context %}
 {% from "auth/_macros.html" import field_error with context %}
-{% block title %}Resume Studio & ATS Optimizer — NEXORA{% endblock %}
+{% block title %}Resume Studio & ATS Optimizer — JOBFLEX{% endblock %}
 
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 md:px-8 py-8 md:py-10 space-y-8">
@@ -429,7 +429,7 @@
         document.getElementById('r-headline').textContent = lastOptimizedData.target_role;
         const skillsContainer = document.getElementById('r-skills');
         skillsContainer.innerHTML = flatSkills.map(s => `<span class="r-chip">${s}</span>`).join(' ');
-        alert("Success! Your 92%+ ATS resume summary and skills have been applied to your NEXORA profile and preview!");
+        alert("Success! Your 92%+ ATS resume summary and skills have been applied to your JOBFLEX profile and preview!");
       }
     } catch (err) {
       alert("Failed to apply to profile.");

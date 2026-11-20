@@ -77,8 +77,9 @@
   window.__tourEnd = end;
 
   window.startWebsiteTour = function () {
-    if (window.NEXORA_TOUR_STEPS && window.NEXORA_TOUR_STEPS.length) {
-      steps = window.NEXORA_TOUR_STEPS;
+    const tourSteps = window.JOBFLEX_TOUR_STEPS || window.NEXORA_TOUR_STEPS;
+    if (tourSteps && tourSteps.length) {
+      steps = tourSteps;
       idx = 0;
       build();
       render();
@@ -89,7 +90,8 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('tour') === '1' && window.NEXORA_TOUR_STEPS) {
+    const tourSteps = window.JOBFLEX_TOUR_STEPS || window.NEXORA_TOUR_STEPS;
+    if (params.get('tour') === '1' && tourSteps) {
       setTimeout(() => window.startWebsiteTour(), 500);
     }
   });

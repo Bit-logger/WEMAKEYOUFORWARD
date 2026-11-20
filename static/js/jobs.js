@@ -1,9 +1,9 @@
 (function () {
-  const jobs = window.NEXORA_JOBS || [];
-  const opts = window.NEXORA_FILTER_OPTIONS || {};
-  const savedIds = new Set(window.NEXORA_SAVED || []);
-  const appliedIds = new Set(window.NEXORA_APPLIED || []);
-  const isEmployer = window.NEXORA_ROLE === 'employer';
+  const jobs = window.JOBFLEX_JOBS || window.NEXORA_JOBS || [];
+  const opts = window.JOBFLEX_FILTER_OPTIONS || window.NEXORA_FILTER_OPTIONS || {};
+  const savedIds = new Set(window.JOBFLEX_SAVED || window.NEXORA_SAVED || []);
+  const appliedIds = new Set(window.JOBFLEX_APPLIED || window.NEXORA_APPLIED || []);
+  const isEmployer = (window.JOBFLEX_ROLE || window.NEXORA_ROLE) === 'employer';
 
   const state = {
     keyword: '',

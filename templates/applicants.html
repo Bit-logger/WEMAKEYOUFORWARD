@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Applicant Management — NEXORA{% endblock %}
+{% block title %}Applicant Management — JOBFLEX{% endblock %}
 {% block content %}
 
 <div class="max-w-7xl mx-auto px-5 md:px-8 py-8 md:py-10">
@@ -69,7 +69,7 @@
 {% block scripts %}
 <script id="candidates-data" type="application/json">{{ (grouped['New'] + grouped['Shortlisted'] + grouped['Interview'] + grouped['Hired']) | tojson }}</script>
 <script>
-  window.NEXORA_CANDIDATES = JSON.parse(document.getElementById('candidates-data').textContent || '[]');
+  window.JOBFLEX_CANDIDATES = window.NEXORA_CANDIDATES = JSON.parse(document.getElementById('candidates-data').textContent || '[]');
   document.addEventListener('click', function(e) {
     const vp = e.target.closest('[data-view-profile]');
     if (vp && window.viewProfile) { e.preventDefault(); window.viewProfile(Number(vp.getAttribute('data-view-profile'))); return; }

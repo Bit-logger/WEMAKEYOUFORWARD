@@ -132,7 +132,7 @@ def register():
         if not errors:
             try:
                 # Do not create another employer record for an email already registered
-                # in the NEXORA employer table.
+                # in the JOBFLEX employer table.
                 if db.get_employer_by_email(email):
                     errors["email"] = "An employer account with this email already exists. Log in instead."
                 else:
@@ -209,7 +209,7 @@ def login():
                         _start_session(emp["id"])
                         return _after_login(emp, next_url)
                     if auth_user and not emp:
-                        errors["form"] = "Your Supabase account is not enabled as a NEXORA employer. Contact the NEXORA administrator."
+                        errors["form"] = "Your Supabase account is not enabled as a JOBFLEX employer. Contact the JOBFLEX administrator."
                     else:
                         errors["form"] = "Incorrect email or password."
                 except Exception:
@@ -273,20 +273,20 @@ def setup():
 
         if not errors:
             db.save_company(emp["id"], {**f, "is_registered": int(f["is_registered"])})
-            flash("Company profile saved." if editing else "You're all set. Welcome to NEXORA.", "success")
+            flash("Company profile saved." if editing else "You're all set. Welcome to JOBFLEX.", "success")
             return redirect(next_url or url_for("employer_dashboard"))
         values = {**f, "phone": form.get("phone", ""), "abn": form.get("abn", "")}
     else:
         values = {
-            "name": existing.get("name", "") if existing else "",
-            "country": existing.get("country", "AU") if existing else "AU",
-            "registered_name": existing.get("registered_name", "") if existing else "",
-            "is_registered": bool(existing.get("is_registered", True)) if existing else True,
-            "abn": v.format_abn(existing.get("abn", "")) if existing and existing.get("abn") else "",
-            "contact_first": existing.get("contact_first", "") if existing else "",
-            "contact_last": existing.get("contact_last", "") if existing else "",
-            "phone_country": existing.get("phone_country", "AU") if existing else "AU",
-            "phone": existing.get("phone", "") if existing else "",
+            "name": existing["name"] if existing else "",
+            "country": existing["country"] if existing else "AU",
+            "registered_name": existing["registered_name"] if existing else "",
+            "is_registered": bool(existing["is_registered"]) if existing else True,
+            "abn": v.format_abn(existing["abn"]) if existing and existing["abn"] else "",
+            "contact_first": existing["contact_first"] if existing else "",
+            "contact_last": existing["contact_last"] if existing else "",
+            "phone_country": existing["phone_country"] if existing else "AU",
+            "phone": existing["phone"] if existing else "",
         }
     return render_template("employer/setup.html", errors=errors, values=values, editing=editing,
                            next_url=next_url, countries=v.COUNTRIES)
@@ -391,8 +391,8 @@ def google_callback():
         _start_session(employer_id)
         return _after_login(db.get_employer(employer_id), next_url)
     except Exception:
-        current_app.logger.exception("Could not map Supabase OAuth user to a NEXORA employer")
-        return fail("Google authentication succeeded, but NEXORA could not load your employer profile. Contact support.")
+        current_app.logger.exception("Could not map Supabase OAuth user to a JOBFLEX employer")
+        return fail("Google authentication succeeded, but JOBFLEX could not load your employer profile. Contact support.")
 
 
 # ----------------------------------------------------------- demo seed --
