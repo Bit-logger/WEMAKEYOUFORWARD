@@ -4,9 +4,9 @@
     <section class="nx-discover-hero" aria-labelledby="nx-discover-title">
       <div class="nx-discover-banner" role="img" aria-label="Sydney Harbour and the Australian skyline"></div>
       <div class="nx-discover-hero-copy">
-        <div class="nx-discover-breadcrumb"><a href="/">Home</a><i data-lucide="chevron-right"></i><span>Discover Jobs</span></div>
-        <h1 id="nx-discover-title">Discover <span>Jobs</span></h1>
-        <p>Find the right opportunity in Australia and take the next step in your career.</p>
+        <div class="nx-discover-breadcrumb"><a href="/">Home</a><i data-lucide="chevron-right"></i><span>{{ 'Job Market' if demo_role == 'employer' else 'Discover Jobs' }}</span></div>
+        <h1 id="nx-discover-title">{{ 'Job Market' if demo_role == 'employer' else 'Discover' }} <span>{{ 'Overview' if demo_role == 'employer' else 'Jobs' }}</span></h1>
+        <p>{{ 'Explore open roles, active hiring demands and compensation benchmarks across Australia.' if demo_role == 'employer' else 'Find the right opportunity in Australia and take the next step in your career.' }}</p>
       </div>
     </section>
 

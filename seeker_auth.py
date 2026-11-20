@@ -127,6 +127,21 @@ def register():
                            google_enabled=ac.google_configured())
 
 
+# --------------------------------------------------------------- skip demo --
+@bp.route("/skip", methods=["GET", "POST"])
+def skip():
+    """Testing phase bypass: logs in directly as demo job seeker without credentials."""
+    row = store.get_seeker_by_email(DEMO_EMAIL)
+    if not row:
+        sid = seed_demo("SeekerDemo123!")
+        row = store.get_seeker(sid)
+    if row:
+        _start_session(row["id"])
+        session["demo_role"] = "seeker"
+        flash("Entered as Job Seeker (Test Demo Mode).", "info")
+    return redirect(url_for("seeker_dashboard"))
+
+
 # --------------------------------------------------------------- login --
 @bp.route("/login", methods=["GET", "POST"])
 def login():

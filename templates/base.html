@@ -420,29 +420,27 @@ tailwind.config = {
 
 <!-- ==================== DEMO CONTROLS ==================== -->
 {% block demo_controls %}
-{% if not app_shell %}
-<div id="demo-controls" class="flex items-center gap-2.5">
+<div id="demo-controls" class="flex items-center gap-2.5 z-50">
   <div class="relative" id="demo-switcher">
-    <button id="demo-switcher-btn" type="button" class="btn btn-sm text-white flex items-center gap-2" onclick="toggleDemoMenu()">
-      <i data-lucide="sparkles" class="w-3.5 h-3.5 icon-spin-slow"></i>
+    <button id="demo-switcher-btn" type="button" class="btn btn-sm text-white flex items-center gap-2 shadow-lg backdrop-blur-md" onclick="toggleDemoMenu()">
+      <i data-lucide="sparkles" class="w-3.5 h-3.5 icon-spin-slow text-mint"></i>
       Select mode:
-      <span id="demo-role-label" class="font-semibold capitalize">{{ 'Visitor' if current_role == 'guest' else current_role }}</span>
+      <span id="demo-role-label" class="font-semibold capitalize text-mint">{{ 'Visitor' if current_role == 'guest' else current_role }}</span>
       <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
     </button>
-    <div id="demo-menu" class="hidden absolute bottom-12 left-0 w-52 nx-menu p-1.5">
-      <button type="button" onclick="setDemoRole('guest')"><span class="icon-badge icon-badge-amber w-7 h-7"><i data-lucide="eye" class="w-3.5 h-3.5"></i></span>Visitor</button>
-      <button type="button" onclick="setDemoRole('seeker')"><span class="icon-badge icon-badge-indigo w-7 h-7"><i data-lucide="user" class="w-3.5 h-3.5"></i></span>Job Seeker</button>
-      <button type="button" onclick="setDemoRole('employer')"><span class="icon-badge icon-badge-mint w-7 h-7"><i data-lucide="briefcase" class="w-3.5 h-3.5"></i></span>Employer</button>
+    <div id="demo-menu" class="hidden absolute bottom-12 left-0 w-52 nx-menu p-1.5 shadow-2xl">
+      <button type="button" onclick="setDemoRole('guest')"><span class="icon-badge icon-badge-amber w-7 h-7"><i data-lucide="eye" class="w-3.5 h-3.5"></i></span>Visitor (Log out)</button>
+      <button type="button" onclick="setDemoRole('seeker')"><span class="icon-badge icon-badge-indigo w-7 h-7"><i data-lucide="user" class="w-3.5 h-3.5"></i></span>Job Seeker (Skip)</button>
+      <button type="button" onclick="setDemoRole('employer')"><span class="icon-badge icon-badge-mint w-7 h-7"><i data-lucide="briefcase" class="w-3.5 h-3.5"></i></span>Employer (Skip)</button>
     </div>
   </div>
   {% if current_role == 'guest' %}
-  <button id="tour-trigger-btn" type="button" class="btn btn-sm flex items-center gap-2" onclick="startWebsiteTour()">
+  <button id="tour-trigger-btn" type="button" class="btn btn-sm flex items-center gap-2 shadow-lg backdrop-blur-md" onclick="startWebsiteTour()">
     <i data-lucide="compass" class="w-3.5 h-3.5 icon-spin-slow"></i>
     Website Tour
   </button>
   {% endif %}
 </div>
-{% endif %}
 {% endblock %}
 
 <!-- ==================== JAVASCRIPT ==================== -->

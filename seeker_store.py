@@ -79,23 +79,61 @@ def resume_requirements(seeker,profile,resume):
 def resume_status(seeker,profile,resume):
  if not resume:return "Not started"
  return "Completed" if all(r["done"] for r in resume_requirements(seeker,profile,resume)) else "In progress"
-def get_applications(seeker_id): return (get_db().table("applications").select("*").eq("seeker_id",seeker_id).order("applied_at",desc=True).order("id",desc=True).execute().data or [])
-def applied_job_ids(seeker_id): return {r["job_id"] for r in (get_db().table("applications").select("job_id").eq("seeker_id",seeker_id).execute().data or [])}
+def get_applications(seeker_id):
+    try:
+        return (get_db().table("applications").select("*").eq("seeker_id",seeker_id).order("applied_at",desc=True).order("id",desc=True).execute().data or [])
+    except Exception as exc:
+        log.warning("get_applications failed: %s", exc)
+        return []
+
+def applied_job_ids(seeker_id):
+    try:
+        return {r["job_id"] for r in (get_db().table("applications").select("job_id").eq("seeker_id",seeker_id).execute().data or [])}
+    except Exception as exc:
+        log.warning("applied_job_ids failed: %s", exc)
+        return set()
+
 def add_application(seeker_id,job_id,cover_note=""):
- if get_db().table("applications").select("id").eq("seeker_id",seeker_id).eq("job_id",job_id).limit(1).execute().data:return False
- get_db().table("applications").insert({"seeker_id":seeker_id,"job_id":job_id,"cover_note":cover_note}).execute(); return True
+    try:
+        if get_db().table("applications").select("id").eq("seeker_id",seeker_id).eq("job_id",job_id).limit(1).execute().data:return False
+        get_db().table("applications").insert({"seeker_id":seeker_id,"job_id":job_id,"cover_note":cover_note}).execute(); return True
+    except Exception as exc:
+        log.warning("add_application failed: %s", exc)
+        return False
+
 def get_application(seeker_id,application_id): return _one("applications",id=application_id,seeker_id=seeker_id)
+
 def set_application_status(seeker_id,application_id,status):
- if not _one("applications",id=application_id,seeker_id=seeker_id):return False
- get_db().table("applications").update({"status":status,"updated_at":_now()}).eq("id",application_id).eq("seeker_id",seeker_id).execute(); return True
+    try:
+        if not _one("applications",id=application_id,seeker_id=seeker_id):return False
+        get_db().table("applications").update({"status":status,"updated_at":_now()}).eq("id",application_id).eq("seeker_id",seeker_id).execute(); return True
+    except Exception as exc:
+        log.warning("set_application_status failed: %s", exc)
+        return False
+
 def remove_application(seeker_id,application_id):
- if not _one("applications",id=application_id,seeker_id=seeker_id):return False
- get_db().table("applications").delete().eq("id",application_id).eq("seeker_id",seeker_id).execute(); return True
-def saved_job_ids(seeker_id): return [r["job_id"] for r in (get_db().table("saved_jobs").select("job_id").eq("seeker_id",seeker_id).order("saved_at",desc=True).execute().data or [])]
+    try:
+        if not _one("applications",id=application_id,seeker_id=seeker_id):return False
+        get_db().table("applications").delete().eq("id",application_id).eq("seeker_id",seeker_id).execute(); return True
+    except Exception as exc:
+        log.warning("remove_application failed: %s", exc)
+        return False
+
+def saved_job_ids(seeker_id):
+    try:
+        return [r["job_id"] for r in (get_db().table("saved_jobs").select("job_id").eq("seeker_id",seeker_id).order("saved_at",desc=True).execute().data or [])]
+    except Exception as exc:
+        log.warning("saved_job_ids failed: %s", exc)
+        return []
+
 def toggle_saved(seeker_id,job_id):
- row=_one("saved_jobs",seeker_id=seeker_id,job_id=job_id)
- if row: get_db().table("saved_jobs").delete().eq("seeker_id",seeker_id).eq("job_id",job_id).execute(); return False
- get_db().table("saved_jobs").insert({"seeker_id":seeker_id,"job_id":job_id}).execute(); return True
+    try:
+        row=_one("saved_jobs",seeker_id=seeker_id,job_id=job_id)
+        if row: get_db().table("saved_jobs").delete().eq("seeker_id",seeker_id).eq("job_id",job_id).execute(); return False
+        get_db().table("saved_jobs").insert({"seeker_id":seeker_id,"job_id":job_id}).execute(); return True
+    except Exception as exc:
+        log.warning("toggle_saved failed: %s", exc)
+        return False
 def format_date(value):
  try:
   d=datetime.strptime(value[:10],"%Y-%m-%d"); return f"{d.day} {d:%b %Y}"

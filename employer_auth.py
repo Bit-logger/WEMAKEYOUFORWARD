@@ -178,6 +178,21 @@ def register():
     )
 
 
+# --------------------------------------------------------------- skip demo --
+@bp.route("/skip", methods=["GET", "POST"])
+def skip():
+    """Testing phase bypass: logs in directly as demo employer without credentials."""
+    emp = db.get_employer_by_email(DEMO_EMAIL)
+    if not emp or not emp.get("onboarding_complete"):
+        eid = seed_demo("EmployerDemo123!")
+        emp = db.get_employer(eid)
+    if emp:
+        _start_session(emp["id"])
+        session["demo_role"] = "employer"
+        flash("Entered as Employer (Test Demo Mode).", "info")
+    return redirect(url_for("employer_dashboard"))
+
+
 # --------------------------------------------------------------- login --
 @bp.route("/login", methods=["GET", "POST"])
 def login():

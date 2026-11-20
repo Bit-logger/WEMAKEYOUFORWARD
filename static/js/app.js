@@ -22,11 +22,16 @@ function showToast(message, opts = {}) {
 // ---------------------------------------------------------------- Demo role
 async function setDemoRole(role) {
   try {
-    await fetch('/api/demo-role', {
+    const res = await fetch('/api/demo-role', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ role }),
     });
+    const data = await res.json();
+    if (data && data.redirect) {
+      window.location.href = data.redirect;
+      return;
+    }
   } catch (e) { /* demo only */ }
   const destinations = {
     guest: '/',
@@ -160,6 +165,16 @@ function animateCounter(el, target, opts = {}) {
   requestAnimationFrame(tick);
 }
 document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-bg]').forEach((el) => {
+    if (el.dataset.bg) el.style.backgroundColor = el.dataset.bg;
+  });
+  document.querySelectorAll('[data-color]').forEach((el) => {
+    const c = el.dataset.color;
+    if (c) { el.style.backgroundColor = c + '22'; el.style.color = c; }
+  });
+  document.querySelectorAll('[data-company-color]').forEach((el) => {
+    if (el.dataset.companyColor) el.style.setProperty('--company-color', el.dataset.companyColor);
+  });
   document.querySelectorAll('[data-counter]').forEach((el) => {
     const target = parseInt(el.dataset.counter, 10) || 0;
     animateCounter(el, target, { prefix: el.dataset.prefix || '', suffix: el.dataset.suffix || '' });

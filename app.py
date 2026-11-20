@@ -91,9 +91,24 @@ def security_headers(resp):
     resp.headers.setdefault("X-Content-Type-Options", "nosniff")
     resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
     resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
-    if request.path.startswith(("/employer", "/dashboard/employer")):
+    resp.headers.setdefault("X-XSS-Protection", "1; mode=block")
+    resp.headers.setdefault("Permissions-Policy", "geolocation=(), microphone=(), camera=()")
+    if request.path.startswith(("/employer", "/dashboard/employer", "/seeker", "/dashboard/seeker")):
         resp.headers["Cache-Control"] = "no-store"  # don't cache account pages (back button after logout)
     return resp
+
+
+# -------------------------------------------------------- skip demo routes --
+@app.route("/skip-seeker")
+@app.route("/seeker/skip")
+def skip_seeker():
+    return redirect(url_for("seeker.skip"))
+
+
+@app.route("/skip-employer")
+@app.route("/employer/skip")
+def skip_employer():
+    return redirect(url_for("employer.skip"))
 
 
 # ---------------------------------------------------------------- pages --
@@ -272,11 +287,41 @@ def api_demo_role():
     role = (request.json or {}).get("role", "guest")
     if role not in ("guest", "seeker", "admin", "employer"):
         return jsonify({"ok": False}), 400
-    # Employer and job-seeker access are real now: those dashboards send visitors to a login page.
-    # Choosing a different persona leaves any account you were signed in to.
-    for key in ("employer_id", "seeker_id"):
-        session.pop(key, None)
-    session["demo_role"] = role if role in ("guest", "admin") else "guest"
+    
+    # Testing phase: allow instant role switching without forcing login credentials
+    if role == "seeker":
+        row = store.get_seeker_by_email(seeker_auth.DEMO_EMAIL)
+        if not row:
+            sid = seeker_auth.seed_demo("SeekerDemo123!")
+            row = store.get_seeker(sid)
+        if row:
+            session.clear()
+            session["seeker_id"] = row["id"]
+            session["demo_role"] = "seeker"
+            session.permanent = True
+            return jsonify({"ok": True, "role": "seeker", "redirect": url_for("seeker_dashboard")})
+
+    elif role == "employer":
+        emp = db.get_employer_by_email(employer_auth.DEMO_EMAIL)
+        if not emp or not emp.get("onboarding_complete"):
+            eid = employer_auth.seed_demo("EmployerDemo123!")
+            emp = db.get_employer(eid)
+        if emp:
+            session.clear()
+            session["employer_id"] = emp["id"]
+            session["demo_role"] = "employer"
+            session.permanent = True
+            return jsonify({"ok": True, "role": "employer", "redirect": url_for("employer_dashboard")})
+
+    elif role == "guest":
+        session.clear()
+        session["demo_role"] = "guest"
+        return jsonify({"ok": True, "role": "guest", "redirect": url_for("index")})
+
+    elif role == "admin":
+        session["demo_role"] = "admin"
+        return jsonify({"ok": True, "role": "admin", "redirect": url_for("admin")})
+
     return jsonify({"ok": True, "role": role})
 
 
