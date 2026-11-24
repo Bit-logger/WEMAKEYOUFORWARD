@@ -7,7 +7,7 @@ import re
 from datetime import date
 from urllib.parse import urlparse
 
-from flask import Blueprint, flash, jsonify, redirect, render_template, request, session, url_for
+from flask import Blueprint, current_app, flash, jsonify, redirect, render_template, request, session, url_for
 
 import data
 import groq_service
@@ -398,13 +398,18 @@ def api_resume_analyze():
     if file and file.filename:
         filename = file.filename.lower()
         if filename.endswith(".pdf"):
+            header = file.stream.read(4)
+            file.stream.seek(0)
+            if not header.startswith(b"%PDF"):
+                return jsonify({"ok": False, "error": "Invalid PDF file signature. Expected valid PDF header."}), 400
             try:
                 reader = pypdf.PdfReader(file.stream)
                 extracted = "".join(page.extract_text() or "" for page in reader.pages)
                 if extracted.strip():
                     resume_text = extracted.strip()
             except Exception as e:
-                return jsonify({"ok": False, "error": f"Failed to parse PDF: {str(e)}"}), 400
+                if not resume_text:
+                    return jsonify({"ok": False, "error": f"Failed to parse PDF: {str(e)}"}), 400
         elif filename.endswith((".txt", ".md")):
             try:
                 resume_text = file.read().decode("utf-8", errors="ignore").strip()

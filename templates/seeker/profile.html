@@ -317,11 +317,76 @@
     </div>
   </div>
   {% endif %}
+
+  <!-- Danger Zone: Account Deletion -->
+  <div class="mt-8 border border-rose/30 bg-rose/[0.04] rounded-2xl p-6">
+    <div class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h3 class="font-display font-bold text-base text-rose flex items-center gap-2">
+          <i data-lucide="alert-triangle" class="w-4 h-4"></i> Danger Zone
+        </h3>
+        <p class="text-xs text-cream/60 mt-1 max-w-xl">
+          Permanently delete your JOBFLEX job seeker account, profile, resume, applications, and saved jobs. This action is irreversible.
+        </p>
+      </div>
+      <button type="button" onclick="confirmDeleteSeekerAccount()" class="btn btn-sm bg-rose hover:bg-rose/80 text-white font-bold inline-flex items-center gap-1.5 px-4 py-2 rounded-xl">
+        <i data-lucide="trash-2" class="w-4 h-4"></i> Delete Account
+      </button>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-seeker-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-navy/80 backdrop-blur-md" style="display:none" role="dialog" aria-modal="true">
+    <div class="bg-[#0D153B] border border-rose/30 rounded-2xl w-full max-w-md p-6 shadow-2xl text-center space-y-4">
+      <div class="w-12 h-12 rounded-full bg-rose/15 text-rose mx-auto flex items-center justify-center">
+        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h4 class="font-display font-bold text-lg text-white">Delete Seeker Account?</h4>
+        <p class="text-xs text-cream/65 mt-1">This will permanently delete your profile, resume files, and all job applications.</p>
+        <p class="text-[11px] text-rose/80 mt-2 font-semibold">This action cannot be undone.</p>
+      </div>
+      <div class="flex gap-3 justify-center pt-2">
+        <button type="button" onclick="closeDeleteSeekerModal()" class="btn btn-outline btn-sm flex-1">Cancel</button>
+        <button type="button" id="btn-confirm-delete-seeker" class="btn btn-sm flex-1 bg-rose hover:bg-rose/80 text-white font-bold">Yes, Delete Account</button>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+  // Seeker Account Deletion
+  const seekerDeleteModal = document.getElementById('delete-seeker-modal');
+  window.confirmDeleteSeekerAccount = function() {
+    seekerDeleteModal.style.display = 'flex';
+    if (window.lucide) window.lucide.createIcons();
+  };
+  window.closeDeleteSeekerModal = function() {
+    seekerDeleteModal.style.display = 'none';
+  };
+  const confirmSeekerDeleteBtn = document.getElementById('btn-confirm-delete-seeker');
+  if (confirmSeekerDeleteBtn) {
+    confirmSeekerDeleteBtn.addEventListener('click', async () => {
+      confirmSeekerDeleteBtn.disabled = true;
+      confirmSeekerDeleteBtn.textContent = 'Deleting...';
+      try {
+        const resp = await fetch('/api/seeker/delete-account', { method: 'POST' });
+        const res = await resp.json();
+        if (res.ok) {
+          window.location.href = res.redirect || '/';
+        } else {
+          alert(res.error || 'Failed to delete account.');
+        }
+      } catch (err) {
+        alert('Network error while deleting account.');
+      } finally {
+        confirmSeekerDeleteBtn.disabled = false;
+        confirmSeekerDeleteBtn.textContent = 'Yes, Delete Account';
+      }
+    });
+  }
   // "Add another" for education / experience: show the first empty row, reveal more on demand.
   document.querySelectorAll('[data-repeat-form]').forEach((form) => {
     const rows = [...form.querySelectorAll('[data-repeat-row]')];

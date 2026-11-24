@@ -31,6 +31,24 @@
   document.querySelector('.moderation-tab.active')?.classList.add('bg-white', 'shadow-sm', 'text-navy');
 
   window.moderate = async function (jobId, action) {
+    if (action === 'delete') {
+      if (!confirm('Are you sure you want to permanently delete this job posting? This will remove all associated applications.')) return;
+      try {
+        const resp = await fetch(`/api/admin/jobs/${jobId}/delete`, { method: 'POST' });
+        const res = await resp.json();
+        if (res.ok) {
+          document.querySelector(`[data-job-row="${jobId}"]`)?.remove();
+          document.querySelector(`[data-job-row-mobile="${jobId}"]`)?.remove();
+          if (typeof showToast === 'function') showToast('Job permanently deleted.', { icon: 'trash-2' });
+        } else {
+          alert(res.error || 'Failed to delete job.');
+        }
+      } catch (err) {
+        alert('Network error while deleting job.');
+      }
+      return;
+    }
+
     const labelMap = { approve: 'Approved', reject: 'Rejected', review: 'Review', suspend: 'Suspended' };
     const newStatus = labelMap[action];
     try {
@@ -50,7 +68,23 @@
       el.textContent = newStatus;
     });
     applyFilter();
-    showToast(`Job marked as ${newStatus.toLowerCase()}.`, { icon: 'shield-check' });
+    if (typeof showToast === 'function') showToast(`Job marked as ${newStatus.toLowerCase()}.`, { icon: 'shield-check' });
+  };
+
+  window.adminDeleteUser = async function(userType, userId, email) {
+    if (!confirm(`Are you sure you want to permanently delete ${userType} account (${email})? All data and associated listings will be removed.`)) return;
+    try {
+      const resp = await fetch(`/api/admin/users/${userType}/${userId}/delete`, { method: 'POST' });
+      const res = await resp.json();
+      if (res.ok) {
+        document.querySelector(`[data-user-row="${userType}-${userId}"]`)?.remove();
+        if (typeof showToast === 'function') showToast(`${userType.toUpperCase()} account deleted.`, { icon: 'trash-2' });
+      } else {
+        alert(res.error || 'Failed to delete account.');
+      }
+    } catch (err) {
+      alert('Network error while deleting account.');
+    }
   };
 
   window.resolveReport = async function (id) {

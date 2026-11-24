@@ -29,6 +29,22 @@ COUNTRY_BY_CODE = {c["code"]: c for c in COUNTRIES}
 _EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9\-]+(\.[A-Za-z0-9\-]+)*\.[A-Za-z]{2,}$")
 
 
+def sanitize_html(value):
+    """Strip or neutralize executable scripts, event handlers, and javascript: protocols."""
+    if not value:
+        return ""
+    text = str(value)
+    text = re.sub(r"<\s*script[^>]*>.*?<\s*/\s*script\s*>", "", text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r"<\s*script[^>]*>", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"<\s*iframe[^>]*>.*?<\s*/\s*iframe\s*>", "", text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r"<\s*iframe[^>]*>", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\bon\w+\s*=\s*['\"][^'\"]*['\"]", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"\bon\w+\s*=\s*[^\s>]+", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"javascript\s*:", "blocked-js:", text, flags=re.IGNORECASE)
+    return text
+
+
+
 def normalise_email(value):
     return (value or "").strip().lower()
 

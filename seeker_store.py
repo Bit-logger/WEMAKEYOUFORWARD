@@ -100,3 +100,22 @@ def format_date(value):
  try:
   d=datetime.strptime(value[:10],"%Y-%m-%d"); return f"{d.day} {d:%b %Y}"
  except (ValueError,TypeError): return value or ""
+def delete_seeker_account(seeker_id):
+ try:
+  get_db().table("saved_jobs").delete().eq("seeker_id", seeker_id).execute()
+  get_db().table("applications").delete().eq("seeker_id", seeker_id).execute()
+  get_db().table("seeker_resumes").delete().eq("seeker_id", seeker_id).execute()
+  get_db().table("seeker_profiles").delete().eq("seeker_id", seeker_id).execute()
+  get_db().table("seekers").delete().eq("id", seeker_id).execute()
+  return True
+ except Exception as exc:
+  log.error("Failed to delete seeker %s: %s", seeker_id, exc)
+  return False
+def reset_resume(seeker_id):
+ try:
+  get_db().table("seeker_resumes").update({"summary":"","template":"modern","updated_at":_now()}).eq("seeker_id",seeker_id).execute()
+  return True
+ except Exception as exc:
+  log.error("Failed to reset resume for seeker %s: %s", seeker_id, exc)
+  return False
+

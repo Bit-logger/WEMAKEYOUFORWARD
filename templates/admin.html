@@ -69,6 +69,7 @@
                   <button class="btn btn-outline btn-sm !py-1" data-moderate-id="{{ job.id }}" data-moderate-action="reject">Reject</button>
                   <button class="btn btn-ghost btn-sm !py-1" data-moderate-id="{{ job.id }}" data-moderate-action="review">Review</button>
                   <button class="btn btn-ghost btn-sm !py-1 text-rose" data-moderate-id="{{ job.id }}" data-moderate-action="suspend">Suspend</button>
+                  <button class="btn btn-ghost btn-sm !py-1 text-rose hover:bg-rose/10" data-moderate-id="{{ job.id }}" data-moderate-action="delete" title="Permanently delete job"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                 </div>
               </td>
             </tr>
@@ -87,9 +88,88 @@
               <button class="btn btn-outline btn-sm !py-1" data-moderate-id="{{ job.id }}" data-moderate-action="approve">Approve</button>
               <button class="btn btn-outline btn-sm !py-1" data-moderate-id="{{ job.id }}" data-moderate-action="reject">Reject</button>
               <button class="btn btn-ghost btn-sm !py-1" data-moderate-id="{{ job.id }}" data-moderate-action="review">Review</button>
+              <button class="btn btn-ghost btn-sm !py-1 text-rose" data-moderate-id="{{ job.id }}" data-moderate-action="delete">Delete</button>
             </div>
           </div>
           {% endfor %}
+        </div>
+      </div>
+
+      <!-- User Management (Seekers & Employers) -->
+      <div class="card p-0 overflow-hidden mb-8">
+        <div class="p-6 border-b border-grey-line flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <h2 class="font-display font-semibold text-lg text-navy">User Account Management</h2>
+            <p class="text-xs text-ink/50 mt-0.5">Manage and moderate registered Job Seekers and Employers.</p>
+          </div>
+          <span class="chip chip-indigo">{{ (seekers|length) + (employers|length) }} Accounts</span>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- Seekers Table -->
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-ink/50 mb-3 flex items-center gap-1.5">
+              <i data-lucide="user" class="w-3.5 h-3.5 text-mint"></i> Job Seekers ({{ seekers|length }})
+            </h3>
+            {% if seekers %}
+            <div class="border border-grey-line rounded-xl overflow-hidden">
+              <table class="nx-table w-full text-xs">
+                <thead><tr><th>Name / Email</th><th>Plan</th><th>Registered</th><th class="text-right">Action</th></tr></thead>
+                <tbody>
+                  {% for s in seekers %}
+                  <tr data-user-row="seeker-{{ s.id }}">
+                    <td>
+                      <p class="font-semibold text-navy">{{ s.full_name or 'Job Seeker' }}</p>
+                      <p class="text-ink/50 text-[11px]">{{ s.email }}</p>
+                    </td>
+                    <td><span class="chip {{ 'chip-mint' if s.plan == 'premium' else 'chip-grey' }}">{{ s.plan|capitalize }}</span></td>
+                    <td class="text-ink/60">{{ s.created_at[:10] if s.created_at else '' }}</td>
+                    <td class="text-right">
+                      <button type="button" class="btn btn-ghost btn-sm text-rose hover:bg-rose/10 !p-1.5" onclick="adminDeleteUser('seeker', {{ s.id }}, '{{ s.email }}')" title="Delete seeker account">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <p class="text-xs text-ink/40">No seekers found in database.</p>
+            {% endif %}
+          </div>
+
+          <!-- Employers Table -->
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-ink/50 mb-3 flex items-center gap-1.5">
+              <i data-lucide="building-2" class="w-3.5 h-3.5 text-indigo"></i> Employers ({{ employers|length }})
+            </h3>
+            {% if employers %}
+            <div class="border border-grey-line rounded-xl overflow-hidden">
+              <table class="nx-table w-full text-xs">
+                <thead><tr><th>Company / Email</th><th>Registered</th><th class="text-right">Action</th></tr></thead>
+                <tbody>
+                  {% for e in employers %}
+                  <tr data-user-row="employer-{{ e.id }}">
+                    <td>
+                      <p class="font-semibold text-navy">{{ e.companies.name if (e.companies and e.companies.name) else 'Employer' }}</p>
+                      <p class="text-ink/50 text-[11px]">{{ e.email }}</p>
+                    </td>
+                    <td class="text-ink/60">{{ e.created_at[:10] if e.created_at else '' }}</td>
+                    <td class="text-right">
+                      <button type="button" class="btn btn-ghost btn-sm text-rose hover:bg-rose/10 !p-1.5" onclick="adminDeleteUser('employer', {{ e.id }}, '{{ e.email }}')" title="Delete employer account">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                      </button>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% else %}
+            <p class="text-xs text-ink/40">No employers found in database.</p>
+            {% endif %}
+          </div>
         </div>
       </div>
 

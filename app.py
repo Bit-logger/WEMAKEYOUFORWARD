@@ -5,7 +5,7 @@ from datetime import date, timedelta
 from dotenv import load_dotenv
 load_dotenv()
 
-from flask import Flask, render_template, session, jsonify, request, redirect, url_for
+from flask import Flask, render_template, session, jsonify, request, redirect, url_for, send_file
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 import data
@@ -15,6 +15,8 @@ import employer_auth
 import seeker_auth
 import seeker_portal
 import chatbot
+import excel_service
+import security
 import seeker_store as store
 from employer_auth import current_company, current_employer, employer_required
 from seeker_auth import current_seeker, seeker_required
@@ -31,12 +33,13 @@ app.config.update(
     # Set SESSION_COOKIE_SECURE=1 on any https deployment (render.yaml does this).
     SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE") == "1",
     PERMANENT_SESSION_LIFETIME=timedelta(days=7),
-    MAX_CONTENT_LENGTH=1024 * 1024,
+    MAX_CONTENT_LENGTH=16 * 1024 * 1024,
 )
 # Trust one proxy hop (Render, Heroku, nginx) so https URLs and client IPs are correct.
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 db.init_app(app)
+security.install_security(app)
 
 # First run: copy the sample job board into Supabase so job search has test data.
 if app.config.get("SUPABASE_CONFIGURED"):
@@ -273,13 +276,23 @@ def admin():
     pending_jobs = [j for j in every_job if j["status"] == "Pending"]
     rejected_jobs = [j for j in every_job if j["status"] == "Rejected"]
     stats = job_store.platform_stats()
+    seekers = []
+    employers = []
+    try:
+        seekers = db.get_db().table("seekers").select("id, email, full_name, plan, created_at").order("created_at", desc=True).limit(20).execute().data or []
+        employers = db.get_db().table("employers").select("id, email, created_at, companies(name, registered_name)").order("created_at", desc=True).limit(20).execute().data or []
+    except Exception:
+        pass
     return render_template("admin.html", stats=stats, live_jobs=live_jobs,
                             pending_jobs=pending_jobs, rejected_jobs=rejected_jobs,
-                            all_jobs=every_job, reports=job_store.reports(), revenue=stats["revenue_month"])
+                            all_jobs=every_job, reports=job_store.reports(), revenue=stats["revenue_month"],
+                            seekers=seekers, employers=employers)
 
 
 @app.errorhandler(404)
 def not_found(e):
+    if request.path.startswith("/api/"):
+        return jsonify({"ok": False, "error": "Endpoint not found."}), 404
     return render_template("404.html"), 404
 
 
@@ -442,6 +455,108 @@ def top_resume_redirect():
 @app.route("/alerts")
 def top_alerts_redirect():
     return redirect(url_for("seeker.alerts"))
+
+
+# --- Bulk Job Upload Through Excel --------------------------------------------
+@app.get("/employer/jobs/template")
+@employer_required
+def download_job_template():
+    """Download the official JOBFLEX job upload template in Excel (.xlsx) format."""
+    buf = excel_service.generate_job_template()
+    return send_file(
+        buf,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        as_attachment=True,
+        download_name="JOBFLEX_Job_Upload_Template.xlsx"
+    )
+
+
+@app.post("/api/employer/jobs/parse-excel")
+@employer_required
+def api_parse_job_excel():
+    """Parse an uploaded Excel spreadsheet and return extracted job listings for review."""
+    if "file" not in request.files:
+        return jsonify({"ok": False, "error": "No file uploaded."}), 400
+    f = request.files["file"]
+    if not f.filename or not f.filename.lower().endswith((".xlsx", ".xls")):
+        return jsonify({"ok": False, "error": "Please upload a valid Excel file (.xlsx or .xls)."}), 400
+    res = excel_service.parse_job_excel(f.stream)
+    return jsonify(res)
+
+
+@app.post("/api/employer/jobs/bulk-upload")
+@employer_required
+def api_bulk_upload_jobs():
+    """Confirm and batch upload reviewed jobs."""
+    payload = request.json or {}
+    jobs_list = payload.get("jobs") or []
+    if not jobs_list:
+        return jsonify({"ok": False, "error": "No jobs provided for upload."}), 400
+    emp, comp = current_employer(), current_company()
+    res = job_store.bulk_create_jobs(emp, comp, jobs_list, default_status="Approved")
+    return jsonify(res)
+
+
+# --- Complete Deletion Endpoints ----------------------------------------------
+@app.post("/api/employer/jobs/<int:job_id>/delete")
+@employer_required
+def api_delete_employer_job(job_id):
+    """Delete an employer's job posting and cascade associated applications."""
+    ok, msg = job_store.delete_job(job_id, employer=current_employer())
+    if not ok:
+        return jsonify({"ok": False, "error": msg}), 403 if "permission" in msg.lower() else 404
+    return jsonify({"ok": True, "message": msg})
+
+
+@app.post("/api/employer/delete-account")
+@employer_required
+def api_delete_employer_account():
+    """Permanently delete employer account, company, and all jobs."""
+    emp = current_employer()
+    ok, msg = job_store.delete_employer_account(emp["id"])
+    if not ok:
+        return jsonify({"ok": False, "error": msg}), 500
+    session.clear()
+    return jsonify({"ok": True, "redirect": url_for("home")})
+
+
+@app.post("/api/seeker/delete-account")
+@seeker_required
+def api_delete_seeker_account():
+    """Permanently delete seeker account, profile, resumes, and applications."""
+    seeker = current_seeker()
+    ok = store.delete_seeker_account(seeker["id"])
+    if not ok:
+        return jsonify({"ok": False, "error": "Failed to delete account."}), 500
+    session.clear()
+    return jsonify({"ok": True, "redirect": url_for("home")})
+
+
+@app.post("/api/seeker/resume/reset")
+@seeker_required
+def api_reset_seeker_resume():
+    """Clear seeker resume text and reset resume builder."""
+    seeker = current_seeker()
+    ok = store.reset_resume(seeker["id"])
+    return jsonify({"ok": ok})
+
+
+@app.post("/api/admin/jobs/<int:job_id>/delete")
+def api_admin_delete_job(job_id):
+    """Admin endpoint to permanently delete any job posting."""
+    if current_role() != "admin":
+        return jsonify({"ok": False, "error": "Admins only."}), 403
+    ok, msg = job_store.delete_job(job_id)
+    return jsonify({"ok": ok, "message": msg}), 200 if ok else 404
+
+
+@app.post("/api/admin/users/<user_type>/<int:user_id>/delete")
+def api_admin_delete_user(user_type, user_id):
+    """Admin endpoint to delete any seeker or employer account."""
+    if current_role() != "admin":
+        return jsonify({"ok": False, "error": "Admins only."}), 403
+    ok, msg = job_store.admin_delete_user(user_type, user_id)
+    return jsonify({"ok": ok, "message": msg}), 200 if ok else 400
 
 
 # ------------------------------------------------------------------ CLI --

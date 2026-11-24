@@ -15,7 +15,7 @@ DEFAULT_MODEL = "openai/gpt-oss-120b"
 FALLBACK_MODEL = "qwen/qwen3.8-27b"
 
 
-def get_api_key():
+def get_api_key(): 
     return (os.environ.get("GROQ_API_KEY") or "").strip()
 
 

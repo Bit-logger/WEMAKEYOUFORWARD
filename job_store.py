@@ -129,6 +129,135 @@ def update_job(job_id, **fields):
         _invalidate()
 
 
+def delete_job(job_id, employer=None):
+    """Permanently delete a job and all associated applications, saved jobs, and orders.
+    If employer is provided, verifies ownership."""
+    job = get_job(job_id)
+    if not job:
+        return False, "Job not found."
+    if employer and not _owns(employer, job):
+        return False, "You do not have permission to delete this job."
+    try:
+        get_db().table("applications").delete().eq("job_id", job_id).execute()
+        get_db().table("saved_jobs").delete().eq("job_id", job_id).execute()
+        try:
+            get_db().table("job_orders").delete().eq("job_id", job_id).execute()
+        except Exception:
+            pass
+        get_db().table("jobs").delete().eq("id", job_id).execute()
+        _invalidate()
+        return True, "Job deleted successfully."
+    except Exception as exc:
+        log.error("Failed to delete job %s: %s", job_id, exc)
+        return False, f"Database error: {str(exc)}"
+
+
+def bulk_create_jobs(employer, company, jobs_list, default_status="Approved"):
+    """Batch-insert multiple validated jobs for an employer.
+    Prevents duplicates and returns upload summary."""
+    if not jobs_list:
+        return {"ok": False, "error": "No jobs provided.", "created_count": 0}
+
+    existing_titles = {j["title"].strip().lower() for j in jobs_for_employer(employer)}
+    to_insert = []
+    skipped = []
+    today = date.today()
+    default_closing = (today + timedelta(days=30)).isoformat()
+
+    for item in jobs_list:
+        title = str(item.get("title") or "").strip()
+        if not title:
+            skipped.append({"title": "Untitled", "reason": "Missing job title."})
+            continue
+
+        if title.lower() in existing_titles:
+            skipped.append({"title": title, "reason": "A job with this title already exists in your listings."})
+            continue
+
+        existing_titles.add(title.lower())
+
+        row = {
+            "employer_id": employer["id"],
+            "is_demo": False,
+            "title": title[:120],
+            "company": company["name"],
+            "company_initials": company.get("initials") or company["name"][:2].upper(),
+            "company_color": company.get("color") or "#5D4FE0",
+            "location": item.get("location") or "Sydney, NSW",
+            "type": item.get("type") or "Full-time",
+            "mode": item.get("mode") or "Hybrid",
+            "experience": item.get("experience") or "3-5 years",
+            "industry": item.get("industry") or "Technology",
+            "salary_min": int(item.get("salary_min") or 70000),
+            "salary_max": int(item.get("salary_max") or 100000),
+            "tags": item.get("skills") or [item.get("industry") or "General"],
+            "closing_date": default_closing,
+            "featured": False,
+            "urgent": False,
+            "status": default_status,
+            "views": 0,
+            "about_role": str(item.get("description") or f"Join {company['name']} as a {title}.")[:5000],
+            "responsibilities": item.get("responsibilities") or ["Deliver against primary job objectives", "Collaborate with cross-functional teams"],
+            "requirements": item.get("requirements") or [f"Experience level: {item.get('experience', '3-5 years')}"],
+            "benefits": item.get("benefits") or ["Competitive salary package", "Flexible work arrangements"],
+            "about_company": f"{company['name']} is hiring through JOBFLEX.",
+        }
+        to_insert.append(row)
+
+    if not to_insert:
+        return {
+            "ok": True,
+            "created_count": 0,
+            "skipped_count": len(skipped),
+            "skipped": skipped,
+            "message": "All jobs were duplicates or missing titles."
+        }
+
+    try:
+        res = get_db().table("jobs").insert(to_insert).execute()
+        _invalidate()
+        created_rows = res.data or []
+        return {
+            "ok": True,
+            "created_count": len(created_rows),
+            "created_ids": [r["id"] for r in created_rows],
+            "skipped_count": len(skipped),
+            "skipped": skipped
+        }
+    except Exception as exc:
+        log.error("Bulk job insert failed: %s", exc)
+        return {"ok": False, "error": f"Database error: {str(exc)}", "created_count": 0}
+
+
+def delete_employer_account(employer_id):
+    """Permanently delete an employer, their company, jobs, and applications."""
+    try:
+        jobs_res = get_db().table("jobs").select("id").eq("employer_id", employer_id).execute()
+        for j in (jobs_res.data or []):
+            get_db().table("applications").delete().eq("job_id", j["id"]).execute()
+            get_db().table("saved_jobs").delete().eq("job_id", j["id"]).execute()
+        get_db().table("jobs").delete().eq("employer_id", employer_id).execute()
+        get_db().table("job_orders").delete().eq("employer_id", employer_id).execute()
+        get_db().table("companies").delete().eq("employer_id", employer_id).execute()
+        get_db().table("employers").delete().eq("id", employer_id).execute()
+        _invalidate()
+        return True, "Employer account deleted."
+    except Exception as exc:
+        log.error("Failed to delete employer %s: %s", employer_id, exc)
+        return False, str(exc)
+
+
+def admin_delete_user(user_type, user_id):
+    """Admin tool to delete any seeker or employer account."""
+    if user_type == "seeker":
+        import seeker_store
+        ok = seeker_store.delete_seeker_account(user_id)
+        return ok, "Seeker deleted" if ok else "Failed to delete seeker"
+    elif user_type == "employer":
+        return delete_employer_account(user_id)
+    return False, "Unknown user type"
+
+
 def add_view(job_id):
     job = get_job(job_id)
     if job:

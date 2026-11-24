@@ -15,6 +15,19 @@ def install_security(app):
     app.config.setdefault("WTF_CSRF_ENABLED", True)
 
     @app.before_request
+    def validate_host_header():
+        allowed_str = os.environ.get("ALLOWED_HOSTS", "").strip()
+        if not allowed_str:
+            return
+        allowed = {h.strip().lower() for h in allowed_str.split(",") if h.strip()}
+        host = (request.host or "").strip().lower()
+        if any(c in host for c in (";", "@", " ", "\t", "\\")):
+            abort(400)
+        host_no_port = host.split(":")[0] if ":" in host else host
+        if host not in allowed and host_no_port not in allowed:
+            abort(400)
+
+    @app.before_request
     def basic_rate_limit():
         # Conservative per-IP request limit for authentication and mutation endpoints.
         path = request.path.lower()
